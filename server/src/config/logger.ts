@@ -1,9 +1,9 @@
-import pino from "pino";
+import pino from 'pino';
 
 const logger = pino({
   transport:
-    process.env.NODE_ENV !== "production"
-      ? { target: "pino-pretty" }
+    process.env.NODE_ENV !== 'production'
+      ? { target: 'pino-pretty' }
       : undefined,
 });
 

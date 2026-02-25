@@ -1,9 +1,9 @@
-import express from "express";
-import helmet from "helmet";
-import cookieParser from "cookie-parser";
-import logger from "./config/logger.ts";
-import cors from "cors";
-import env from "./config/env.ts";
+import cookieParser from 'cookie-parser';
+import cors from 'cors';
+import express from 'express';
+import helmet from 'helmet';
+import env from './config/env.ts';
+import logger from './config/logger.ts';
 
 const app = express();
 
@@ -13,8 +13,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 
-app.get("/", (req, res, next) => {
-  res.send("Hello world");
+app.get('/', (_req, res, next) => {
+  res.send('Hello world');
   next();
 });
 
