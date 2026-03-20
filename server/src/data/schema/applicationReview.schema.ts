@@ -6,12 +6,15 @@ import { sql } from 'drizzle-orm';
 export const applicationReview = pgTable(
   'application_review',
   {
-    id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
-    jobApplicationId: integer('job_application_id').references(() => jobApplication.id),
-    companyId: integer('company_id').references(() => jobApplication.id),
-    rating: integer('rating').notNull(),
-    comment: text('comment').notNull(),
+    id: integer().primaryKey().generatedAlwaysAsIdentity(),
+    jobApplicationId: integer().references(() => jobApplication.id),
+    companyId: integer().references(() => jobApplication.id),
+    rating: integer().notNull(),
+    comment: text().notNull(),
     ...timestamps,
   },
-  (table) => [check('rating_range', sql`${table.rating} BETWEEN 1 AND 5`)],
+  (table) => [check('rating_range_check', sql`${table.rating} BETWEEN 1 AND 5`)],
 );
+
+export type ApplicationReview = typeof applicationReview.$inferSelect;
+export type ApplicationReviewInsert = typeof applicationReview.$inferInsert;

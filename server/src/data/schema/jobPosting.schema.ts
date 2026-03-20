@@ -16,13 +16,13 @@ export const jobPosting = pgTable(
   'job_posting',
   {
     id: integer().primaryKey().generatedAlwaysAsIdentity(),
-    companyId: integer('company_id')
+    companyId: integer()
       .references(() => company.id)
       .notNull(),
-    title: text('title'),
-    description: text('description'),
-    status: text('status').notNull(),
-    expiresAt: timestamp('expires_at', { withTimezone: true }),
+    title: text(),
+    description: text(),
+    status: text().notNull(),
+    expiresAt: timestamp({ withTimezone: true }),
     ...timestamps,
   },
   (table) => [enumCheckConstraint('status_check', table.status, JOB_POSTING_STATUS)],

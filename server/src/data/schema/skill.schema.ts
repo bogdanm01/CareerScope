@@ -3,7 +3,7 @@ import { timestamps } from '../util/utils.ts';
 
 export const skill = pgTable('skill', {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  name: text('name').notNull(),
+  name: text().notNull(),
   ...timestamps,
 });
 

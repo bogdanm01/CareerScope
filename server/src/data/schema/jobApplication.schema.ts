@@ -5,9 +5,9 @@ import { jobPosting } from './jobPosting.schema.ts';
 
 export const jobApplication = pgTable('job_application', {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  userId: integer('user_id').references(() => user.id),
-  jobPostingId: integer('job_posting_id').references(() => jobPosting.id), // what when job posting is deleted/archived
-  status: text('status').notNull(),
+  userId: integer().references(() => user.id),
+  jobPostingId: integer().references(() => jobPosting.id),
+  status: text().notNull(),
   ...timestamps,
 });
 
