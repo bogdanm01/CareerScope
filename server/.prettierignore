@@ -1,0 +1,27 @@
+# Dependencies
+node_modules
+
+# Build outputs
+dist
+build
+out
+.next
+
+# Generated files
+coverage
+*.min.js
+*.min.css
+
+# Config & lock files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Env files
+.env
+.env.*
+
+# Docker
+docker-compose*.yml
+
+# Database migrations
