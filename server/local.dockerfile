@@ -6,7 +6,7 @@ FROM node:${NODE_VERSION}-alpine
 
 WORKDIR /usr/src/app
 
-ENV NODE_ENV development
+ENV NODE_ENV=development
 
 RUN --mount=type=bind,source=package.json,target=package.json \
     --mount=type=bind,source=package-lock.json,target=package-lock.json \
@@ -17,4 +17,4 @@ USER node
 
 COPY . .
 
-CMD npm run dev
+CMD ["npm", "run", "dev"]

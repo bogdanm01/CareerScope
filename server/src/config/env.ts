@@ -1,7 +1,7 @@
-import * as z from "zod";
+import * as z from 'zod';
 
 const EnvSchema = z.object({
-  NODE_ENV: z.string().default("development"),
+  NODE_ENV: z.string().default('development'),
   SERVER_PORT: z.coerce.number().default(5432),
 
   POSTGRES_USER: z.string(),

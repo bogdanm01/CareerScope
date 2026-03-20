@@ -5,7 +5,7 @@ services:
       dockerfile: local.dockerfile
     env_file: ./.env
     ports:
-      - "${SERVER_PORT}:${SERVER_PORT}"
+      - '${SERVER_PORT}:${SERVER_PORT}'
     volumes:
       - .:/usr/src/app
       - /usr/src/app/node_modules
@@ -14,7 +14,7 @@ services:
         condition: service_healthy
     networks:
       - internal
-        
+
   db:
     image: postgres:18.3
     user: postgres
@@ -22,9 +22,9 @@ services:
     volumes:
       - career-scope-db-data:/var/lib/postgresql
     ports:
-      - "${POSTGRES_PORT}:${POSTGRES_PORT}"
+      - '${POSTGRES_PORT}:${POSTGRES_PORT}'
     healthcheck:
-      test: ["CMD", "pg_isready"]
+      test: ['CMD', 'pg_isready']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -35,7 +35,7 @@ services:
     image: redis:alpine
     env_file: ./.env
     ports:
-      - "${REDIS_PORT}:${REDIS_PORT}"
+      - '${REDIS_PORT}:${REDIS_PORT}'
     volumes:
       - career-scope-redis-data:/data
     networks:
@@ -44,7 +44,7 @@ services:
   redis-insight:
     image: redis/redisinsight:latest
     ports:
-      - "${REDIS_INSIGHT_PORT}:${REDIS_INSIGHT_PORT}"
+      - '${REDIS_INSIGHT_PORT}:${REDIS_INSIGHT_PORT}'
     depends_on:
       - redis
     networks:
