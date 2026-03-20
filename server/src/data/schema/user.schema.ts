@@ -22,7 +22,7 @@ export const user = pgTable('user', {
   dateOfBirth: date('date_of_birth'),
   isDeleted: boolean('is_deleted').default(false).notNull(),
   onboardingStep: integer('onboarding_step').default(1).notNull(),
-  role: text('role').notNull(), // admin, user, recruiter
+  role: text('role').notNull(),
   // companyId (for recruiter/hr role)
   // resumeUrl (unrelated to digital cv) ?
   ...timestamps,

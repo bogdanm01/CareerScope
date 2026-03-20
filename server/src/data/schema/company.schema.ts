@@ -1,11 +1,3 @@
-// name
-// short description (tagline)
-// long description (markdown)
-// founding year
-// number of employees
-// location
-// logo
-// links (linkedin, social media, website)
 // TODO: poreski broj ili nesto slicno radi verifikacije ???
 
 import { integer, pgTable, text } from 'drizzle-orm/pg-core';
