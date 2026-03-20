@@ -23,5 +23,6 @@ pnpm-lock.yaml
 
 # Docker
 docker-compose*.yml
+local.compose.yaml
 
 # Database migrations
