@@ -1,10 +1,5 @@
 import { boolean, date, integer, pgTable, text } from 'drizzle-orm/pg-core';
-import { timestamps } from '../util/timestamps.ts';
-
-/* //TODO: DigitalCv
-    centralized (TECH) skill repository (managed by admins) for digital cv
-    user <-> skill table: {id, userId, skillId, years of experience} 
-*/
+import { timestamps } from '../util/utils.ts';
 
 export const USER_ROLE = {
   ADMIN: 'Admin',
@@ -27,3 +22,6 @@ export const user = pgTable('user', {
   // resumeUrl (unrelated to digital cv) ?
   ...timestamps,
 });
+
+export type User = typeof user.$inferSelect;
+export type UserInsert = typeof user.$inferInsert;

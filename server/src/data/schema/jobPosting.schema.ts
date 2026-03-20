@@ -1,23 +1,16 @@
-import { check, integer, pgTable, text } from 'drizzle-orm/pg-core';
-import { timestamps } from '../util/timestamps.ts';
-import { user } from './user.schema.ts';
-import { sql } from 'drizzle-orm';
+import { integer, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
+import { enumCheckConstraint, timestamps } from '../util/utils.ts';
 import { company } from './company.schema.ts';
 
-// TODO: Define job posting statuses as previously agreed upon
 export const JOB_POSTING_STATUS = {
-  PENDING: 'Pending',
+  DRAFT: 'Draft',
+  PENDING_APPROVAL: 'PendingApproval',
+  REJECTED: 'Rejected',
+  ACTIVE: 'Active',
+  PAUSED: 'Paused',
+  CLOSED: 'Closed',
+  EXPIRED: 'Expired',
 } as const;
-
-export type JobPostingStatus = (typeof JOB_POSTING_STATUS)[keyof typeof JOB_POSTING_STATUS];
-
-const validStatuses = Object.values(JOB_POSTING_STATUS)
-  .map((s) => `'${s}'`)
-  .join(', ');
-
-// TODO: Add a column for job filtering by category? (frontend, backend, full stack, devops etc.) Would require another table for categories
-// TODO: statusSetAt column?
-// TODO: deletedAt column for soft delete (or archived at)
 
 export const jobPosting = pgTable(
   'job_posting',
@@ -26,12 +19,15 @@ export const jobPosting = pgTable(
     companyId: integer('company_id')
       .references(() => company.id)
       .notNull(),
-    title: integer('user_id').references(() => user.id),
-    description: text('description').notNull(),
+    title: text('title'),
+    description: text('description'),
     status: text('status').notNull(),
-    // createdBy
-    // deadline
+    expiresAt: timestamp('expires_at', { withTimezone: true }),
     ...timestamps,
   },
-  (table) => [check('age_check1', sql`${table.status} IN ${sql.raw(validStatuses)}`)],
+  (table) => [enumCheckConstraint('status_check', table.status, JOB_POSTING_STATUS)],
 );
+
+export type JobPostingStatus = (typeof JOB_POSTING_STATUS)[keyof typeof JOB_POSTING_STATUS];
+export type JobPosting = typeof jobPosting.$inferSelect;
+export type JobPostingInsert = typeof jobPosting.$inferInsert;
