@@ -1,4 +1,4 @@
-// TODO: poreski broj ili nesto slicno radi verifikacije ???
+// TODO: Company tax number for validation ?
 
 import { integer, pgTable, text } from 'drizzle-orm/pg-core';
 

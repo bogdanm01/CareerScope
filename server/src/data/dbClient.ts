@@ -1,7 +1,7 @@
 import { drizzle } from 'drizzle-orm/node-postgres';
 import env from '../config/env.ts';
 
-// TODO: Move to config folder? Also add drizzle config for drizzle kit to config folder
+// TODO: Move to config folder and add drizzle config for drizzle kit to config folder
 
 type DbClient = ReturnType<typeof getDbClient>;
 

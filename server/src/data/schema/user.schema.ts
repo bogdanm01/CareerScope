@@ -1,7 +1,7 @@
 import { boolean, date, integer, pgTable, text } from 'drizzle-orm/pg-core';
 import { timestamps } from '../util/timestamps.ts';
 
-/* //TODO: Digital cv?
+/* //TODO: DigitalCv
     centralized (TECH) skill repository (managed by admins) for digital cv
     user <-> skill table: {id, userId, skillId, years of experience} 
 */
