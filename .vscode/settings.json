@@ -1,4 +1,14 @@
 {
   "editor.formatOnSave": true,
-  "editor.defaultFormatter": "esbenp.prettier-vscode"
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "js/ts.preferences.autoImportFileExcludePatterns": [
+    "drizzle-orm/mysql*",
+    "drizzle-orm/sqlite*",
+    "drizzle-orm/planetscale*",
+    "drizzle-orm/neon*",
+    "drizzle-orm/libsql*",
+    "drizzle-orm/better-sqlite3*",
+    "drizzle-orm/gel-core*",
+    "drizzle-orm/singlestore-core*"
+  ]
 }
