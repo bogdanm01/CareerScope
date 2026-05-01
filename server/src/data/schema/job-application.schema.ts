@@ -1,11 +1,12 @@
 import { integer, pgTable, text } from 'drizzle-orm/pg-core';
 import { timestamps } from '../util/utils.ts';
-import { user } from './user.schema.ts';
-import { jobPosting } from './jobPosting.schema.ts';
+import { jobPosting } from './job-posting.schema.ts';
+
+import { user } from './auth.schema.ts';
 
 export const jobApplication = pgTable('job_application', {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  userId: integer().references(() => user.id),
+  userId: text().references(() => user.id),
   jobPostingId: integer().references(() => jobPosting.id),
   status: text().notNull(),
   ...timestamps,
