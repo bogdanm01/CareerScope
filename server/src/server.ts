@@ -1,3 +1,6 @@
+import 'reflect-metadata';
+import { registerDependencies } from './config/dependencies.ts';
+
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express from 'express';
@@ -30,6 +33,8 @@ const createApp = (): express.Application => {
 
   return app;
 };
+
+registerDependencies();
 
 const app = createApp();
 
