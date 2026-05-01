@@ -1,14 +1,15 @@
 import { check, integer, pgTable, text } from 'drizzle-orm/pg-core';
-import { jobApplication } from './jobApplication.schema.ts';
+import { jobApplication } from './job-application.schema.ts';
 import { timestamps } from '../util/utils.ts';
 import { sql } from 'drizzle-orm';
+import { company } from './company.schema.ts';
 
 export const applicationReview = pgTable(
   'application_review',
   {
     id: integer().primaryKey().generatedAlwaysAsIdentity(),
     jobApplicationId: integer().references(() => jobApplication.id),
-    companyId: integer().references(() => jobApplication.id),
+    companyId: integer().references(() => company.id),
     rating: integer().notNull(),
     comment: text().notNull(),
     ...timestamps,

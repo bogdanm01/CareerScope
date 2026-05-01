@@ -9,25 +9,16 @@ services:
     volumes:
       - .:/usr/src/app
       - /usr/src/app/node_modules
-    depends_on:
-      db:
-        condition: service_healthy
     networks:
       - internal
 
   db:
     image: postgres:18.3
-    user: postgres
     env_file: ./.env
     volumes:
       - career-scope-db-data:/var/lib/postgresql
     ports:
-      - '${POSTGRES_PORT}:${POSTGRES_PORT}'
-    healthcheck:
-      test: ['CMD', 'pg_isready']
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      - '${POSTGRES_HOST_PORT}:${POSTGRES_PORT}'
     networks:
       - internal
 

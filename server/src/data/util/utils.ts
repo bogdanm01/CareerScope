@@ -8,10 +8,7 @@ export const timestamps = {
 
 export const enumCheckConstraint = (constraintName: string, field: AnyColumn, sourceObject: Record<string, string>) => {
   const values = Object.values(sourceObject);
-  const placeholders = sql.join(
-    values.map((v) => sql`${v}`),
-    sql`, `,
-  );
+  const literals = sql.raw(values.map((value) => `'${value.replaceAll("'", "''")}'`).join(', '));
 
-  return check(constraintName, sql`${field} IN (${placeholders})`);
+  return check(constraintName, sql`${field} IN (${literals})`);
 };

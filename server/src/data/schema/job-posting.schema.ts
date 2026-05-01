@@ -1,16 +1,7 @@
 import { integer, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
 import { enumCheckConstraint, timestamps } from '../util/utils.ts';
 import { company } from './company.schema.ts';
-
-export const JOB_POSTING_STATUS = {
-  DRAFT: 'Draft',
-  PENDING_APPROVAL: 'PendingApproval',
-  REJECTED: 'Rejected',
-  ACTIVE: 'Active',
-  PAUSED: 'Paused',
-  CLOSED: 'Closed',
-  EXPIRED: 'Expired',
-} as const;
+import { JOB_POSTING_STATUS } from '../util/constants.ts';
 
 export const jobPosting = pgTable(
   'job_posting',
