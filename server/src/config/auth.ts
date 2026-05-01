@@ -2,10 +2,10 @@ import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 
 import * as schema from '../data/schema/auth.schema.ts';
-import { getDbClient } from './db-client.ts';
 import { redisStorage } from '@better-auth/redis-storage';
-import { getRedisClient } from './redis-client.ts';
 import { USER_ROLE } from '../data/util/constants.ts';
+import { getDbClient } from './db-client.ts';
+import { getRedisClient } from './redis-client.ts';
 
 export const auth = betterAuth({
   database: drizzleAdapter(getDbClient(), { provider: 'pg', schema }),
