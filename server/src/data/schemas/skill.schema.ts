@@ -1,5 +1,5 @@
 import { integer, pgTable, text } from 'drizzle-orm/pg-core';
-import { timestamps } from '../util/utils.ts';
+import { timestamps } from '../utils/utils.ts';
 
 export const skill = pgTable('skill', {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),

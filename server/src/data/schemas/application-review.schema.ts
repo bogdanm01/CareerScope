@@ -1,6 +1,6 @@
 import { check, integer, pgTable, text } from 'drizzle-orm/pg-core';
 import { jobApplication } from './job-application.schema.ts';
-import { timestamps } from '../util/utils.ts';
+import { timestamps } from '../utils/utils.ts';
 import { sql } from 'drizzle-orm';
 import { company } from './company.schema.ts';
 

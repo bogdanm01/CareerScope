@@ -1,5 +1,5 @@
 import { integer, pgTable, text } from 'drizzle-orm/pg-core';
-import { timestamps } from '../util/utils.ts';
+import { timestamps } from '../utils/utils.ts';
 import { jobPosting } from './job-posting.schema.ts';
 
 import { user } from './auth.schema.ts';

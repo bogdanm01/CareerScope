@@ -1,9 +1,9 @@
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 
-import * as schema from '../data/schema/auth.schema.ts';
+import * as schema from '../data/schemas/auth.schema.ts';
 import { redisStorage } from '@better-auth/redis-storage';
-import { USER_ROLE } from '../data/util/constants.ts';
+import { USER_ROLE } from '../data/utils/constants.ts';
 import { getDbClient } from './db-client.ts';
 import { getRedisClient } from './redis-client.ts';
 

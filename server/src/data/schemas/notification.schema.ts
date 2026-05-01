@@ -1,5 +1,5 @@
 import { integer, text, jsonb, pgTable, timestamp } from 'drizzle-orm/pg-core';
-import { timestamps } from '../util/utils.ts';
+import { timestamps } from '../utils/utils.ts';
 import { user } from './auth.schema.ts';
 
 export const notification = pgTable('notification', {

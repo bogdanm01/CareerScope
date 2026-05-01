@@ -1,6 +1,6 @@
 import { fromNodeHeaders } from 'better-auth/node';
 import { auth } from '../config/auth.ts';
-import { UserRole } from '../data/util/constants.ts';
+import { UserRole } from '../data/utils/constants.ts';
 
 export const authGuard = (allowedRoles?: UserRole[]) => async (req, res, next) => {
   const session = await auth.api.getSession({

@@ -1,7 +1,7 @@
 import { integer, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
-import { enumCheckConstraint, timestamps } from '../util/utils.ts';
+import { enumCheckConstraint, timestamps } from '../utils/utils.ts';
 import { company } from './company.schema.ts';
-import { JOB_POSTING_STATUS } from '../util/constants.ts';
+import { JOB_POSTING_STATUS } from '../utils/constants.ts';
 
 export const jobPosting = pgTable(
   'job_posting',
