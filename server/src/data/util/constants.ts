@@ -13,3 +13,5 @@ export const JOB_POSTING_STATUS = {
   CLOSED: 'Closed',
   EXPIRED: 'Expired',
 } as const;
+
+export type UserRole = (typeof USER_ROLE)[keyof typeof USER_ROLE];
