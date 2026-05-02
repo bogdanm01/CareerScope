@@ -2,18 +2,22 @@ import { integer, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
 import { enumCheckConstraint, timestamps } from '../util/utils.ts';
 import { company } from './company.schema.ts';
 import { JOB_POSTING_STATUS } from '../util/constants.ts';
+import { user } from './auth.schema.ts';
 
 export const jobPosting = pgTable(
   'job_posting',
   {
-    id: integer().primaryKey().generatedAlwaysAsIdentity(),
-    companyId: integer()
+    id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
+    companyId: integer('company_id')
       .references(() => company.id)
       .notNull(),
-    title: text(),
-    description: text(),
-    status: text().notNull(),
-    expiresAt: timestamp({ withTimezone: true }),
+    title: text('title'),
+    description: text('description'),
+    status: text('status').notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }),
+    createdBy: text('created_by')
+      .references(() => user.id)
+      .notNull(),
     ...timestamps,
   },
   (table) => [enumCheckConstraint('status_check', table.status, JOB_POSTING_STATUS)],

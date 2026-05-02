@@ -5,10 +5,10 @@ import { jobPosting } from './job-posting.schema.ts';
 import { user } from './auth.schema.ts';
 
 export const jobApplication = pgTable('job_application', {
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  userId: text().references(() => user.id),
-  jobPostingId: integer().references(() => jobPosting.id),
-  status: text().notNull(),
+  id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
+  userId: text('user_id').references(() => user.id),
+  jobPostingId: integer('job_posting_id').references(() => jobPosting.id),
+  status: text('status').notNull(),
   ...timestamps,
 });
 

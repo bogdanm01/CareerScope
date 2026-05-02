@@ -7,11 +7,11 @@ import { company } from './company.schema.ts';
 export const applicationReview = pgTable(
   'application_review',
   {
-    id: integer().primaryKey().generatedAlwaysAsIdentity(),
-    jobApplicationId: integer().references(() => jobApplication.id),
-    companyId: integer().references(() => company.id),
-    rating: integer().notNull(),
-    comment: text().notNull(),
+    id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
+    jobApplicationId: integer('job_application_id').references(() => jobApplication.id),
+    companyId: integer('company_id').references(() => company.id),
+    rating: integer('rating').notNull(),
+    comment: text('comment').notNull(),
     ...timestamps,
   },
   (table) => [check('rating_range_check', sql`${table.rating} BETWEEN 1 AND 5`)],

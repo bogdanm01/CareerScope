@@ -4,14 +4,14 @@ import { skill } from './skill.schema.ts';
 import { user } from './auth.schema.ts';
 
 export const userSkill = pgTable('user_skill', {
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  userId: text()
+  id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
+  userId: text('user_id')
     .references(() => user.id)
     .notNull(),
-  skillId: integer()
+  skillId: integer('skill_id')
     .references(() => skill.id)
     .notNull(),
-  yearsOfExperience: integer().notNull(),
+  yearsOfExperience: integer('years_of_experience').notNull(),
   ...timestamps,
 });
 

@@ -2,8 +2,8 @@ import { integer, pgTable, text } from 'drizzle-orm/pg-core';
 import { timestamps } from '../util/utils.ts';
 
 export const skill = pgTable('skill', {
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  name: text().notNull(),
+  id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
+  name: text('name').notNull(),
   ...timestamps,
 });
 
