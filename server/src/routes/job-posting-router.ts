@@ -15,17 +15,17 @@ export const getJobPostingRouter = () => {
   const router = express.Router();
   const jobPostingController = new JobPostingController(new JobPostingService());
 
-  router.get('/', jobPostingController.getAll);
+  router.get('/', jobPostingController.getAllJobPostings);
 
-  router.get('/:id', jobPostingController.getById);
+  router.get('/:id', jobPostingController.getJobPostingById);
 
-  router.get('/:id/status-history', jobPostingController.getStatusHistory);
+  router.get('/:id/status-history', jobPostingController.getJobPostingStatusHistory);
 
-  router.post('/', jobPostingController.create);
+  router.post('/', jobPostingController.createJobPosting);
 
-  router.patch('/:id', jobPostingController.update);
+  router.patch('/:id', jobPostingController.updateJobPosting);
 
-  router.delete('/:id', jobPostingController.delete);
+  router.delete('/:id', jobPostingController.deleteJobPosting);
 
   return router;
 };

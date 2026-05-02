@@ -10,38 +10,38 @@ type JobPostingParams = {
 export class JobPostingController {
   constructor(private jobPostingService: JobPostingService) {}
 
-  getAll = async (req: Request, res: Response) => {
-    const result = await this.jobPostingService?.getAll(req.query);
+  getAllJobPostings = async (req: Request, res: Response) => {
+    const result = await this.jobPostingService.getAllJobPostings(req.query);
 
     res.status(200).json(result);
   };
 
-  getById = async (req: Request<JobPostingParams>, res: Response) => {
-    const result = await this.jobPostingService?.getById(req.params.id);
+  getJobPostingById = async (req: Request<JobPostingParams>, res: Response) => {
+    const result = await this.jobPostingService.getJobPostingById(req.params.id);
 
     res.status(200).json(result);
   };
 
-  getStatusHistory = async (req: Request<JobPostingParams>, res: Response) => {
-    const result = await this.jobPostingService?.getStatusHistory(req.params.id);
+  getJobPostingStatusHistory = async (req: Request<JobPostingParams>, res: Response) => {
+    const result = await this.jobPostingService.getJobPostingStatusHistory(req.params.id);
 
     res.status(200).json(result);
   };
 
-  create = async (req: Request, res: Response) => {
-    const result = await this.jobPostingService?.create(req.body, req.user);
+  createJobPosting = async (req: Request, res: Response) => {
+    const result = await this.jobPostingService.createJobPosting(req.body, req.user);
 
     res.status(201).json(result);
   };
 
-  update = async (req: Request<JobPostingParams>, res: Response) => {
-    const result = await this.jobPostingService?.update(req.params.id, req.body, req.user);
+  updateJobPosting = async (req: Request<JobPostingParams>, res: Response) => {
+    const result = await this.jobPostingService.updateJobPosting(req.params.id, req.body, req.user);
 
     res.status(200).json(result);
   };
 
-  delete = async (req: Request<JobPostingParams>, res: Response) => {
-    await this.jobPostingService?.delete(req.params.id, req.user);
+  deleteJobPosting = async (req: Request<JobPostingParams>, res: Response) => {
+    await this.jobPostingService.deleteJobPosting(req.params.id, req.user);
 
     res.status(204).send();
   };

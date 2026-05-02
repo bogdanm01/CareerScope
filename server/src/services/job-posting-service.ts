@@ -5,7 +5,7 @@ type AuthenticatedUser = Request['user'];
 
 @injectable()
 export class JobPostingService {
-  async getAll(query: Request['query']) {
+  async getAllJobPostings(query: Request['query']) {
     return {
       data: [],
       meta: {
@@ -14,13 +14,13 @@ export class JobPostingService {
     };
   }
 
-  async getById(id: string) {
+  async getJobPostingById(id: string) {
     return {
       id,
     };
   }
 
-  async getStatusHistory(jobPostingId: string) {
+  async getJobPostingStatusHistory(jobPostingId: string) {
     return {
       data: [],
       meta: {
@@ -29,7 +29,7 @@ export class JobPostingService {
     };
   }
 
-  async create(payload: unknown, user: AuthenticatedUser) {
+  async createJobPosting(payload: unknown, user: AuthenticatedUser) {
     return {
       data: null,
       meta: {
@@ -39,7 +39,7 @@ export class JobPostingService {
     };
   }
 
-  async update(id: string, payload: unknown, user: AuthenticatedUser) {
+  async updateJobPosting(id: string, payload: unknown, user: AuthenticatedUser) {
     return {
       id,
       data: null,
@@ -50,7 +50,7 @@ export class JobPostingService {
     };
   }
 
-  async delete(id: string, user: AuthenticatedUser) {
+  async deleteJobPosting(id: string, user: AuthenticatedUser) {
     return {
       id,
       userId: user?.id,
