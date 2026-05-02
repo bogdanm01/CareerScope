@@ -4,6 +4,10 @@ import { JobPostingRepository } from '../data/repositories/job-posting.repositor
 import { JobPosting } from '../data/schema/job-posting.schema.ts';
 import { JOB_POSTING_STATUS, USER_ROLE } from '../data/util/constants.ts';
 import { TOKENS } from '../config/dependency-tokens.ts';
+import { JobPostingSchema } from '../lib/zod/job-posting.zod-schema.ts';
+import { z } from 'zod';
+import { validate } from 'json-schema';
+import { ValidationError } from '../middleware/global-error-handler.ts';
 
 type AuthenticatedUser = Request['user'];
 
@@ -64,22 +68,27 @@ export class JobPostingService {
     };
   }
 
-  // Recruiter only
-  async createJobPosting(
-    payload: { companyId: number; title: string; description: string; status: string },
-    user: AuthenticatedUser,
-  ) {
-    // TODO: Validation
+  async createJobPosting(payload: unknown, user: AuthenticatedUser) {
+    const validationResult = JobPostingSchema.safeParse(payload);
 
-    console.log(payload);
+    if (!validationResult.success) {
+      throw new ValidationError(validationResult.error);
+    }
+
+    if (!user?.companyId) {
+      throw Error('API ERROR - recruiter company missing');
+    }
+
+    const newJobPosting = validationResult.data;
 
     return await this.jobPostingRepository.insert({
-      expiresAt: new Date(),
-      companyId: payload.companyId,
-      title: payload.title,
-      description: payload.description,
-      status: payload.status,
-      createdBy: 'LxuNc0TZpQ2C2eLy78INOexQGq7yJ8lj',
+      companyId: user.companyId,
+      title: newJobPosting.title,
+      description: newJobPosting.description,
+      status: newJobPosting.status,
+      createdBy: user.id,
+      expiresAt: newJobPosting.expiresAt,
+      // TODO: Add skills
     });
   }
 

@@ -11,6 +11,7 @@ import logger from './config/logger.ts';
 import { auth } from './config/auth.ts';
 import { toNodeHandler } from 'better-auth/node';
 import { getApiRouter } from './routes/index.ts';
+import { globalErrorHandler } from './middleware/global-error-handler.ts';
 
 const configureMiddleware = (app: express.Application): void => {
   app.use(helmet());
@@ -26,6 +27,7 @@ const configureMiddleware = (app: express.Application): void => {
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
   app.use('/api', getApiRouter());
+  app.use(globalErrorHandler);
 };
 
 const createApp = (): express.Application => {
