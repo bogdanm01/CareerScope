@@ -5,7 +5,7 @@ type ValidationErrorDetail = {
   message: string;
 };
 
-export class ValidationError extends Error {
+export class ZodValidationError extends Error {
   public errors: ValidationErrorDetail[];
 
   constructor(error: z.ZodError) {

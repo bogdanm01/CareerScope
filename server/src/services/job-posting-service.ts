@@ -5,7 +5,7 @@ import { JobPosting } from '../data/schema/job-posting.schema.ts';
 import { JOB_POSTING_STATUS, USER_ROLE } from '../data/util/constants.ts';
 import { TOKENS } from '../config/dependency-tokens.ts';
 import { JobPostingSchema } from '../lib/zod/job-posting.zod-schema.ts';
-import { ValidationError } from '../lib/validation-error.ts';
+import { ZodValidationError } from '../lib/zod-validation-error.ts';
 
 type AuthenticatedUser = Request['user'];
 
@@ -70,11 +70,12 @@ export class JobPostingService {
     const validationResult = JobPostingSchema.safeParse(payload);
 
     if (!validationResult.success) {
-      throw new ValidationError(validationResult.error);
+      throw new ZodValidationError(validationResult.error);
     }
 
     if (!user?.companyId) {
-      throw Error('API ERROR - recruiter company missing');
+      // TODO: Auth error
+      throw new Error('Recruiter companyId is missing');
     }
 
     const newJobPosting = validationResult.data;
