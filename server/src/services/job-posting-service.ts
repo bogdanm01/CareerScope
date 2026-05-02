@@ -4,7 +4,7 @@ import { JobPostingRepository } from '../data/repositories/job-posting.repositor
 import { JobPosting } from '../data/schema/job-posting.schema.ts';
 import { JOB_POSTING_STATUS, USER_ROLE } from '../data/util/constants.ts';
 import { TOKENS } from '../config/dependency-tokens.ts';
-import { JobPostingSchema } from '../lib/zod/job-posting.zod-schema.ts';
+import { JobPostingRequest } from '../lib/zod/job-posting.zod-schema.ts';
 import { ZodValidationError } from '../lib/zod-validation-error.ts';
 
 type AuthenticatedUser = Request['user'];
@@ -12,6 +12,32 @@ type AuthenticatedUser = Request['user'];
 @injectable()
 export class JobPostingService {
   constructor(@inject(TOKENS.jobPostingRepository) private jobPostingRepository: JobPostingRepository) {}
+
+  async createJobPosting(payload: unknown, user: AuthenticatedUser) {
+    const validationResult = JobPostingRequest.safeParse(payload);
+
+    if (!validationResult.success) {
+      throw new ZodValidationError(validationResult.error);
+    }
+
+    if (!user?.companyId) {
+      // TODO: Auth error
+      throw new Error('Recruiter companyId is missing');
+    }
+
+    const newJobPosting = validationResult.data;
+
+    // insertWithSkills?
+    return await this.jobPostingRepository.insert({
+      companyId: user.companyId,
+      title: newJobPosting.title,
+      description: newJobPosting.description,
+      status: newJobPosting.status,
+      createdBy: user.id,
+      expiresAt: newJobPosting.expiresAt,
+      // TODO: Add skills
+    });
+  }
 
   /**
    * {
@@ -64,31 +90,6 @@ export class JobPostingService {
         jobPostingId,
       },
     };
-  }
-
-  async createJobPosting(payload: unknown, user: AuthenticatedUser) {
-    const validationResult = JobPostingSchema.safeParse(payload);
-
-    if (!validationResult.success) {
-      throw new ZodValidationError(validationResult.error);
-    }
-
-    if (!user?.companyId) {
-      // TODO: Auth error
-      throw new Error('Recruiter companyId is missing');
-    }
-
-    const newJobPosting = validationResult.data;
-
-    return await this.jobPostingRepository.insert({
-      companyId: user.companyId,
-      title: newJobPosting.title,
-      description: newJobPosting.description,
-      status: newJobPosting.status,
-      createdBy: user.id,
-      expiresAt: newJobPosting.expiresAt,
-      // TODO: Add skills
-    });
   }
 
   async updateJobPosting(id: string, payload: unknown, user: AuthenticatedUser) {

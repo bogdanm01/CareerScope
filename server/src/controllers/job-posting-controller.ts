@@ -13,6 +13,11 @@ type JobPostingParams = {
 export class JobPostingController {
   constructor(@inject(TOKENS.jobPostingService) private jobPostingService: JobPostingService) {}
 
+  createJobPosting = async (req: Request, res: Response) => {
+    const result = await this.jobPostingService.createJobPosting(req.body, req.user);
+    res.status(201).json(result); // TODO: Global API response
+  };
+
   getAllJobPostings = async (req: Request, res: Response) => {
     const payload = {
       companyId: req.query.companyId ? Number(req.query.companyId) : undefined,
@@ -34,11 +39,6 @@ export class JobPostingController {
     const result = await this.jobPostingService.getJobPostingStatusHistory(req.params.id);
 
     res.status(200).json(result);
-  };
-
-  createJobPosting = async (req: Request, res: Response) => {
-    const result = await this.jobPostingService.createJobPosting(req.body, req.user);
-    res.status(201).json(result);
   };
 
   updateJobPosting = async (req: Request<JobPostingParams>, res: Response) => {

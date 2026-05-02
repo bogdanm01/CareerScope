@@ -1,18 +1,18 @@
 import logger from '../config/logger.ts';
 import env from '../config/env.ts';
 import { ErrorRequestHandler } from 'express';
-import { ValidationError } from 'ajv';
+import { ZodValidationError } from '../lib/zod-validation-error.ts';
 
 export const globalErrorHandler: ErrorRequestHandler = (err, req, res, next) => {
   const logPayload = {
     err,
     method: req.method,
     url: req.originalUrl,
-    statusCode: err instanceof ValidationError ? 400 : 500,
+    statusCode: err instanceof ZodValidationError ? 400 : 500,
     userId: req.user?.id,
   };
 
-  if (err instanceof ValidationError) {
+  if (err instanceof ZodValidationError) {
     logger.warn(logPayload, 'Request validation failed');
     return res.status(400).send({
       success: false,
