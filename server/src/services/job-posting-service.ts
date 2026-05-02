@@ -5,9 +5,7 @@ import { JobPosting } from '../data/schema/job-posting.schema.ts';
 import { JOB_POSTING_STATUS, USER_ROLE } from '../data/util/constants.ts';
 import { TOKENS } from '../config/dependency-tokens.ts';
 import { JobPostingSchema } from '../lib/zod/job-posting.zod-schema.ts';
-import { z } from 'zod';
-import { validate } from 'json-schema';
-import { ValidationError } from '../middleware/global-error-handler.ts';
+import { ValidationError } from '../lib/validation-error.ts';
 
 type AuthenticatedUser = Request['user'];
 
