@@ -1,3 +1,10 @@
+import express from 'express';
+import { JobPostingController } from '../controllers/job-posting-controller.ts';
+import { container } from 'tsyringe';
+import { TOKENS } from '../config/dependency-tokens.ts';
+import { authGuard } from '../middleware/auth-guard.ts';
+import { USER_ROLE } from '../data/util/constants.ts';
+
 /**
  * GET    /api/job-postings
  * GET    /api/job-postings/:id
@@ -7,13 +14,9 @@
  * GET    /api/job-postings/:id/status-history [RECRUITER, ADMIN]
  */
 
-import express from 'express';
-import { JobPostingController } from '../controllers/job-posting-controller.ts';
-import { JobPostingService } from '../services/job-posting-service.ts';
-
 export const getJobPostingRouter = () => {
   const router = express.Router();
-  const jobPostingController = new JobPostingController(new JobPostingService());
+  const jobPostingController = container.resolve<JobPostingController>(TOKENS.jobPostingController);
 
   router.get('/', jobPostingController.getAllJobPostings);
 
@@ -21,7 +24,7 @@ export const getJobPostingRouter = () => {
 
   router.get('/:id/status-history', jobPostingController.getJobPostingStatusHistory);
 
-  router.post('/', jobPostingController.createJobPosting);
+  router.post('/', authGuard([USER_ROLE.RECRUITER]), jobPostingController.createJobPosting);
 
   router.patch('/:id', jobPostingController.updateJobPosting);
 

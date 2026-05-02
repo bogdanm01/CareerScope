@@ -10,7 +10,7 @@ import logger from './config/logger.ts';
 
 import { auth } from './config/auth.ts';
 import { toNodeHandler } from 'better-auth/node';
-import { apiRouter } from './routes/index.ts';
+import { getApiRouter } from './routes/index.ts';
 
 const configureMiddleware = (app: express.Application): void => {
   app.use(helmet());
@@ -25,7 +25,7 @@ const configureMiddleware = (app: express.Application): void => {
   app.all('/api/auth/*splat', toNodeHandler(auth));
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
-  app.use('/api', apiRouter);
+  app.use('/api', getApiRouter());
 };
 
 const createApp = (): express.Application => {
@@ -34,7 +34,10 @@ const createApp = (): express.Application => {
   return app;
 };
 
-registerDependencies();
+await registerDependencies().catch((err) => {
+  logger.error(err, 'Failed to register dependencies');
+  process.exit(1);
+});
 
 const app = createApp();
 
