@@ -22,7 +22,7 @@
 
 import { integer, pgTable } from 'drizzle-orm/pg-core';
 import { jobPosting } from './job-posting.schema.ts';
-import { skill } from './skill.schema.ts';
+import skill from './skill.schema.ts';
 
 export const jobPostingSkill = pgTable('job_posting_skill', {
   id: integer('id').primaryKey().generatedAlwaysAsIdentity(),

@@ -1,6 +1,6 @@
 import { integer, pgTable, text } from 'drizzle-orm/pg-core';
 import { timestamps } from '../util/utils.ts';
-import { skill } from './skill.schema.ts';
+import skill from './skill.schema.ts';
 import { user } from './auth.schema.ts';
 
 export const userSkill = pgTable('user_skill', {
