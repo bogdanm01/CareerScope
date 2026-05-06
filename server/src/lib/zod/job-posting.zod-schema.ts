@@ -25,7 +25,7 @@ export const JobPostingRequest = z
       ctx.addIssue({
         code: 'custom',
         path: ['description'],
-        message: 'Description is required when submitting for approval.',
+        message: 'Description is required when submitting job posting for approval.',
       });
     }
 
@@ -33,7 +33,7 @@ export const JobPostingRequest = z
       ctx.addIssue({
         code: 'custom',
         path: ['expiresAt'],
-        message: 'expiresAt is required when submitting for approval.',
+        message: 'expiresAt is required when submitting job posting for approval.',
       });
     } else {
       const minimumExpiresAt = new Date();

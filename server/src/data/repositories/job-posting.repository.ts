@@ -5,6 +5,7 @@ import { TOKENS } from '../../config/dependency-tokens.ts';
 import { GenericRepository } from './generic.repository.ts';
 import { JOB_POSTING_STATUS } from '../util/constants.ts';
 import { eq } from 'drizzle-orm';
+import { jobPostingSkill } from '../schema/job-posting-skill.schema.ts';
 
 @injectable()
 export class JobPostingRepository extends GenericRepository<JobPosting, JobPostingInsert> {
@@ -26,5 +27,31 @@ export class JobPostingRepository extends GenericRepository<JobPosting, JobPosti
     query = query.offset(skip);
 
     return query;
+  }
+
+  async insertWithSkills(
+    payload: JobPostingInsert & {
+      skills?: {
+        skillId: number;
+        yoe?: number;
+      }[];
+    },
+  ): Promise<JobPosting> {
+    return await this.db.transaction(async (tx) => {
+      const { skills = [], ...jobPostingInsert } = payload;
+      const [createdJobPosting] = await tx.insert(jobPosting).values(jobPostingInsert).returning();
+
+      if (skills.length > 0) {
+        await tx.insert(jobPostingSkill).values(
+          skills.map((skill) => ({
+            jobPostingId: createdJobPosting.id,
+            skillId: skill.skillId,
+            yoe: skill.yoe,
+          })),
+        );
+      }
+
+      return createdJobPosting;
+    });
   }
 }

@@ -1,7 +1,7 @@
 import { inject, injectable } from 'tsyringe';
 import { Request } from 'express';
 import { JobPostingRepository } from '../data/repositories/job-posting.repository.ts';
-import { JobPosting } from '../data/schema/job-posting.schema.ts';
+import { JobPosting, JobPostingStatus } from '../data/schema/job-posting.schema.ts';
 import { JOB_POSTING_STATUS, USER_ROLE } from '../data/util/constants.ts';
 import { TOKENS } from '../config/dependency-tokens.ts';
 import { JobPostingRequest } from '../lib/zod/job-posting.zod-schema.ts';
@@ -21,21 +21,25 @@ export class JobPostingService {
     }
 
     if (!user?.companyId) {
-      // TODO: Auth error
+      // TODO: throw auth error
       throw new Error('Recruiter companyId is missing');
     }
 
     const newJobPosting = validationResult.data;
+    const allowedCreateStatuses: JobPostingStatus[] = [JOB_POSTING_STATUS.DRAFT, JOB_POSTING_STATUS.PENDING_APPROVAL];
 
-    // insertWithSkills?
-    return await this.jobPostingRepository.insert({
+    if (!allowedCreateStatuses.includes(newJobPosting.status)) {
+      throw new Error('Invalid job posting status. Allowed statuses for creation are Draft and PendingApproval.');
+    }
+
+    return await this.jobPostingRepository.insertWithSkills({
       companyId: user.companyId,
       title: newJobPosting.title,
       description: newJobPosting.description,
       status: newJobPosting.status,
       createdBy: user.id,
       expiresAt: newJobPosting.expiresAt,
-      // TODO: Add skills
+      skills: newJobPosting.skills,
     });
   }
 
