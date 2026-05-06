@@ -6,6 +6,8 @@ import { JOB_POSTING_STATUS, USER_ROLE } from '../data/util/constants.ts';
 import { TOKENS } from '../config/dependency-tokens.ts';
 import { JobPostingRequest } from '../lib/zod/job-posting.zod-schema.ts';
 import { ZodValidationError } from '../lib/zod-validation-error.ts';
+import { BadRequestError, ForbiddenError } from '../lib/app-error.ts';
+import { ERROR_CODE } from '../lib/error-codes.ts';
 
 type AuthenticatedUser = Request['user'];
 
@@ -13,7 +15,7 @@ type AuthenticatedUser = Request['user'];
 export class JobPostingService {
   constructor(@inject(TOKENS.jobPostingRepository) private jobPostingRepository: JobPostingRepository) {}
 
-  async createJobPosting(payload: unknown, user: AuthenticatedUser) {
+  async createJobPosting(payload: unknown, user: AuthenticatedUser): Promise<JobPosting> {
     const validationResult = JobPostingRequest.safeParse(payload);
 
     if (!validationResult.success) {
@@ -21,15 +23,17 @@ export class JobPostingService {
     }
 
     if (!user?.companyId) {
-      // TODO: throw auth error
-      throw new Error('Recruiter companyId is missing');
+      throw new ForbiddenError('Recruiter is not assigned to a company.', ERROR_CODE.RECRUITER_COMPANY_MISSING);
     }
 
     const newJobPosting = validationResult.data;
     const allowedCreateStatuses: JobPostingStatus[] = [JOB_POSTING_STATUS.DRAFT, JOB_POSTING_STATUS.PENDING_APPROVAL];
 
     if (!allowedCreateStatuses.includes(newJobPosting.status)) {
-      throw new Error('Invalid job posting status. Allowed statuses for creation are Draft and PendingApproval.');
+      throw new BadRequestError(
+        'Invalid job posting status. Allowed statuses for creation are Draft and PendingApproval.',
+        ERROR_CODE.INVALID_JOB_POSTING_STATUS,
+      );
     }
 
     return await this.jobPostingRepository.insertWithSkills({

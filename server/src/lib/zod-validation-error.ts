@@ -1,12 +1,8 @@
 import { z } from 'zod';
-
-type ValidationErrorDetail = {
-  field: string;
-  message: string;
-};
+import { ApiErrorDetail } from './api-response.ts';
 
 export class ZodValidationError extends Error {
-  public errors: ValidationErrorDetail[];
+  public errors: ApiErrorDetail[];
 
   constructor(error: z.ZodError) {
     super('Request validation failed');

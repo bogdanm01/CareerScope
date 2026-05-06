@@ -2,20 +2,20 @@ import { inject, injectable } from 'tsyringe';
 import { JobPostingService } from '../services/job-posting-service.ts';
 import { Request, Response } from 'express';
 import { TOKENS } from '../config/dependency-tokens.ts';
+import { ApiSuccessResponse, successResponse } from '../lib/api-response.ts';
+import { JobPosting } from '../data/schema/job-posting.schema.ts';
 
 type JobPostingParams = {
   id: string;
 };
 
-// TODO: Global error handler
-
 @injectable()
 export class JobPostingController {
   constructor(@inject(TOKENS.jobPostingService) private jobPostingService: JobPostingService) {}
 
-  createJobPosting = async (req: Request, res: Response) => {
+  createJobPosting = async (req: Request, res: Response<ApiSuccessResponse<JobPosting>>) => {
     const result = await this.jobPostingService.createJobPosting(req.body, req.user);
-    res.status(201).json(result); // TODO: Global API response
+    res.status(201).json(successResponse<JobPosting>(result));
   };
 
   getAllJobPostings = async (req: Request, res: Response) => {
