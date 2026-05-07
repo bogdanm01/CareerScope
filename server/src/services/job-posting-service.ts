@@ -1,12 +1,13 @@
 import { inject, injectable } from 'tsyringe';
 import { Request } from 'express';
-import { JobPostingRepository } from '../data/repositories/job-posting.repository.ts';
+import { JobPostingListItem, JobPostingRepository } from '../data/repositories/job-posting.repository.ts';
 import { JobPosting, JobPostingStatus } from '../data/schema/job-posting.schema.ts';
 import { JOB_POSTING_STATUS, USER_ROLE } from '../data/util/constants.ts';
 import { TOKENS } from '../config/dependency-tokens.ts';
 import {
   ActiveJobPostingsRequestSchema,
   JobPostingInsertRequestSchema,
+  JobPostingsRequestSchema,
 } from '../lib/zod/job-posting.zod-schema.ts';
 import { ZodValidationError } from '../lib/zod-validation-error.ts';
 import { BadRequestError, ForbiddenError } from '../lib/app-error.ts';
@@ -51,47 +52,46 @@ export class JobPostingService {
     });
   }
 
-  /**
-   * {
-   *   companyId: number,
-   *   orderBy: string,
-   *   sort: string,
-   *   status: string,
-   * }
-   * @param payload
-   */
-  async getAllJobPostings(
-    payload: { companyId?: number; status?: string },
-    user?: AuthenticatedUser,
-  ): Promise<JobPosting[]> {
-    // TODO: Zod schema
+  async getJobPostings(payload: unknown, user: AuthenticatedUser): Promise<PaginatedResult<JobPostingListItem>> {
+    const validationResult = JobPostingsRequestSchema.safeParse(payload);
 
-    /**
-     * unauthenticated user:
-     * - can see active posts only
-     * - can filter by company
-     */
-
-    let result = [];
-
-    if (user) {
-      if (user.role === USER_ROLE.ADMIN) {
-        result = await this.jobPostingRepository.find({ status: JOB_POSTING_STATUS.ACTIVE });
-      } else if (user.role === USER_ROLE.CANDIDATE) {
-        result = await this.jobPostingRepository.find({ status: JOB_POSTING_STATUS.ACTIVE });
-      } else if (user.role === USER_ROLE.RECRUITER) {
-        result = await this.jobPostingRepository.find({ companyId: payload.companyId });
-      }
-    } else {
-      // Unauthenticated user branch
-      const activeJobPostings = await this.jobPostingRepository.findActiveJobPostings(payload.companyId);
-      result = activeJobPostings.data;
+    if (!validationResult.success) {
+      throw new ZodValidationError(validationResult.error);
     }
 
-    return result;
+    const query = validationResult.data;
+    let companyId = query.companyId;
+
+    if (user?.role === USER_ROLE.RECRUITER) {
+      if (!user.companyId) {
+        throw new ForbiddenError('Recruiter is not assigned to a company.', ERROR_CODE.RECRUITER_COMPANY_MISSING);
+      }
+
+      companyId = user.companyId;
+    }
+
+    const result = await this.jobPostingRepository.findJobPostings(
+      query.status,
+      companyId,
+      undefined,
+      query.orderBy,
+      query.sort,
+      query.page,
+      query.limit,
+    );
+
+    return {
+      data: result.data,
+      pagination: {
+        currentPage: query.page,
+        pageSize: query.limit,
+        totalPages: Math.ceil(result.totalItems / query.limit),
+        totalItems: result.totalItems,
+      },
+    };
   }
 
-  async getActiveJobPostings(payload: unknown): Promise<PaginatedResult<JobPosting>> {
+  async getPublicJobPostings(payload: unknown): Promise<PaginatedResult<JobPostingListItem>> {
     const validationResult = ActiveJobPostingsRequestSchema.safeParse(payload);
 
     if (!validationResult.success) {
@@ -100,7 +100,8 @@ export class JobPostingService {
 
     const query = validationResult.data;
 
-    const result = await this.jobPostingRepository.findActiveJobPostings(
+    const result = await this.jobPostingRepository.findJobPostings(
+      JOB_POSTING_STATUS.ACTIVE,
       query.companyId,
       query.skills,
       query.orderBy,

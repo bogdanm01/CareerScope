@@ -1,17 +1,25 @@
 import { inject, injectable } from 'tsyringe';
 import { DbClient } from '../../config/db-client.ts';
-import { jobPosting, JobPosting, JobPostingInsert } from '../schema/job-posting.schema.ts';
+import { jobPosting, JobPosting, JobPostingInsert, JobPostingStatus } from '../schema/job-posting.schema.ts';
 import { TOKENS } from '../../config/dependency-tokens.ts';
 import { GenericRepository } from './generic.repository.ts';
-import { JOB_POSTING_STATUS } from '../util/constants.ts';
-import { and, asc, countDistinct, desc, eq, getTableColumns, or, sql, SQL } from 'drizzle-orm';
+import { and, asc, countDistinct, desc, eq, getTableColumns, or, SQL } from 'drizzle-orm';
 import { jobPostingSkill } from '../schema/job-posting-skill.schema.ts';
 import skill from '../schema/skill.schema.ts';
 import type { ActiveJobPostingsRequest } from '../../lib/zod/job-posting.zod-schema.ts';
+import { company } from '../schema/company.schema.ts';
 
-type FindActiveJobPostingsResult = {
-  data: JobPosting[];
+type FindJobPostingsResult = {
+  data: JobPostingListItem[];
   totalItems: number;
+};
+
+export type JobPostingListItem = Omit<JobPosting, 'companyId'> & {
+  company: {
+    id: number;
+    name: string;
+    logo: string | null;
+  };
 };
 
 @injectable()
@@ -20,23 +28,41 @@ export class JobPostingRepository extends GenericRepository<JobPosting, JobPosti
     super(db, jobPosting);
   }
 
-  async findActiveJobPostings(
+  async findJobPostings(
+    status?: JobPostingStatus,
     companyId?: number,
     skills?: string[],
     orderBy: ActiveJobPostingsRequest['orderBy'] = 'createdAt',
     sort: ActiveJobPostingsRequest['sort'] = 'desc',
     page: number = 1,
     limit: number = 50,
-  ): Promise<FindActiveJobPostingsResult> {
+  ): Promise<FindJobPostingsResult> {
     const skip = (page - 1) * limit;
+    const { companyId: _companyId, ...jobPostingSelectColumns } = getTableColumns(jobPosting);
 
-    let query = this.db.selectDistinct(getTableColumns(jobPosting)).from(jobPosting).$dynamic();
+    let query = this.db
+      .selectDistinct({
+        ...jobPostingSelectColumns,
+        company: {
+          id: company.id,
+          name: company.name,
+          logo: company.logoUrl,
+        },
+      })
+      .from(jobPosting)
+      .innerJoin(company, eq(jobPosting.companyId, company.id))
+      .$dynamic();
+
     let countQuery = this.db
       .select({ totalItems: countDistinct(jobPosting.id) })
       .from(jobPosting)
       .$dynamic();
 
-    const conditions: SQL[] = [eq(jobPosting.status, JOB_POSTING_STATUS.ACTIVE)];
+    const conditions: SQL[] = [];
+
+    if (status) {
+      conditions.push(eq(jobPosting.status, status));
+    }
 
     if (companyId) {
       conditions.push(eq(jobPosting.companyId, companyId));

@@ -29,6 +29,15 @@ export const ActiveJobPostingsRequestSchema = z.object({
   limit: z.coerce.number().int().positive().max(100).default(50),
 });
 
+export const JobPostingsRequestSchema = z.object({
+  companyId: z.coerce.number().int().positive().optional(),
+  status: z.enum(Object.values(JOB_POSTING_STATUS)).optional(),
+  orderBy: z.enum(ACTIVE_JOB_POSTING_ORDER_BY).default('createdAt'),
+  sort: z.enum(SORT_ORDER).default('desc'),
+  page: z.coerce.number().int().positive().default(1),
+  limit: z.coerce.number().int().positive().max(100).default(50),
+});
+
 export const JobPostingInsertRequestSchema = z
   .object({
     title: z.string().trim().min(1),
@@ -79,4 +88,5 @@ export const JobPostingInsertRequestSchema = z
   });
 
 export type ActiveJobPostingsRequest = z.infer<typeof ActiveJobPostingsRequestSchema>;
+export type JobPostingsRequest = z.infer<typeof JobPostingsRequestSchema>;
 export type JobPostingInsertRequest = z.infer<typeof JobPostingInsertRequestSchema>;

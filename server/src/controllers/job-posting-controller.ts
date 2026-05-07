@@ -4,6 +4,7 @@ import { Request, Response } from 'express';
 import { TOKENS } from '../config/dependency-tokens.ts';
 import { ApiSuccessResponse, successResponse } from '../lib/api-response.ts';
 import { JobPosting } from '../data/schema/job-posting.schema.ts';
+import { JobPostingListItem } from '../data/repositories/job-posting.repository.ts';
 
 type JobPostingParams = {
   id: string;
@@ -18,22 +19,16 @@ export class JobPostingController {
     res.status(201).json(successResponse<JobPosting>(result));
   };
 
-  getActiveJobPostings = async (req: Request, res: Response<ApiSuccessResponse<JobPosting[]>>) => {
-    const result = await this.jobPostingService.getActiveJobPostings(req.query);
+  // TODO: Add search by title
+  // Public/candidate facing API
+  getPublicJobPostings = async (req: Request, res: Response<ApiSuccessResponse<JobPostingListItem[]>>) => {
+    const result = await this.jobPostingService.getPublicJobPostings(req.query);
     res.status(200).json(successResponse(result.data, undefined, result.pagination));
   };
 
-  getAllJobPostings = async (req: Request, res: Response) => {
-    // GET /api/job-postings?companyId=12&status=Active
-
-    const payload = {
-      companyId: req.query.companyId ? Number(req.query.companyId) : undefined,
-      status: typeof req.query.status === 'string' ? req.query.status : undefined,
-    };
-
-    const result = await this.jobPostingService.getAllJobPostings(payload, req.user);
-
-    res.status(200).json(result);
+  getAllJobPostings = async (req: Request, res: Response<ApiSuccessResponse<JobPostingListItem[]>>) => {
+    const result = await this.jobPostingService.getJobPostings(req.query, req.user);
+    res.status(200).json(successResponse(result.data, undefined, result.pagination));
   };
 
   getJobPostingById = async (req: Request<JobPostingParams>, res: Response) => {};
