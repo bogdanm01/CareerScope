@@ -19,6 +19,8 @@ export class JobPostingController {
   };
 
   getAllJobPostings = async (req: Request, res: Response) => {
+    // GET /api/job-postings?companyId=12&status=Active
+
     const payload = {
       companyId: req.query.companyId ? Number(req.query.companyId) : undefined,
       status: typeof req.query.status === 'string' ? req.query.status : undefined,
@@ -29,11 +31,13 @@ export class JobPostingController {
     res.status(200).json(result);
   };
 
-  getJobPostingById = async (req: Request<JobPostingParams>, res: Response) => {
-    const result = await this.jobPostingService.getJobPostingById(req.params.id);
+  getActiveJobPostings = async (req: Request, res: Response) => {
+    const result = await this.jobPostingService.getActiveJobPostings(req.query);
 
-    res.status(200).json(result);
+    res.status(200).json(successResponse(result));
   };
+
+  getJobPostingById = async (req: Request<JobPostingParams>, res: Response) => {};
 
   getJobPostingStatusHistory = async (req: Request<JobPostingParams>, res: Response) => {
     const result = await this.jobPostingService.getJobPostingStatusHistory(req.params.id);

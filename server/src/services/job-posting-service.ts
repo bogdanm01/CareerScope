@@ -4,7 +4,10 @@ import { JobPostingRepository } from '../data/repositories/job-posting.repositor
 import { JobPosting, JobPostingStatus } from '../data/schema/job-posting.schema.ts';
 import { JOB_POSTING_STATUS, USER_ROLE } from '../data/util/constants.ts';
 import { TOKENS } from '../config/dependency-tokens.ts';
-import { JobPostingRequest } from '../lib/zod/job-posting.zod-schema.ts';
+import {
+  ActiveJobPostingsRequestSchema,
+  JobPostingInsertRequestSchema,
+} from '../lib/zod/job-posting.zod-schema.ts';
 import { ZodValidationError } from '../lib/zod-validation-error.ts';
 import { BadRequestError, ForbiddenError } from '../lib/app-error.ts';
 import { ERROR_CODE } from '../lib/error-codes.ts';
@@ -16,7 +19,7 @@ export class JobPostingService {
   constructor(@inject(TOKENS.jobPostingRepository) private jobPostingRepository: JobPostingRepository) {}
 
   async createJobPosting(payload: unknown, user: AuthenticatedUser): Promise<JobPosting> {
-    const validationResult = JobPostingRequest.safeParse(payload);
+    const validationResult = JobPostingInsertRequestSchema.safeParse(payload);
 
     if (!validationResult.success) {
       throw new ZodValidationError(validationResult.error);
@@ -79,10 +82,30 @@ export class JobPostingService {
         result = await this.jobPostingRepository.find({ companyId: payload.companyId });
       }
     } else {
+      // Unauthenticated user branch
       result = await this.jobPostingRepository.findActiveJobPostings(payload.companyId);
     }
 
     return result;
+  }
+
+  async getActiveJobPostings(payload: unknown): Promise<JobPosting[]> {
+    const validationResult = ActiveJobPostingsRequestSchema.safeParse(payload);
+
+    if (!validationResult.success) {
+      throw new ZodValidationError(validationResult.error);
+    }
+
+    const query = validationResult.data;
+
+    return await this.jobPostingRepository.findActiveJobPostings(
+      query.companyId,
+      query.skills,
+      query.orderBy,
+      query.sort,
+      query.page,
+      query.limit,
+    );
   }
 
   async getJobPostingById(id: string) {

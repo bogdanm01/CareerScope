@@ -20,9 +20,11 @@ export const getJobPostingRouter = () => {
 
   router.get('/', jobPostingController.getAllJobPostings);
 
-  router.get('/:id', jobPostingController.getJobPostingById);
+  router.get('/active', jobPostingController.getActiveJobPostings);
 
   router.get('/:id/status-history', jobPostingController.getJobPostingStatusHistory);
+
+  router.get('/:id', jobPostingController.getJobPostingById);
 
   router.post('/', authGuard([USER_ROLE.RECRUITER]), jobPostingController.createJobPosting);
 
