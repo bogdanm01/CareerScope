@@ -8,6 +8,7 @@ import { jobPostingSkill } from '../schema/job-posting-skill.schema.ts';
 import skill from '../schema/skill.schema.ts';
 import type { ActiveJobPostingsRequest } from '../../lib/zod/job-posting.zod-schema.ts';
 import { company } from '../schema/company.schema.ts';
+import { jobPostingStatusHistory } from '../schema/job-posting-status-history.schema.ts';
 
 type FindJobPostingsResult = {
   data: JobPostingListItem[];
@@ -117,6 +118,11 @@ export class JobPostingRepository extends GenericRepository<JobPosting, JobPosti
     return await this.db.transaction(async (tx) => {
       const { skills = [], ...jobPostingInsert } = payload;
       const [createdJobPosting] = await tx.insert(jobPosting).values(jobPostingInsert).returning();
+
+      await tx.insert(jobPostingStatusHistory).values({
+        jobPostingId: createdJobPosting.id,
+        status: createdJobPosting.status,
+      });
 
       if (skills.length > 0) {
         await tx.insert(jobPostingSkill).values(
