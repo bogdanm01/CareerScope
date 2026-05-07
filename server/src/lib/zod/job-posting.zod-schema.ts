@@ -4,6 +4,7 @@ import { JOB_POSTING_STATUS } from '../../data/util/constants.ts';
 const MIN_EXPIRATION_DAYS = 7;
 const ACTIVE_JOB_POSTING_ORDER_BY = ['createdAt', 'expiresAt'] as const;
 const SORT_ORDER = ['asc', 'desc'] as const;
+const CREATE_JOB_POSTING_STATUS = [JOB_POSTING_STATUS.DRAFT, JOB_POSTING_STATUS.PENDING_APPROVAL] as const;
 
 const JobPostingSkillSchema = z.object({
   skillId: z.number().int().positive(),
@@ -42,7 +43,9 @@ export const JobPostingInsertRequestSchema = z
   .object({
     title: z.string().trim().min(1),
     description: z.string().trim().optional(),
-    status: z.enum(Object.values(JOB_POSTING_STATUS)),
+    status: z.enum(CREATE_JOB_POSTING_STATUS, {
+      error: 'Invalid status. New job postings can only be created as Draft or PendingApproval.',
+    }),
     expiresAt: z.coerce.date().optional(),
     skills: z.array(JobPostingSkillSchema).optional(),
   })

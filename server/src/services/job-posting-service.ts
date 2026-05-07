@@ -1,7 +1,7 @@
 import { inject, injectable } from 'tsyringe';
 import { Request } from 'express';
 import { JobPostingListItem, JobPostingRepository } from '../data/repositories/job-posting.repository.ts';
-import { JobPosting, JobPostingStatus } from '../data/schema/job-posting.schema.ts';
+import { JobPosting } from '../data/schema/job-posting.schema.ts';
 import { JOB_POSTING_STATUS, USER_ROLE } from '../data/util/constants.ts';
 import { TOKENS } from '../config/dependency-tokens.ts';
 import {
@@ -10,7 +10,7 @@ import {
   JobPostingsRequestSchema,
 } from '../lib/zod/job-posting.zod-schema.ts';
 import { ZodValidationError } from '../lib/zod-validation-error.ts';
-import { BadRequestError, ForbiddenError } from '../lib/app-error.ts';
+import { ForbiddenError } from '../lib/app-error.ts';
 import { ERROR_CODE } from '../lib/error-codes.ts';
 import { PaginatedResult } from '../lib/api-response.ts';
 
@@ -32,14 +32,6 @@ export class JobPostingService {
     }
 
     const newJobPosting = validationResult.data;
-    const allowedCreateStatuses: JobPostingStatus[] = [JOB_POSTING_STATUS.DRAFT, JOB_POSTING_STATUS.PENDING_APPROVAL];
-
-    if (!allowedCreateStatuses.includes(newJobPosting.status)) {
-      throw new BadRequestError(
-        'Invalid job posting status. Allowed statuses for creation are Draft and PendingApproval.',
-        ERROR_CODE.INVALID_JOB_POSTING_STATUS,
-      );
-    }
 
     return await this.jobPostingRepository.insertWithSkills({
       companyId: user.companyId,
