@@ -11,6 +11,7 @@ import {
 import { ZodValidationError } from '../lib/zod-validation-error.ts';
 import { BadRequestError, ForbiddenError } from '../lib/app-error.ts';
 import { ERROR_CODE } from '../lib/error-codes.ts';
+import { PaginatedResult } from '../lib/api-response.ts';
 
 type AuthenticatedUser = Request['user'];
 
@@ -83,13 +84,14 @@ export class JobPostingService {
       }
     } else {
       // Unauthenticated user branch
-      result = await this.jobPostingRepository.findActiveJobPostings(payload.companyId);
+      const activeJobPostings = await this.jobPostingRepository.findActiveJobPostings(payload.companyId);
+      result = activeJobPostings.data;
     }
 
     return result;
   }
 
-  async getActiveJobPostings(payload: unknown): Promise<JobPosting[]> {
+  async getActiveJobPostings(payload: unknown): Promise<PaginatedResult<JobPosting>> {
     const validationResult = ActiveJobPostingsRequestSchema.safeParse(payload);
 
     if (!validationResult.success) {
@@ -98,7 +100,7 @@ export class JobPostingService {
 
     const query = validationResult.data;
 
-    return await this.jobPostingRepository.findActiveJobPostings(
+    const result = await this.jobPostingRepository.findActiveJobPostings(
       query.companyId,
       query.skills,
       query.orderBy,
@@ -106,6 +108,16 @@ export class JobPostingService {
       query.page,
       query.limit,
     );
+
+    return {
+      data: result.data,
+      pagination: {
+        currentPage: query.page,
+        pageSize: query.limit,
+        totalPages: Math.ceil(result.totalItems / query.limit),
+        totalItems: result.totalItems,
+      },
+    };
   }
 
   async getJobPostingById(id: string) {

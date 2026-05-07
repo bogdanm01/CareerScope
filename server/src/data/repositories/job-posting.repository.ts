@@ -4,10 +4,15 @@ import { jobPosting, JobPosting, JobPostingInsert } from '../schema/job-posting.
 import { TOKENS } from '../../config/dependency-tokens.ts';
 import { GenericRepository } from './generic.repository.ts';
 import { JOB_POSTING_STATUS } from '../util/constants.ts';
-import { and, asc, desc, eq, getTableColumns, or, SQL } from 'drizzle-orm';
+import { and, asc, countDistinct, desc, eq, getTableColumns, or, sql, SQL } from 'drizzle-orm';
 import { jobPostingSkill } from '../schema/job-posting-skill.schema.ts';
 import skill from '../schema/skill.schema.ts';
 import type { ActiveJobPostingsRequest } from '../../lib/zod/job-posting.zod-schema.ts';
+
+type FindActiveJobPostingsResult = {
+  data: JobPosting[];
+  totalItems: number;
+};
 
 @injectable()
 export class JobPostingRepository extends GenericRepository<JobPosting, JobPostingInsert> {
@@ -22,9 +27,15 @@ export class JobPostingRepository extends GenericRepository<JobPosting, JobPosti
     sort: ActiveJobPostingsRequest['sort'] = 'desc',
     page: number = 1,
     limit: number = 50,
-  ): Promise<JobPosting[]> {
+  ): Promise<FindActiveJobPostingsResult> {
     const skip = (page - 1) * limit;
+
     let query = this.db.selectDistinct(getTableColumns(jobPosting)).from(jobPosting).$dynamic();
+    let countQuery = this.db
+      .select({ totalItems: countDistinct(jobPosting.id) })
+      .from(jobPosting)
+      .$dynamic();
+
     const conditions: SQL[] = [eq(jobPosting.status, JOB_POSTING_STATUS.ACTIVE)];
 
     if (companyId) {
@@ -40,11 +51,16 @@ export class JobPostingRepository extends GenericRepository<JobPosting, JobPosti
         .innerJoin(jobPostingSkill, eq(jobPostingSkill.jobPostingId, jobPosting.id))
         .innerJoin(skill, eq(jobPostingSkill.skillId, skill.id));
 
+      countQuery = countQuery
+        .innerJoin(jobPostingSkill, eq(jobPostingSkill.jobPostingId, jobPosting.id))
+        .innerJoin(skill, eq(jobPostingSkill.skillId, skill.id));
+
       conditions.push(or(...skillConditions));
     }
 
     if (conditions.length > 0) {
       query = query.where(and(...conditions));
+      countQuery = countQuery.where(and(...conditions));
     }
 
     if (sort === 'desc') {
@@ -56,7 +72,12 @@ export class JobPostingRepository extends GenericRepository<JobPosting, JobPosti
     query = query.limit(limit);
     query = query.offset(skip);
 
-    return query;
+    const [data, [countResult]] = await Promise.all([query, countQuery]);
+
+    return {
+      data,
+      totalItems: countResult?.totalItems ?? 0,
+    };
   }
 
   async insertWithSkills(

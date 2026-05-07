@@ -18,6 +18,11 @@ export class JobPostingController {
     res.status(201).json(successResponse<JobPosting>(result));
   };
 
+  getActiveJobPostings = async (req: Request, res: Response<ApiSuccessResponse<JobPosting[]>>) => {
+    const result = await this.jobPostingService.getActiveJobPostings(req.query);
+    res.status(200).json(successResponse(result.data, undefined, result.pagination));
+  };
+
   getAllJobPostings = async (req: Request, res: Response) => {
     // GET /api/job-postings?companyId=12&status=Active
 
@@ -29,12 +34,6 @@ export class JobPostingController {
     const result = await this.jobPostingService.getAllJobPostings(payload, req.user);
 
     res.status(200).json(result);
-  };
-
-  getActiveJobPostings = async (req: Request, res: Response) => {
-    const result = await this.jobPostingService.getActiveJobPostings(req.query);
-
-    res.status(200).json(successResponse(result));
   };
 
   getJobPostingById = async (req: Request<JobPostingParams>, res: Response) => {};

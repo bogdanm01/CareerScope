@@ -1,4 +1,4 @@
-import { integer, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
+import { index, integer, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
 import { enumCheckConstraint, timestamps } from '../util/utils.ts';
 import { company } from './company.schema.ts';
 import { JOB_POSTING_STATUS } from '../util/constants.ts';
@@ -20,7 +20,12 @@ export const jobPosting = pgTable(
       .notNull(),
     ...timestamps,
   },
-  (table) => [enumCheckConstraint('status_check', table.status, JOB_POSTING_STATUS)],
+  (table) => [
+    enumCheckConstraint('status_check', table.status, JOB_POSTING_STATUS),
+    index('job_posting_status_created_at_idx').on(table.status, table.createdAt),
+    index('job_posting_status_expires_at_idx').on(table.status, table.expiresAt),
+    index('job_posting_status_company_id_idx').on(table.status, table.companyId),
+  ],
 );
 
 export type JobPostingStatus = (typeof JOB_POSTING_STATUS)[keyof typeof JOB_POSTING_STATUS];
