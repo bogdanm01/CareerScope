@@ -9,7 +9,7 @@ export const getJobPostingRouter = () => {
   const router = express.Router();
   const jobPostingController = container.resolve<JobPostingController>(TOKENS.jobPostingController);
 
-  router.get('/', authGuard([USER_ROLE.RECRUITER, USER_ROLE.ADMIN]), jobPostingController.getAllJobPostings);
+  router.get('/', authGuard([USER_ROLE.RECRUITER, USER_ROLE.ADMIN]), jobPostingController.getJobPostings);
 
   router.get('/active', jobPostingController.getPublicJobPostings);
 

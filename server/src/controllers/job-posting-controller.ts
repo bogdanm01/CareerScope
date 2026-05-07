@@ -26,7 +26,7 @@ export class JobPostingController {
     res.status(200).json(successResponse(result.data, undefined, result.pagination));
   };
 
-  getAllJobPostings = async (req: Request, res: Response<ApiSuccessResponse<JobPostingListItem[]>>) => {
+  getJobPostings = async (req: Request, res: Response<ApiSuccessResponse<JobPostingListItem[]>>) => {
     const result = await this.jobPostingService.getJobPostings(req.query, req.user);
     res.status(200).json(successResponse(result.data, undefined, result.pagination));
   };
