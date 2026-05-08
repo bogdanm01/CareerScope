@@ -6,21 +6,80 @@ import { GenericRepository } from './generic.repository.ts';
 import { and, asc, countDistinct, desc, eq, getTableColumns, or, SQL } from 'drizzle-orm';
 import { jobPostingSkill } from '../schema/job-posting-skill.schema.ts';
 import skill from '../schema/skill.schema.ts';
-import type { ActiveJobPostingsRequest } from '../../lib/zod/job-posting.zod-schema.ts';
+import type { ActiveJobPostingsRequest, JobPostingDetailInclude } from '../../lib/zod/job-posting.zod-schema.ts';
 import { company } from '../schema/company.schema.ts';
 import { jobPostingStatusHistory } from '../schema/job-posting-status-history.schema.ts';
+import type { SelectedFields } from 'drizzle-orm/pg-core/query-builders/select.types';
 
 type FindJobPostingsResult = {
   data: JobPostingListItem[];
   totalItems: number;
 };
 
-export type JobPostingListItem = Omit<JobPosting, 'companyId'> & {
+export type JobPostingListItem = Omit<JobPosting, 'companyId' | 'description'> & {
   company: {
     id: number;
     name: string;
     logo: string | null;
   };
+};
+
+export type JobPostingDetail = JobPosting & {
+  company?: {
+    id: number;
+    name: string;
+    logo: string | null;
+  };
+  skills?: {
+    id: number;
+    name: string;
+    yoe: number | null;
+  }[];
+  statusHistory?: {
+    id: number;
+    status: string;
+    reason: string | null;
+    createdAt: Date;
+  }[];
+};
+
+type JobPostingCompanySelection = {
+  id: number;
+  name: string;
+  logo: string | null;
+};
+
+type JobPostingSkillSelection = {
+  id: number;
+  name: string;
+  yoe: number | null;
+};
+
+type JobPostingStatusHistorySelection = {
+  id: number;
+  status: string;
+  reason: string | null;
+  createdAt: Date;
+};
+
+type JobPostingDetailRow = JobPosting & {
+  company?: JobPostingCompanySelection;
+  skill?: JobPostingSkillSelection | null;
+  statusHistory?: JobPostingStatusHistorySelection | null;
+};
+
+type JobPostingDetailQuery = {
+  innerJoin(table: unknown, on: SQL): JobPostingDetailQuery;
+  leftJoin(table: unknown, on: SQL): JobPostingDetailQuery;
+  where(condition: SQL): Promise<JobPostingDetailRow[]>;
+};
+
+type JobPostingDetailJoinFn = (query: JobPostingDetailQuery) => JobPostingDetailQuery;
+
+type JobPostingDetailIncludeFlags = {
+  company: boolean;
+  skills: boolean;
+  statusHistory: boolean;
 };
 
 @injectable()
@@ -39,7 +98,15 @@ export class JobPostingRepository extends GenericRepository<JobPosting, JobPosti
     limit: number = 50,
   ): Promise<FindJobPostingsResult> {
     const skip = (page - 1) * limit;
-    const { companyId: _companyId, ...jobPostingSelectColumns } = getTableColumns(jobPosting);
+    const jobPostingSelectColumns = {
+      id: jobPosting.id,
+      title: jobPosting.title,
+      status: jobPosting.status,
+      expiresAt: jobPosting.expiresAt,
+      createdBy: jobPosting.createdBy,
+      createdAt: jobPosting.createdAt,
+      updatedAt: jobPosting.updatedAt,
+    };
 
     let query = this.db
       .selectDistinct({
@@ -105,6 +172,130 @@ export class JobPostingRepository extends GenericRepository<JobPosting, JobPosti
       data,
       totalItems: countResult?.totalItems ?? 0,
     };
+  }
+
+  async findJobPosting(id: number, include: JobPostingDetailInclude[] = []): Promise<JobPostingDetail | undefined> {
+    const idFilter: SQL = eq(jobPosting.id, id);
+
+    const includeFlags = this.getJobPostingDetailIncludeFlags(include);
+    const selectFields = this.getJobPostingDetailSelectFields(includeFlags);
+
+    const baseQuery = this.db.select(selectFields).from(jobPosting).$dynamic() as unknown as JobPostingDetailQuery;
+    const query = this.applyJobPostingDetailIncludes(baseQuery, include);
+
+    const rows = await query.where(idFilter);
+    return this.mapJobPostingDetail(rows, includeFlags);
+  }
+
+  private getJobPostingDetailIncludeFlags(include: JobPostingDetailInclude[]): JobPostingDetailIncludeFlags {
+    return {
+      company: include.includes('company'),
+      skills: include.includes('skills'),
+      statusHistory: include.includes('statusHistory'),
+    };
+  }
+
+  private getJobPostingDetailSelectFields(include: JobPostingDetailIncludeFlags): SelectedFields {
+    const selectFields: SelectedFields = {
+      ...getTableColumns(jobPosting),
+    };
+
+    if (include.company) {
+      selectFields.company = {
+        id: company.id,
+        name: company.name,
+        logo: company.logoUrl,
+      };
+    }
+
+    if (include.skills) {
+      selectFields.skill = {
+        id: skill.id,
+        name: skill.name,
+        yoe: jobPostingSkill.yoe,
+      };
+    }
+
+    if (include.statusHistory) {
+      selectFields.statusHistory = {
+        id: jobPostingStatusHistory.id,
+        status: jobPostingStatusHistory.status,
+        reason: jobPostingStatusHistory.reason,
+        createdAt: jobPostingStatusHistory.createdAt,
+      };
+    }
+
+    return selectFields;
+  }
+
+  private applyJobPostingDetailIncludes(
+    query: JobPostingDetailQuery,
+    include: JobPostingDetailInclude[],
+  ): JobPostingDetailQuery {
+    const includeJoinFn: Record<JobPostingDetailInclude, JobPostingDetailJoinFn> = {
+      company: (query) => query.innerJoin(company, eq(company.id, jobPosting.companyId)),
+      skills: (query) =>
+        query
+          .leftJoin(jobPostingSkill, eq(jobPostingSkill.jobPostingId, jobPosting.id))
+          .leftJoin(skill, eq(jobPostingSkill.skillId, skill.id)),
+      statusHistory: (query) =>
+        query.leftJoin(jobPostingStatusHistory, eq(jobPostingStatusHistory.jobPostingId, jobPosting.id)),
+    };
+
+    return include.reduce((currentQuery, includeValue) => includeJoinFn[includeValue](currentQuery), query);
+  }
+
+  private mapJobPostingDetail(
+    rows: JobPostingDetailRow[],
+    include: JobPostingDetailIncludeFlags,
+  ): JobPostingDetail | undefined {
+    const firstRow = rows[0];
+
+    if (!firstRow) {
+      return undefined;
+    }
+
+    const result: any = {
+      id: firstRow.id,
+      companyId: firstRow.companyId,
+      title: firstRow.title,
+      description: firstRow.description,
+      status: firstRow.status,
+      expiresAt: firstRow.expiresAt,
+      createdBy: firstRow.createdBy,
+      createdAt: firstRow.createdAt,
+      updatedAt: firstRow.updatedAt,
+    };
+
+    if (include.company) result.company = firstRow.company;
+    if (include.skills) result.skills = this.mapJobPostingDetailSkills(rows);
+    if (include.statusHistory) result.statusHistory = this.mapJobPostingDetailStatusHistory(rows);
+
+    return result;
+  }
+
+  private mapJobPostingDetailSkills(rows: JobPostingDetailRow[]): JobPostingSkillSelection[] {
+    const skillsById = new Map<number, JobPostingSkillSelection>();
+
+    for (const row of rows) {
+      if (row.skill?.id) {
+        skillsById.set(row.skill.id, row.skill);
+      }
+    }
+
+    return [...skillsById.values()];
+  }
+
+  private mapJobPostingDetailStatusHistory(rows: JobPostingDetailRow[]): JobPostingStatusHistorySelection[] {
+    const statusHistoryById = new Map<number, JobPostingStatusHistorySelection>();
+
+    for (const row of rows) {
+      if (row.statusHistory?.id) {
+        statusHistoryById.set(row.statusHistory.id, row.statusHistory);
+      }
+    }
+
+    return [...statusHistoryById.values()];
   }
 
   async insertWithSkills(

@@ -33,6 +33,10 @@ export type PaginatedResult<TData> = {
   pagination: PaginationMeta;
 };
 
+export type SingleResult<TData> = {
+  data: TData;
+};
+
 export const successResponse = <TData>(
   data: TData,
   message?: string,

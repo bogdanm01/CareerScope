@@ -4,7 +4,7 @@ import { Request, Response } from 'express';
 import { TOKENS } from '../config/dependency-tokens.ts';
 import { ApiSuccessResponse, successResponse } from '../lib/api-response.ts';
 import { JobPosting } from '../data/schema/job-posting.schema.ts';
-import { JobPostingListItem } from '../data/repositories/job-posting.repository.ts';
+import { JobPostingDetail, JobPostingListItem } from '../data/repositories/job-posting.repository.ts';
 
 type JobPostingParams = {
   id: string;
@@ -31,7 +31,18 @@ export class JobPostingController {
     res.status(200).json(successResponse(result.data, undefined, result.pagination));
   };
 
-  getJobPostingById = async (req: Request<JobPostingParams>, res: Response) => {};
+  // TODO: GET /api/job-postings/:id?include=skills,statusHistory
+  getJobPostingById = async (
+    req: Request<{ id: string }, undefined, undefined, { include?: string }>,
+    res: Response<ApiSuccessResponse<JobPostingDetail>>,
+  ) => {
+    const result = await this.jobPostingService.getJobPostingById({
+      id: req.params.id,
+      include: req.query.include ?? undefined,
+    });
+
+    res.status(200).json(successResponse(result.data));
+  };
 
   getJobPostingStatusHistory = async (req: Request<JobPostingParams>, res: Response) => {
     const result = await this.jobPostingService.getJobPostingStatusHistory(req.params.id);

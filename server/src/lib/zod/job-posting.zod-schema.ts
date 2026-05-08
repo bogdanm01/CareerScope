@@ -5,6 +5,7 @@ const MIN_EXPIRATION_DAYS = 7;
 const ACTIVE_JOB_POSTING_ORDER_BY = ['createdAt', 'expiresAt'] as const;
 const SORT_ORDER = ['asc', 'desc'] as const;
 const CREATE_JOB_POSTING_STATUS = [JOB_POSTING_STATUS.DRAFT, JOB_POSTING_STATUS.PENDING_APPROVAL] as const;
+const JOB_POSTING_DETAIL_INCLUDE = ['skills', 'statusHistory', 'company'] as const;
 
 const JobPostingSkillSchema = z.object({
   skillId: z.number().int().positive(),
@@ -90,6 +91,24 @@ export const JobPostingInsertRequestSchema = z
     }
   });
 
+export const JobPostingDetailRequestSchema = z.object({
+  id: z.coerce.number().int().positive(),
+  include: z
+    .string()
+    .optional()
+    .transform((value) =>
+      value
+        ? value
+            .split(',')
+            .map((it) => it.trim())
+            .filter(Boolean)
+        : [],
+    )
+    .pipe(z.array(z.enum(JOB_POSTING_DETAIL_INCLUDE))),
+});
+
 export type ActiveJobPostingsRequest = z.infer<typeof ActiveJobPostingsRequestSchema>;
 export type JobPostingsRequest = z.infer<typeof JobPostingsRequestSchema>;
 export type JobPostingInsertRequest = z.infer<typeof JobPostingInsertRequestSchema>;
+export type JobPostingDetailInclude = (typeof JOB_POSTING_DETAIL_INCLUDE)[number];
+export type JobPostingDetailRequest = z.infer<typeof JobPostingDetailRequestSchema>;

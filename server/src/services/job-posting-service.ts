@@ -1,18 +1,23 @@
 import { inject, injectable } from 'tsyringe';
 import { Request } from 'express';
-import { JobPostingListItem, JobPostingRepository } from '../data/repositories/job-posting.repository.ts';
+import {
+  JobPostingDetail,
+  JobPostingListItem,
+  JobPostingRepository,
+} from '../data/repositories/job-posting.repository.ts';
 import { JobPosting } from '../data/schema/job-posting.schema.ts';
 import { JOB_POSTING_STATUS, USER_ROLE } from '../data/util/constants.ts';
 import { TOKENS } from '../config/dependency-tokens.ts';
 import {
   ActiveJobPostingsRequestSchema,
+  JobPostingDetailRequestSchema,
   JobPostingInsertRequestSchema,
   JobPostingsRequestSchema,
 } from '../lib/zod/job-posting.zod-schema.ts';
 import { ZodValidationError } from '../lib/zod-validation-error.ts';
-import { ForbiddenError } from '../lib/app-error.ts';
+import { ForbiddenError, NotFoundError } from '../lib/app-error.ts';
 import { ERROR_CODE } from '../lib/error-codes.ts';
-import { PaginatedResult } from '../lib/api-response.ts';
+import { PaginatedResult, SingleResult } from '../lib/api-response.ts';
 
 type AuthenticatedUser = Request['user'];
 
@@ -113,9 +118,22 @@ export class JobPostingService {
     };
   }
 
-  async getJobPostingById(id: string) {
+  async getJobPostingById(payload: unknown): Promise<SingleResult<JobPostingDetail>> {
+    const validationResult = JobPostingDetailRequestSchema.safeParse(payload);
+
+    if (!validationResult.success) {
+      throw new ZodValidationError(validationResult.error);
+    }
+
+    const query = validationResult.data;
+    const result = await this.jobPostingRepository.findJobPosting(query.id, query.include);
+
+    if (!result) {
+      throw new NotFoundError('Job posting not found.');
+    }
+
     return {
-      id,
+      data: result,
     };
   }
 

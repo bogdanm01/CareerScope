@@ -29,6 +29,12 @@ export class ForbiddenError extends AppError {
   }
 }
 
+export class NotFoundError extends AppError {
+  constructor(message = 'Not found', code: ErrorCode = ERROR_CODE.NOT_FOUND) {
+    super(404, message, code);
+  }
+}
+
 export class ConflictError extends AppError {
   constructor(message: string, code: ErrorCode = ERROR_CODE.CONFLICT) {
     super(409, message, code);
