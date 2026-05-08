@@ -2,7 +2,7 @@ import { and, eq, SQL } from 'drizzle-orm';
 import { DbClient } from '../../config/db-client.ts';
 import { PgTableWithColumns } from 'drizzle-orm/pg-core';
 
-export class GenericRepository<TSelect, TInsert extends Record<string, any>> {
+export class GenericRepository<TSelect, TInsert extends Record<string, any>, TId> {
   constructor(
     protected db: DbClient,
     private readonly table: PgTableWithColumns<any>,
@@ -26,7 +26,7 @@ export class GenericRepository<TSelect, TInsert extends Record<string, any>> {
   }
 
   public async findById<TColumns extends Partial<Record<keyof TSelect, never>>>(
-    id: string,
+    id: TId,
     select?: { [K in keyof TColumns]: (typeof this.table)[K] },
     filter?: SQL,
   ): Promise<TSelect | Partial<TSelect> | null> {

@@ -19,7 +19,11 @@ export const getJobPostingRouter = () => {
 
   router.post('/', authGuard([USER_ROLE.RECRUITER]), jobPostingController.createJobPosting);
 
-  router.patch('/:id', jobPostingController.updateJobPosting);
+  router.patch(
+    '/:id',
+    authGuard([USER_ROLE.RECRUITER, USER_ROLE.ADMIN]),
+    jobPostingController.updateJobPosting,
+  );
 
   router.delete('/:id', jobPostingController.deleteJobPosting);
 

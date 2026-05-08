@@ -82,8 +82,22 @@ type JobPostingDetailIncludeFlags = {
   statusHistory: boolean;
 };
 
+type JobPostingSkillUpdate = {
+  skillId: number;
+  yoe?: number;
+};
+
+type JobPostingUpdateWithSkillsPayload = {
+  title?: string;
+  description?: string;
+  expiresAt?: Date;
+  status?: JobPostingStatus;
+  skills?: JobPostingSkillUpdate[];
+  statusHistoryReason?: string;
+};
+
 @injectable()
-export class JobPostingRepository extends GenericRepository<JobPosting, JobPostingInsert> {
+export class JobPostingRepository extends GenericRepository<JobPosting, JobPostingInsert, number> {
   constructor(@inject(TOKENS.db) db: DbClient) {
     super(db, jobPosting);
   }
@@ -258,7 +272,7 @@ export class JobPostingRepository extends GenericRepository<JobPosting, JobPosti
       return undefined;
     }
 
-    const result: any = {
+    const result: JobPostingDetail = {
       id: firstRow.id,
       companyId: firstRow.companyId,
       title: firstRow.title,
@@ -299,6 +313,61 @@ export class JobPostingRepository extends GenericRepository<JobPosting, JobPosti
     }
 
     return [...statusHistoryById.values()];
+  }
+
+  async updateWithSkillsAndStatusHistory(
+    id: number,
+    payload: JobPostingUpdateWithSkillsPayload,
+    currentStatus: JobPostingStatus,
+  ): Promise<JobPosting> {
+    return await this.db.transaction(async (tx) => {
+      const jobPostingUpdate: Partial<JobPostingInsert> = {};
+
+      if (payload.title !== undefined) {
+        jobPostingUpdate.title = payload.title;
+      }
+
+      if (payload.description !== undefined) {
+        jobPostingUpdate.description = payload.description;
+      }
+
+      if (payload.expiresAt !== undefined) {
+        jobPostingUpdate.expiresAt = payload.expiresAt;
+      }
+
+      if (payload.status !== undefined) {
+        jobPostingUpdate.status = payload.status;
+      }
+
+      if (Object.keys(jobPostingUpdate).length > 0) {
+        await tx.update(jobPosting).set(jobPostingUpdate).where(eq(jobPosting.id, id));
+      }
+
+      if (payload.skills !== undefined) {
+        await tx.delete(jobPostingSkill).where(eq(jobPostingSkill.jobPostingId, id));
+
+        if (payload.skills.length > 0) {
+          await tx.insert(jobPostingSkill).values(
+            payload.skills.map((skill) => ({
+              jobPostingId: id,
+              skillId: skill.skillId,
+              yoe: skill.yoe,
+            })),
+          );
+        }
+      }
+
+      if (payload.status !== undefined && payload.status !== currentStatus) {
+        await tx.insert(jobPostingStatusHistory).values({
+          jobPostingId: id,
+          status: payload.status,
+          reason: payload.statusHistoryReason,
+        });
+      }
+
+      const [updatedJobPosting] = await tx.select().from(jobPosting).where(eq(jobPosting.id, id)).limit(1);
+      return updatedJobPosting;
+    });
   }
 
   async insertWithSkills(

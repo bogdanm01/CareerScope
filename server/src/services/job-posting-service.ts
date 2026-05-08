@@ -5,21 +5,55 @@ import {
   JobPostingListItem,
   JobPostingRepository,
 } from '../data/repositories/job-posting.repository.ts';
-import { JobPosting } from '../data/schema/job-posting.schema.ts';
+import { JobPosting, JobPostingStatus } from '../data/schema/job-posting.schema.ts';
 import { JOB_POSTING_STATUS, USER_ROLE } from '../data/util/constants.ts';
 import { TOKENS } from '../config/dependency-tokens.ts';
 import {
   ActiveJobPostingsRequestSchema,
+  AdminJobPostingUpdateRequestSchema,
+  JobPostingIdParamSchema,
   JobPostingDetailRequestSchema,
   JobPostingInsertRequestSchema,
   JobPostingsRequestSchema,
+  RecruiterJobPostingUpdateRequest,
+  RecruiterJobPostingUpdateRequestSchema,
 } from '../lib/zod/job-posting.zod-schema.ts';
 import { ZodValidationError } from '../lib/zod-validation-error.ts';
-import { ForbiddenError, NotFoundError } from '../lib/app-error.ts';
+import { BadRequestError, ForbiddenError, NotFoundError } from '../lib/app-error.ts';
 import { ERROR_CODE } from '../lib/error-codes.ts';
 import { PaginatedResult, SingleResult } from '../lib/api-response.ts';
 
 type AuthenticatedUser = Request['user'];
+type ApprovalReadyJobPosting = {
+  title?: string | null;
+  description?: string | null;
+  expiresAt?: Date | null;
+  skills?: { skillId: number; yoe?: number }[];
+};
+type JobPostingSkillState = {
+  skillId: number;
+  yoe?: number;
+};
+
+const RECRUITER_ALLOWED_STATUS_TRANSITIONS: Partial<Record<JobPostingStatus, JobPostingStatus[]>> = {
+  [JOB_POSTING_STATUS.DRAFT]: [JOB_POSTING_STATUS.PENDING_APPROVAL],
+  [JOB_POSTING_STATUS.REJECTED]: [JOB_POSTING_STATUS.PENDING_APPROVAL],
+  [JOB_POSTING_STATUS.ACTIVE]: [
+    JOB_POSTING_STATUS.PAUSED,
+    JOB_POSTING_STATUS.CLOSED,
+    JOB_POSTING_STATUS.PENDING_APPROVAL,
+  ],
+  [JOB_POSTING_STATUS.PAUSED]: [JOB_POSTING_STATUS.ACTIVE, JOB_POSTING_STATUS.CLOSED],
+};
+
+const ADMIN_ALLOWED_STATUS_TRANSITIONS: Partial<Record<JobPostingStatus, JobPostingStatus[]>> = {
+  [JOB_POSTING_STATUS.PENDING_APPROVAL]: [
+    JOB_POSTING_STATUS.ACTIVE,
+    JOB_POSTING_STATUS.REJECTED,
+    JOB_POSTING_STATUS.CLOSED,
+  ],
+  [JOB_POSTING_STATUS.ACTIVE]: [JOB_POSTING_STATUS.CLOSED, JOB_POSTING_STATUS.PAUSED],
+};
 
 @injectable()
 export class JobPostingService {
@@ -146,15 +180,214 @@ export class JobPostingService {
     };
   }
 
-  async updateJobPosting(id: string, payload: unknown, user: AuthenticatedUser) {
-    return {
+  async updateJobPosting(id: unknown, payload: unknown, user: AuthenticatedUser): Promise<JobPosting> {
+    const idValidationResult = JobPostingIdParamSchema.safeParse({ id });
+
+    if (!idValidationResult.success) {
+      throw new ZodValidationError(idValidationResult.error);
+    }
+
+    if (user.role === USER_ROLE.RECRUITER) {
+      return await this.updateJobPostingAsRecruiter(idValidationResult.data.id, payload, user);
+    }
+
+    if (user.role === USER_ROLE.ADMIN) {
+      return await this.updateJobPostingAsAdmin(idValidationResult.data.id, payload);
+    }
+  }
+
+  private async updateJobPostingAsRecruiter(
+    id: number,
+    payload: unknown,
+    user: NonNullable<AuthenticatedUser>,
+  ): Promise<JobPosting> {
+    const validationResult = RecruiterJobPostingUpdateRequestSchema.safeParse(payload);
+
+    if (!validationResult.success) {
+      throw new ZodValidationError(validationResult.error);
+    }
+
+    const existingJobPosting = await this.getExistingJobPostingForUpdate(id);
+
+    if (existingJobPosting.companyId !== user.companyId) {
+      throw new ForbiddenError('User is not authorized to perform this action.', ERROR_CODE.RECRUITER_COMPANY_MISSING);
+    }
+
+    const updatePayload = validationResult.data;
+    const hasContentChanges = this.hasJobPostingContentChanges(existingJobPosting, updatePayload);
+    const nextStatus = this.getRecruiterNextStatus(
+      existingJobPosting.status as JobPostingStatus,
+      updatePayload,
+      hasContentChanges,
+    );
+
+    this.validateStatusTransition(
+      existingJobPosting.status as JobPostingStatus,
+      nextStatus,
+      RECRUITER_ALLOWED_STATUS_TRANSITIONS,
+    );
+
+    const nextSkills =
+      updatePayload.skills ?? existingJobPosting.skills?.map((it) => ({ skillId: it.id, yoe: it.yoe ?? undefined }));
+
+    if (nextStatus === JOB_POSTING_STATUS.PENDING_APPROVAL) {
+      this.validateJobPostingReadyForApproval({
+        title: updatePayload.title ?? existingJobPosting.title,
+        description: updatePayload.description ?? existingJobPosting.description,
+        expiresAt: updatePayload.expiresAt ?? existingJobPosting.expiresAt,
+        skills: nextSkills,
+      });
+    }
+
+    return await this.jobPostingRepository.updateWithSkillsAndStatusHistory(
       id,
-      data: null,
-      meta: {
-        payload,
-        userId: user?.id,
+      {
+        title: updatePayload.title,
+        description: updatePayload.description,
+        expiresAt: updatePayload.expiresAt,
+        status: nextStatus,
+        skills: updatePayload.skills,
       },
-    };
+      existingJobPosting.status as JobPostingStatus,
+    );
+  }
+
+  private async updateJobPostingAsAdmin(id: number, payload: unknown): Promise<JobPosting> {
+    const validationResult = AdminJobPostingUpdateRequestSchema.safeParse(payload);
+
+    if (!validationResult.success) {
+      throw new ZodValidationError(validationResult.error);
+    }
+
+    const updatePayload = validationResult.data;
+    const existingJobPosting = await this.getExistingJobPostingForUpdate(id);
+
+    this.validateStatusTransition(
+      existingJobPosting.status as JobPostingStatus,
+      updatePayload.status,
+      ADMIN_ALLOWED_STATUS_TRANSITIONS,
+    );
+
+    return await this.jobPostingRepository.updateWithSkillsAndStatusHistory(
+      id,
+      {
+        status: updatePayload.status,
+        statusHistoryReason: updatePayload.reason,
+      },
+      existingJobPosting.status as JobPostingStatus,
+    );
+  }
+
+  private async getExistingJobPostingForUpdate(id: number): Promise<JobPostingDetail> {
+    const existingJobPosting = await this.jobPostingRepository.findJobPosting(id, ['skills']);
+
+    if (!existingJobPosting) {
+      throw new NotFoundError('Job posting not found.');
+    }
+
+    return existingJobPosting;
+  }
+
+  private getRecruiterNextStatus(
+    currentStatus: JobPostingStatus,
+    payload: RecruiterJobPostingUpdateRequest,
+    hasContentChanges: boolean,
+  ): JobPostingStatus | undefined {
+    if (currentStatus === JOB_POSTING_STATUS.ACTIVE && hasContentChanges) {
+      if (payload.status === JOB_POSTING_STATUS.ACTIVE) {
+        throw new BadRequestError('Active job posting content changes must be submitted for approval.');
+      }
+
+      if (payload.status === undefined) {
+        return JOB_POSTING_STATUS.PENDING_APPROVAL;
+      }
+    }
+
+    return payload.status;
+  }
+
+  private hasJobPostingContentChanges(
+    existingJobPosting: JobPostingDetail,
+    payload: RecruiterJobPostingUpdateRequest,
+  ): boolean {
+    if (payload.title !== undefined && payload.title !== existingJobPosting.title) {
+      return true;
+    }
+
+    if (payload.description !== undefined && payload.description !== existingJobPosting.description) {
+      return true;
+    }
+
+    if (payload.expiresAt !== undefined && !this.areDatesEqual(payload.expiresAt, existingJobPosting.expiresAt)) {
+      return true;
+    }
+
+    if (payload.skills !== undefined) {
+      const existingSkills =
+        existingJobPosting.skills?.map((skill) => ({
+          skillId: skill.id,
+          yoe: skill.yoe ?? undefined,
+        })) ?? [];
+
+      return !this.areJobPostingSkillsEqual(existingSkills, payload.skills);
+    }
+
+    return false;
+  }
+
+  private areDatesEqual(left: Date | null, right: Date | null): boolean {
+    return left?.getTime() === right?.getTime();
+  }
+
+  private areJobPostingSkillsEqual(left: JobPostingSkillState[], right: JobPostingSkillState[]): boolean {
+    if (left.length !== right.length) {
+      return false;
+    }
+
+    const leftBySkillId = new Map(left.map((skill) => [skill.skillId, skill.yoe ?? null]));
+
+    return right.every((skill) => leftBySkillId.get(skill.skillId) === (skill.yoe ?? null));
+  }
+
+  private validateStatusTransition(
+    currentStatus: JobPostingStatus,
+    nextStatus: JobPostingStatus | undefined,
+    allowedTransitions: Partial<Record<JobPostingStatus, JobPostingStatus[]>>,
+  ): void {
+    if (nextStatus === undefined || nextStatus === currentStatus) {
+      return;
+    }
+
+    const allowedNextStatuses = allowedTransitions[currentStatus] ?? [];
+
+    if (!allowedNextStatuses.includes(nextStatus)) {
+      throw new BadRequestError(`Invalid status transition from ${currentStatus} to ${nextStatus}.`);
+    }
+  }
+
+  private validateJobPostingReadyForApproval(jobPosting: ApprovalReadyJobPosting): void {
+    if (!jobPosting.title || jobPosting.title.trim().length < 10) {
+      throw new BadRequestError('Title must be at least 10 characters long when submitting for approval.');
+    }
+
+    if (!jobPosting.description || jobPosting.description.trim().length < 60) {
+      throw new BadRequestError('Description is required when submitting job posting for approval.');
+    }
+
+    if (!jobPosting.expiresAt) {
+      throw new BadRequestError('expiresAt must be provided when submitting job posting for approval.');
+    }
+
+    const minimumExpiresAt = new Date();
+    minimumExpiresAt.setDate(minimumExpiresAt.getDate() + 7);
+
+    if (jobPosting.expiresAt < minimumExpiresAt) {
+      throw new BadRequestError('expiresAt must be at least 7 days from now.');
+    }
+
+    if (!jobPosting.skills?.length) {
+      throw new BadRequestError('At least one skill is required when submitting for approval.');
+    }
   }
 
   async deleteJobPosting(id: string, user: AuthenticatedUser) {

@@ -6,6 +6,18 @@ const ACTIVE_JOB_POSTING_ORDER_BY = ['createdAt', 'expiresAt'] as const;
 const SORT_ORDER = ['asc', 'desc'] as const;
 const CREATE_JOB_POSTING_STATUS = [JOB_POSTING_STATUS.DRAFT, JOB_POSTING_STATUS.PENDING_APPROVAL] as const;
 const JOB_POSTING_DETAIL_INCLUDE = ['skills', 'statusHistory', 'company'] as const;
+const RECRUITER_UPDATE_JOB_POSTING_STATUS = [
+  JOB_POSTING_STATUS.ACTIVE,
+  JOB_POSTING_STATUS.DRAFT,
+  JOB_POSTING_STATUS.PENDING_APPROVAL,
+  JOB_POSTING_STATUS.PAUSED,
+  JOB_POSTING_STATUS.CLOSED,
+] as const;
+const ADMIN_UPDATE_JOB_POSTING_STATUS = [
+  JOB_POSTING_STATUS.ACTIVE,
+  JOB_POSTING_STATUS.REJECTED,
+  JOB_POSTING_STATUS.CLOSED,
+] as const;
 
 const JobPostingSkillSchema = z.object({
   skillId: z.number().int().positive(),
@@ -40,9 +52,40 @@ export const JobPostingsRequestSchema = z.object({
   limit: z.coerce.number().int().positive().max(100).default(50),
 });
 
+export const JobPostingIdParamSchema = z.object({
+  id: z.coerce.number().int().positive(),
+});
+
+const JobPostingUpdateBaseRequestSchema = z.object({
+  title: z.string().trim().min(3).optional(),
+  description: z.string().trim().min(60).optional(), // TODO: Decide min length (markdown)
+  expiresAt: z.coerce.date().optional(),
+  skills: z.array(JobPostingSkillSchema).optional(),
+});
+
+export const RecruiterJobPostingUpdateRequestSchema = JobPostingUpdateBaseRequestSchema.extend({
+  status: z.enum(RECRUITER_UPDATE_JOB_POSTING_STATUS).optional(),
+})
+  .strict()
+  .refine((data) => Object.keys(data).length > 0, {
+    message: 'At least one field must be provided.',
+  });
+
+export const AdminJobPostingUpdateRequestSchema = z
+  .object({
+    status: z.enum(ADMIN_UPDATE_JOB_POSTING_STATUS),
+    reason: z.string().trim().min(3).optional(),
+  })
+  .strict();
+
+export const JobPostingUpdateRequestSchema = z.union([
+  RecruiterJobPostingUpdateRequestSchema,
+  AdminJobPostingUpdateRequestSchema,
+]);
+
 export const JobPostingInsertRequestSchema = z
   .object({
-    title: z.string().trim().min(1),
+    title: z.string().trim().min(3),
     description: z.string().trim().optional(),
     status: z.enum(CREATE_JOB_POSTING_STATUS, {
       error: 'Invalid status. New job postings can only be created as Draft or PendingApproval.',
@@ -110,5 +153,9 @@ export const JobPostingDetailRequestSchema = z.object({
 export type ActiveJobPostingsRequest = z.infer<typeof ActiveJobPostingsRequestSchema>;
 export type JobPostingsRequest = z.infer<typeof JobPostingsRequestSchema>;
 export type JobPostingInsertRequest = z.infer<typeof JobPostingInsertRequestSchema>;
+export type JobPostingIdParam = z.infer<typeof JobPostingIdParamSchema>;
+export type RecruiterJobPostingUpdateRequest = z.infer<typeof RecruiterJobPostingUpdateRequestSchema>;
+export type AdminJobPostingUpdateRequest = z.infer<typeof AdminJobPostingUpdateRequestSchema>;
+export type JobPostingUpdateRequest = z.infer<typeof JobPostingUpdateRequestSchema>;
 export type JobPostingDetailInclude = (typeof JOB_POSTING_DETAIL_INCLUDE)[number];
 export type JobPostingDetailRequest = z.infer<typeof JobPostingDetailRequestSchema>;
