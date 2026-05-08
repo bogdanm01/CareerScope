@@ -6,7 +6,7 @@ import {
   JobPostingRepository,
 } from '../data/repositories/job-posting.repository.ts';
 import { JobPosting, JobPostingStatus } from '../data/schema/job-posting.schema.ts';
-import { JOB_POSTING_STATUS, USER_ROLE } from '../data/util/constants.ts';
+import { JOB_POSTING_STATUS, USER_ROLE, UserRole } from '../data/util/constants.ts';
 import { TOKENS } from '../config/dependency-tokens.ts';
 import {
   ActiveJobPostingsRequestSchema,
@@ -14,6 +14,7 @@ import {
   JobPostingIdParamSchema,
   JobPostingDetailRequestSchema,
   JobPostingInsertRequestSchema,
+  JobPostingReadyForApprovalSchema,
   JobPostingsRequestSchema,
   RecruiterJobPostingUpdateRequest,
   RecruiterJobPostingUpdateRequestSchema,
@@ -24,12 +25,6 @@ import { ERROR_CODE } from '../lib/error-codes.ts';
 import { PaginatedResult, SingleResult } from '../lib/api-response.ts';
 
 type AuthenticatedUser = Request['user'];
-type ApprovalReadyJobPosting = {
-  title?: string | null;
-  description?: string | null;
-  expiresAt?: Date | null;
-  skills?: { skillId: number; yoe?: number }[];
-};
 type JobPostingSkillState = {
   skillId: number;
   yoe?: number;
@@ -231,12 +226,16 @@ export class JobPostingService {
       updatePayload.skills ?? existingJobPosting.skills?.map((it) => ({ skillId: it.id, yoe: it.yoe ?? undefined }));
 
     if (nextStatus === JOB_POSTING_STATUS.PENDING_APPROVAL) {
-      this.validateJobPostingReadyForApproval({
+      const approvalReadyValidationResult = JobPostingReadyForApprovalSchema.safeParse({
         title: updatePayload.title ?? existingJobPosting.title,
         description: updatePayload.description ?? existingJobPosting.description,
         expiresAt: updatePayload.expiresAt ?? existingJobPosting.expiresAt,
         skills: nextSkills,
       });
+
+      if (!approvalReadyValidationResult.success) {
+        throw new ZodValidationError(approvalReadyValidationResult.error);
+      }
     }
 
     return await this.jobPostingRepository.updateWithSkillsAndStatusHistory(
@@ -247,6 +246,11 @@ export class JobPostingService {
         expiresAt: updatePayload.expiresAt,
         status: nextStatus,
         skills: updatePayload.skills,
+        statusHistoryReason: this.getStatusHistoryReason(
+          existingJobPosting.status as JobPostingStatus,
+          nextStatus,
+          USER_ROLE.RECRUITER,
+        ),
       },
       existingJobPosting.status as JobPostingStatus,
     );
@@ -272,7 +276,12 @@ export class JobPostingService {
       id,
       {
         status: updatePayload.status,
-        statusHistoryReason: updatePayload.reason,
+        statusHistoryReason: this.getStatusHistoryReason(
+          existingJobPosting.status as JobPostingStatus,
+          updatePayload.status,
+          USER_ROLE.ADMIN,
+          updatePayload.reason,
+        ),
       },
       existingJobPosting.status as JobPostingStatus,
     );
@@ -318,7 +327,7 @@ export class JobPostingService {
       return true;
     }
 
-    if (payload.expiresAt !== undefined && !this.areDatesEqual(payload.expiresAt, existingJobPosting.expiresAt)) {
+    if (payload.expiresAt !== undefined && payload.expiresAt.getTime() !== existingJobPosting.expiresAt?.getTime()) {
       return true;
     }
 
@@ -333,10 +342,6 @@ export class JobPostingService {
     }
 
     return false;
-  }
-
-  private areDatesEqual(left: Date | null, right: Date | null): boolean {
-    return left?.getTime() === right?.getTime();
   }
 
   private areJobPostingSkillsEqual(left: JobPostingSkillState[], right: JobPostingSkillState[]): boolean {
@@ -365,29 +370,53 @@ export class JobPostingService {
     }
   }
 
-  private validateJobPostingReadyForApproval(jobPosting: ApprovalReadyJobPosting): void {
-    if (!jobPosting.title || jobPosting.title.trim().length < 10) {
-      throw new BadRequestError('Title must be at least 10 characters long when submitting for approval.');
+  private getStatusHistoryReason(
+    currentStatus: JobPostingStatus,
+    nextStatus: JobPostingStatus | undefined,
+    role: UserRole,
+    providedReason?: string,
+  ): string | undefined {
+    if (nextStatus === undefined || nextStatus === currentStatus) {
+      return undefined;
     }
 
-    if (!jobPosting.description || jobPosting.description.trim().length < 60) {
-      throw new BadRequestError('Description is required when submitting job posting for approval.');
+    if (role === USER_ROLE.ADMIN && providedReason) {
+      return providedReason;
     }
 
-    if (!jobPosting.expiresAt) {
-      throw new BadRequestError('expiresAt must be provided when submitting job posting for approval.');
+    if (currentStatus === JOB_POSTING_STATUS.ACTIVE && nextStatus === JOB_POSTING_STATUS.PENDING_APPROVAL) {
+      return 'Job posting edited and resubmitted for approval.';
     }
 
-    const minimumExpiresAt = new Date();
-    minimumExpiresAt.setDate(minimumExpiresAt.getDate() + 7);
-
-    if (jobPosting.expiresAt < minimumExpiresAt) {
-      throw new BadRequestError('expiresAt must be at least 7 days from now.');
+    if (currentStatus === JOB_POSTING_STATUS.REJECTED && nextStatus === JOB_POSTING_STATUS.PENDING_APPROVAL) {
+      return 'Job posting resubmitted for approval.';
     }
 
-    if (!jobPosting.skills?.length) {
-      throw new BadRequestError('At least one skill is required when submitting for approval.');
+    if (nextStatus === JOB_POSTING_STATUS.PENDING_APPROVAL) {
+      return 'Job posting submitted for approval.';
     }
+
+    if (nextStatus === JOB_POSTING_STATUS.PAUSED) {
+      return 'Job posting paused by recruiter.';
+    }
+
+    if (currentStatus === JOB_POSTING_STATUS.PAUSED && nextStatus === JOB_POSTING_STATUS.ACTIVE) {
+      return 'Job posting resumed by recruiter.';
+    }
+
+    if (nextStatus === JOB_POSTING_STATUS.CLOSED) {
+      return `Job posting closed by ${role.toLowerCase()}.`;
+    }
+
+    if (nextStatus === JOB_POSTING_STATUS.ACTIVE) {
+      return 'Job posting approved by admin.';
+    }
+
+    if (nextStatus === JOB_POSTING_STATUS.REJECTED) {
+      return 'Job posting rejected by admin.';
+    }
+
+    return undefined;
   }
 
   async deleteJobPosting(id: string, user: AuthenticatedUser) {
