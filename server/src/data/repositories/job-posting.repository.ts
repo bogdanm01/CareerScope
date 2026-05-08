@@ -205,6 +205,9 @@ export class JobPostingRepository extends GenericRepository<JobPosting, JobPosti
         id: company.id,
         name: company.name,
         logo: company.logoUrl,
+        websiteUrl: company.websiteUrl,
+        shortDescription: company.shortDescription,
+        address: company.address,
       };
     }
 
