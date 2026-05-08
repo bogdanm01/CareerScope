@@ -76,12 +76,49 @@ export const AdminJobPostingUpdateRequestSchema = z
     status: z.enum(ADMIN_UPDATE_JOB_POSTING_STATUS),
     reason: z.string().trim().min(3).optional(),
   })
-  .strict();
+  .strict()
+  .superRefine((data, ctx) => {
+    if (data.status === JOB_POSTING_STATUS.REJECTED && !data.reason) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['reason'],
+        message: 'Reason is required when rejecting a job posting.',
+      });
+    }
+  });
 
 export const JobPostingUpdateRequestSchema = z.union([
   RecruiterJobPostingUpdateRequestSchema,
   AdminJobPostingUpdateRequestSchema,
 ]);
+
+export const JobPostingReadyForApprovalSchema = z
+  .object({
+    title: z.string().trim().min(10, {
+      error: 'Title must be at least 10 characters long when submitting for approval.',
+    }),
+    description: z.string().trim().min(60, {
+      error: 'Description is required when submitting job posting for approval.',
+    }),
+    expiresAt: z.coerce.date({
+      error: 'expiresAt must be provided when submitting job posting for approval.',
+    }),
+    skills: z.array(JobPostingSkillSchema).min(1, {
+      error: 'At least one skill is required when submitting for approval.',
+    }),
+  })
+  .superRefine((data, ctx) => {
+    const minimumExpiresAt = new Date();
+    minimumExpiresAt.setDate(minimumExpiresAt.getDate() + MIN_EXPIRATION_DAYS);
+
+    if (data.expiresAt < minimumExpiresAt) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['expiresAt'],
+        message: `expiresAt must be at least ${MIN_EXPIRATION_DAYS} days from now.`,
+      });
+    }
+  });
 
 export const JobPostingInsertRequestSchema = z
   .object({
@@ -157,5 +194,6 @@ export type JobPostingIdParam = z.infer<typeof JobPostingIdParamSchema>;
 export type RecruiterJobPostingUpdateRequest = z.infer<typeof RecruiterJobPostingUpdateRequestSchema>;
 export type AdminJobPostingUpdateRequest = z.infer<typeof AdminJobPostingUpdateRequestSchema>;
 export type JobPostingUpdateRequest = z.infer<typeof JobPostingUpdateRequestSchema>;
+export type JobPostingReadyForApproval = z.infer<typeof JobPostingReadyForApprovalSchema>;
 export type JobPostingDetailInclude = (typeof JOB_POSTING_DETAIL_INCLUDE)[number];
 export type JobPostingDetailRequest = z.infer<typeof JobPostingDetailRequestSchema>;
