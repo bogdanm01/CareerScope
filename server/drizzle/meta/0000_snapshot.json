@@ -1,5 +1,5 @@
 {
-  "id": "39964812-e9cd-43e3-8157-f8a360a3d6f0",
+  "id": "18473683-350e-493a-bf8c-98d8f44656e1",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -25,14 +25,14 @@
             "cycle": false
           }
         },
-        "job_application_id": {
-          "name": "job_application_id",
+        "jobApplicationId": {
+          "name": "jobApplicationId",
           "type": "integer",
           "primaryKey": false,
           "notNull": false
         },
-        "company_id": {
-          "name": "company_id",
+        "companyId": {
+          "name": "companyId",
           "type": "integer",
           "primaryKey": false,
           "notNull": false
@@ -65,12 +65,12 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "application_review_job_application_id_job_application_id_fk": {
-          "name": "application_review_job_application_id_job_application_id_fk",
+        "application_review_jobApplicationId_job_application_id_fk": {
+          "name": "application_review_jobApplicationId_job_application_id_fk",
           "tableFrom": "application_review",
           "tableTo": "job_application",
           "columnsFrom": [
-            "job_application_id"
+            "jobApplicationId"
           ],
           "columnsTo": [
             "id"
@@ -78,12 +78,12 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
-        "application_review_company_id_company_id_fk": {
-          "name": "application_review_company_id_company_id_fk",
+        "application_review_companyId_company_id_fk": {
+          "name": "application_review_companyId_company_id_fk",
           "tableFrom": "application_review",
           "tableTo": "company",
           "columnsFrom": [
-            "company_id"
+            "companyId"
           ],
           "columnsTo": [
             "id"
@@ -347,14 +347,14 @@
           "primaryKey": false,
           "notNull": true
         },
-        "first_name": {
-          "name": "first_name",
+        "firstName": {
+          "name": "firstName",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "last_name": {
-          "name": "last_name",
+        "lastName": {
+          "name": "lastName",
           "type": "text",
           "primaryKey": false,
           "notNull": true
@@ -372,8 +372,8 @@
           "primaryKey": false,
           "notNull": false
         },
-        "company_id": {
-          "name": "company_id",
+        "companyId": {
+          "name": "companyId",
           "type": "integer",
           "primaryKey": false,
           "notNull": false
@@ -384,21 +384,21 @@
           "primaryKey": false,
           "notNull": true
         },
-        "date_of_birth": {
-          "name": "date_of_birth",
+        "dateOfBirth": {
+          "name": "dateOfBirth",
           "type": "date",
           "primaryKey": false,
           "notNull": true
         },
-        "is_deleted": {
-          "name": "is_deleted",
+        "isDeleted": {
+          "name": "isDeleted",
           "type": "boolean",
           "primaryKey": false,
           "notNull": true,
           "default": false
         },
-        "onboarding_step": {
-          "name": "onboarding_step",
+        "onboardingStep": {
+          "name": "onboardingStep",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
@@ -421,12 +421,12 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "user_company_id_company_id_fk": {
-          "name": "user_company_id_company_id_fk",
+        "user_companyId_company_id_fk": {
+          "name": "user_companyId_company_id_fk",
           "tableFrom": "user",
           "tableTo": "company",
           "columnsFrom": [
-            "company_id"
+            "companyId"
           ],
           "columnsTo": [
             "id"
@@ -543,27 +543,27 @@
           "primaryKey": false,
           "notNull": true
         },
-        "is_approved": {
-          "name": "is_approved",
+        "isApproved": {
+          "name": "isApproved",
           "type": "boolean",
           "primaryKey": false,
           "notNull": true,
           "default": false
         },
-        "approved_at": {
-          "name": "approved_at",
+        "approvedAt": {
+          "name": "approvedAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
         },
-        "tax_id": {
-          "name": "tax_id",
+        "taxId": {
+          "name": "taxId",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "short_description": {
-          "name": "short_description",
+        "shortDescription": {
+          "name": "shortDescription",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -574,14 +574,14 @@
           "primaryKey": false,
           "notNull": false
         },
-        "founding_year": {
-          "name": "founding_year",
+        "foundingYear": {
+          "name": "foundingYear",
           "type": "integer",
           "primaryKey": false,
           "notNull": false
         },
-        "number_of_employees": {
-          "name": "number_of_employees",
+        "numberOfEmployees": {
+          "name": "numberOfEmployees",
           "type": "integer",
           "primaryKey": false,
           "notNull": false
@@ -592,14 +592,14 @@
           "primaryKey": false,
           "notNull": true
         },
-        "logo_url": {
-          "name": "logo_url",
+        "logoUrl": {
+          "name": "logoUrl",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "website_url": {
-          "name": "website_url",
+        "websiteUrl": {
+          "name": "websiteUrl",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -634,14 +634,14 @@
             "cycle": false
           }
         },
-        "user_id": {
-          "name": "user_id",
+        "userId": {
+          "name": "userId",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "job_posting_id": {
-          "name": "job_posting_id",
+        "jobPostingId": {
+          "name": "jobPostingId",
           "type": "integer",
           "primaryKey": false,
           "notNull": false
@@ -668,12 +668,12 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "job_application_user_id_user_id_fk": {
-          "name": "job_application_user_id_user_id_fk",
+        "job_application_userId_user_id_fk": {
+          "name": "job_application_userId_user_id_fk",
           "tableFrom": "job_application",
           "tableTo": "user",
           "columnsFrom": [
-            "user_id"
+            "userId"
           ],
           "columnsTo": [
             "id"
@@ -681,87 +681,12 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
-        "job_application_job_posting_id_job_posting_id_fk": {
-          "name": "job_application_job_posting_id_job_posting_id_fk",
+        "job_application_jobPostingId_job_posting_id_fk": {
+          "name": "job_application_jobPostingId_job_posting_id_fk",
           "tableFrom": "job_application",
           "tableTo": "job_posting",
           "columnsFrom": [
-            "job_posting_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.job_posting_skill": {
-      "name": "job_posting_skill",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "integer",
-          "primaryKey": true,
-          "notNull": true,
-          "identity": {
-            "type": "always",
-            "name": "job_posting_skill_id_seq",
-            "schema": "public",
-            "increment": "1",
-            "startWith": "1",
-            "minValue": "1",
-            "maxValue": "2147483647",
-            "cache": "1",
-            "cycle": false
-          }
-        },
-        "job_posting_id": {
-          "name": "job_posting_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "skill_id": {
-          "name": "skill_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "yoe": {
-          "name": "yoe",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "job_posting_skill_job_posting_id_job_posting_id_fk": {
-          "name": "job_posting_skill_job_posting_id_job_posting_id_fk",
-          "tableFrom": "job_posting_skill",
-          "tableTo": "job_posting",
-          "columnsFrom": [
-            "job_posting_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "job_posting_skill_skill_id_skill_id_fk": {
-          "name": "job_posting_skill_skill_id_skill_id_fk",
-          "tableFrom": "job_posting_skill",
-          "tableTo": "skill",
-          "columnsFrom": [
-            "skill_id"
+            "jobPostingId"
           ],
           "columnsTo": [
             "id"
@@ -797,8 +722,8 @@
             "cycle": false
           }
         },
-        "job_posting_id": {
-          "name": "job_posting_id",
+        "jobPostingId": {
+          "name": "jobPostingId",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
@@ -815,8 +740,8 @@
           "primaryKey": false,
           "notNull": false
         },
-        "created_at": {
-          "name": "created_at",
+        "createdAt": {
+          "name": "createdAt",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
@@ -825,12 +750,12 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "job_posting_status_history_job_posting_id_job_posting_id_fk": {
-          "name": "job_posting_status_history_job_posting_id_job_posting_id_fk",
+        "job_posting_status_history_jobPostingId_job_posting_id_fk": {
+          "name": "job_posting_status_history_jobPostingId_job_posting_id_fk",
           "tableFrom": "job_posting_status_history",
           "tableTo": "job_posting",
           "columnsFrom": [
-            "job_posting_id"
+            "jobPostingId"
           ],
           "columnsTo": [
             "id"
@@ -871,8 +796,8 @@
             "cycle": false
           }
         },
-        "company_id": {
-          "name": "company_id",
+        "companyId": {
+          "name": "companyId",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
@@ -895,17 +820,11 @@
           "primaryKey": false,
           "notNull": true
         },
-        "expires_at": {
-          "name": "expires_at",
+        "expiresAt": {
+          "name": "expiresAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
-        },
-        "created_by": {
-          "name": "created_by",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
         },
         "created_at": {
           "name": "created_at",
@@ -923,25 +842,12 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "job_posting_company_id_company_id_fk": {
-          "name": "job_posting_company_id_company_id_fk",
+        "job_posting_companyId_company_id_fk": {
+          "name": "job_posting_companyId_company_id_fk",
           "tableFrom": "job_posting",
           "tableTo": "company",
           "columnsFrom": [
-            "company_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "job_posting_created_by_user_id_fk": {
-          "name": "job_posting_created_by_user_id_fk",
-          "tableFrom": "job_posting",
-          "tableTo": "user",
-          "columnsFrom": [
-            "created_by"
+            "companyId"
           ],
           "columnsTo": [
             "id"
@@ -982,8 +888,8 @@
             "cycle": false
           }
         },
-        "user_id": {
-          "name": "user_id",
+        "userId": {
+          "name": "userId",
           "type": "text",
           "primaryKey": false,
           "notNull": true
@@ -994,8 +900,8 @@
           "primaryKey": false,
           "notNull": true
         },
-        "read_at": {
-          "name": "read_at",
+        "readAt": {
+          "name": "readAt",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
@@ -1016,12 +922,12 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "notification_user_id_user_id_fk": {
-          "name": "notification_user_id_user_id_fk",
+        "notification_userId_user_id_fk": {
+          "name": "notification_userId_user_id_fk",
           "tableFrom": "notification",
           "tableTo": "user",
           "columnsFrom": [
-            "user_id"
+            "userId"
           ],
           "columnsTo": [
             "id"
@@ -1032,82 +938,6 @@
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.skill_category": {
-      "name": "skill_category",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "integer",
-          "primaryKey": true,
-          "notNull": true,
-          "identity": {
-            "type": "always",
-            "name": "skill_category_id_seq",
-            "schema": "public",
-            "increment": "1",
-            "startWith": "1",
-            "minValue": "1",
-            "maxValue": "2147483647",
-            "cache": "1",
-            "cycle": false
-          }
-        },
-        "name": {
-          "name": "name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "slug": {
-          "name": "slug",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "description": {
-          "name": "description",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "skill_category_name_unique": {
-          "name": "skill_category_name_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "name"
-          ]
-        },
-        "skill_category_slug_unique": {
-          "name": "skill_category_slug_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "slug"
-          ]
-        }
-      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -1139,34 +969,6 @@
           "primaryKey": false,
           "notNull": true
         },
-        "description": {
-          "name": "description",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "slug": {
-          "name": "slug",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "category_id": {
-          "name": "category_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "search_vector": {
-          "name": "search_vector",
-          "type": "tsvector",
-          "primaryKey": false,
-          "notNull": false,
-          "generated": {
-            "as": "to_tsvector('english', coalesce(\"name\", '') || ' ' || coalesce(\"description\", ''))",
-            "type": "stored"
-          }
-        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
@@ -1181,63 +983,10 @@
           "notNull": false
         }
       },
-      "indexes": {
-        "skill_search_vector_idx": {
-          "name": "skill_search_vector_idx",
-          "columns": [
-            {
-              "expression": "search_vector",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "gin",
-          "with": {}
-        },
-        "skill_category_id_idx": {
-          "name": "skill_category_id_idx",
-          "columns": [
-            {
-              "expression": "category_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "skill_category_id_skill_category_id_fk": {
-          "name": "skill_category_id_skill_category_id_fk",
-          "tableFrom": "skill",
-          "tableTo": "skill_category",
-          "columnsFrom": [
-            "category_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
+      "indexes": {},
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "skill_slug_unique": {
-          "name": "skill_slug_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "slug"
-          ]
-        }
-      },
+      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -1263,20 +1012,20 @@
             "cycle": false
           }
         },
-        "user_id": {
-          "name": "user_id",
+        "userId": {
+          "name": "userId",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "skill_id": {
-          "name": "skill_id",
+        "skillId": {
+          "name": "skillId",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
-        "years_of_experience": {
-          "name": "years_of_experience",
+        "yearsOfExperience": {
+          "name": "yearsOfExperience",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
@@ -1297,12 +1046,12 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "user_skill_user_id_user_id_fk": {
-          "name": "user_skill_user_id_user_id_fk",
+        "user_skill_userId_user_id_fk": {
+          "name": "user_skill_userId_user_id_fk",
           "tableFrom": "user_skill",
           "tableTo": "user",
           "columnsFrom": [
-            "user_id"
+            "userId"
           ],
           "columnsTo": [
             "id"
@@ -1310,12 +1059,12 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
-        "user_skill_skill_id_skill_id_fk": {
-          "name": "user_skill_skill_id_skill_id_fk",
+        "user_skill_skillId_skill_id_fk": {
+          "name": "user_skill_skillId_skill_id_fk",
           "tableFrom": "user_skill",
           "tableTo": "skill",
           "columnsFrom": [
-            "skill_id"
+            "skillId"
           ],
           "columnsTo": [
             "id"
