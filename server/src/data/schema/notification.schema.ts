@@ -3,12 +3,12 @@ import { timestamps } from '../util/utils.ts';
 import { user } from './auth.schema.ts';
 
 export const notification = pgTable('notification', {
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  userId: text()
+  id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
+  userId: text('user_id')
     .references(() => user.id)
     .notNull(),
-  payload: jsonb().notNull(),
-  readAt: timestamp({ withTimezone: true }),
+  payload: jsonb('payload').notNull(),
+  readAt: timestamp('read_at', { withTimezone: true }),
   ...timestamps,
 });
 
