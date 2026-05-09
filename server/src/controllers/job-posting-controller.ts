@@ -70,10 +70,13 @@ export class JobPostingController {
     req: Request<{ id: string }, undefined, undefined, { include?: string }>,
     res: Response<ApiSuccessResponse<JobPostingDetail>>,
   ) => {
-    const result = await this.jobPostingService.getJobPostingById({
-      id: req.params.id,
-      include: req.query.include ?? undefined,
-    });
+    const result = await this.jobPostingService.getJobPostingById(
+      {
+        id: req.params.id,
+        include: req.query.include ?? undefined,
+      },
+      req.user,
+    );
 
     res.status(200).json(successResponse(result.data));
   };

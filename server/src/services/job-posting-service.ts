@@ -147,7 +147,7 @@ export class JobPostingService {
     };
   }
 
-  async getJobPostingById(payload: unknown): Promise<SingleResult<JobPostingDetail>> {
+  async getJobPostingById(payload: unknown, user?: AuthenticatedUser): Promise<SingleResult<JobPostingDetail>> {
     const validationResult = JobPostingDetailRequestSchema.safeParse(payload);
 
     if (!validationResult.success) {
@@ -161,9 +161,25 @@ export class JobPostingService {
       throw new NotFoundError('Job posting not found.');
     }
 
+    if (!this.canViewJobPostingDetail(result, user)) {
+      throw new NotFoundError('Job posting not found.');
+    }
+
     return {
       data: result,
     };
+  }
+
+  private canViewJobPostingDetail(jobPosting: JobPostingDetail, user?: AuthenticatedUser): boolean {
+    if (jobPosting.status === JOB_POSTING_STATUS.ACTIVE) {
+      return true;
+    }
+
+    if (user?.role === USER_ROLE.ADMIN) {
+      return true;
+    }
+
+    return user?.role === USER_ROLE.RECRUITER && user.companyId === jobPosting.companyId;
   }
 
   async getJobPostingStatusHistory(jobPostingId: string) {

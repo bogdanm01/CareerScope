@@ -2,7 +2,7 @@ import express from 'express';
 import { JobPostingController } from '../controllers/job-posting-controller.ts';
 import { container } from 'tsyringe';
 import { TOKENS } from '../config/dependency-tokens.ts';
-import { authGuard } from '../middleware/auth-guard.ts';
+import { authGuard, optionalAuth } from '../middleware/auth-guard.ts';
 import { USER_ROLE } from '../data/util/constants.ts';
 
 export const getJobPostingRouter = () => {
@@ -15,7 +15,7 @@ export const getJobPostingRouter = () => {
 
   router.get('/:id/status-history', jobPostingController.getJobPostingStatusHistory);
 
-  router.get('/:id', jobPostingController.getJobPostingById);
+  router.get('/:id', optionalAuth, jobPostingController.getJobPostingById);
 
   router.post('/', authGuard([USER_ROLE.RECRUITER]), jobPostingController.createJobPosting);
 
