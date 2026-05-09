@@ -9,12 +9,11 @@ import { jobPosting, JobPosting, JobPostingStatus } from '../data/schema/job-pos
 import { JOB_POSTING_STATUS, USER_ROLE, UserRole } from '../data/util/constants.ts';
 import { TOKENS } from '../config/dependency-tokens.ts';
 import {
-  ActiveJobPostingsRequestSchema,
   AdminJobPostingUpdateRequestSchema,
   JobPostingDetailRequestSchema,
   JobPostingInsertRequestSchema,
+  JobPostingListRequestSchema,
   JobPostingReadyForApprovalSchema,
-  JobPostingsRequestSchema,
   RecruiterJobPostingUpdateRequest,
   RecruiterJobPostingUpdateRequestSchema,
 } from '../lib/zod/job-posting.zod-schema.ts';
@@ -79,7 +78,7 @@ export class JobPostingService {
   }
 
   async getJobPostings(payload: unknown, user: AuthenticatedUser): Promise<PaginatedResult<JobPostingListItem>> {
-    const validationResult = JobPostingsRequestSchema.safeParse(payload);
+    const validationResult = JobPostingListRequestSchema.safeParse(payload);
 
     if (!validationResult.success) {
       throw new ZodValidationError(validationResult.error);
@@ -99,11 +98,12 @@ export class JobPostingService {
     const result = await this.jobPostingRepository.findJobPostings(
       query.status,
       companyId,
-      undefined,
+      query.skills,
       query.orderBy,
       query.sort,
       query.page,
       query.limit,
+      query.search,
     );
 
     return {
@@ -118,7 +118,7 @@ export class JobPostingService {
   }
 
   async getPublicJobPostings(payload: unknown): Promise<PaginatedResult<JobPostingListItem>> {
-    const validationResult = ActiveJobPostingsRequestSchema.safeParse(payload);
+    const validationResult = JobPostingListRequestSchema.safeParse(payload);
 
     if (!validationResult.success) {
       throw new ZodValidationError(validationResult.error);
@@ -134,6 +134,7 @@ export class JobPostingService {
       query.sort,
       query.page,
       query.limit,
+      query.search,
     );
 
     return {

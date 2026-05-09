@@ -25,7 +25,7 @@ const JobPostingSkillSchema = z.object({
   yoe: z.number().int().nonnegative().optional(),
 });
 
-export const ActiveJobPostingsRequestSchema = z.object({
+export const JobPostingListRequestSchema = z.object({
   companyId: z.coerce.number().int().positive().optional(),
   skills: z
     .string()
@@ -42,15 +42,8 @@ export const ActiveJobPostingsRequestSchema = z.object({
   sort: z.enum(SORT_ORDER).default('desc'),
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().max(100).default(50),
-});
-
-export const JobPostingsRequestSchema = z.object({
-  companyId: z.coerce.number().int().positive().optional(),
+  search: z.string().trim().min(2).optional(),
   status: z.enum(Object.values(JOB_POSTING_STATUS)).optional(),
-  orderBy: z.enum(ACTIVE_JOB_POSTING_ORDER_BY).default('createdAt'),
-  sort: z.enum(SORT_ORDER).default('desc'),
-  page: z.coerce.number().int().positive().default(1),
-  limit: z.coerce.number().int().positive().max(100).default(50),
 });
 
 const JobPostingUpdateBaseRequestSchema = z.object({
@@ -206,8 +199,7 @@ export const JobPostingDetailRequestSchema = z.object({
     .pipe(z.array(z.enum(JOB_POSTING_DETAIL_INCLUDE))),
 });
 
-export type ActiveJobPostingsRequest = z.infer<typeof ActiveJobPostingsRequestSchema>;
-export type JobPostingsRequest = z.infer<typeof JobPostingsRequestSchema>;
+export type JobPostingListRequest = z.infer<typeof JobPostingListRequestSchema>;
 export type JobPostingInsertRequest = z.infer<typeof JobPostingInsertRequestSchema>;
 export type RecruiterJobPostingUpdateRequest = z.infer<typeof RecruiterJobPostingUpdateRequestSchema>;
 export type AdminJobPostingUpdateRequest = z.infer<typeof AdminJobPostingUpdateRequestSchema>;
