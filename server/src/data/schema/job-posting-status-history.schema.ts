@@ -6,13 +6,13 @@ import { JOB_POSTING_STATUS } from '../util/constants.ts';
 export const jobPostingStatusHistory = pgTable(
   'job_posting_status_history',
   {
-    id: integer().primaryKey().generatedAlwaysAsIdentity(),
-    jobPostingId: integer()
+    id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
+    jobPostingId: integer('job_posting_id')
       .references(() => jobPosting.id)
       .notNull(),
-    status: text().notNull(),
-    reason: text(),
-    createdAt: timestamp().defaultNow().notNull(),
+    status: text('status').notNull(),
+    reason: text('reason'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
   },
   (table) => [enumCheckConstraint('status_check', table.status, JOB_POSTING_STATUS)],
 );
