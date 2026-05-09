@@ -5,13 +5,12 @@ import {
   JobPostingListItem,
   JobPostingRepository,
 } from '../data/repositories/job-posting.repository.ts';
-import { JobPosting, JobPostingStatus } from '../data/schema/job-posting.schema.ts';
+import { jobPosting, JobPosting, JobPostingStatus } from '../data/schema/job-posting.schema.ts';
 import { JOB_POSTING_STATUS, USER_ROLE, UserRole } from '../data/util/constants.ts';
 import { TOKENS } from '../config/dependency-tokens.ts';
 import {
   ActiveJobPostingsRequestSchema,
   AdminJobPostingUpdateRequestSchema,
-  JobPostingIdParamSchema,
   JobPostingDetailRequestSchema,
   JobPostingInsertRequestSchema,
   JobPostingReadyForApprovalSchema,
@@ -23,6 +22,7 @@ import { ZodValidationError } from '../lib/zod-validation-error.ts';
 import { BadRequestError, ForbiddenError, NotFoundError } from '../lib/app-error.ts';
 import { ERROR_CODE } from '../lib/error-codes.ts';
 import { PaginatedResult, SingleResult } from '../lib/api-response.ts';
+import { IntegerIdSchema } from '../lib/zod/integer-id.zod-schema.ts';
 
 type AuthenticatedUser = Request['user'];
 type JobPostingSkillState = {
@@ -90,7 +90,7 @@ export class JobPostingService {
 
     if (user?.role === USER_ROLE.RECRUITER) {
       if (!user.companyId) {
-        throw new ForbiddenError('Recruiter is not assigned to a company.', ERROR_CODE.RECRUITER_COMPANY_MISSING);
+        throw new ForbiddenError('User is not authorized to perform this action.', ERROR_CODE.FORBIDDEN);
       }
 
       companyId = user.companyId;
@@ -183,7 +183,7 @@ export class JobPostingService {
   }
 
   async updateJobPosting(id: unknown, payload: unknown, user: AuthenticatedUser): Promise<JobPosting> {
-    const idValidationResult = JobPostingIdParamSchema.safeParse({ id });
+    const idValidationResult = IntegerIdSchema.safeParse({ id });
 
     if (!idValidationResult.success) {
       throw new ZodValidationError(idValidationResult.error);
@@ -212,7 +212,7 @@ export class JobPostingService {
     const existingJobPosting = await this.getExistingJobPostingForUpdate(id);
 
     if (existingJobPosting.companyId !== user.companyId) {
-      throw new ForbiddenError('User is not authorized to perform this action.', ERROR_CODE.RECRUITER_COMPANY_MISSING);
+      throw new ForbiddenError('User is not authorized to perform this action.', ERROR_CODE.FORBIDDEN);
     }
 
     const updatePayload = validationResult.data;
@@ -383,53 +383,65 @@ export class JobPostingService {
     role: UserRole,
     providedReason?: string,
   ): string | undefined {
-    if (nextStatus === undefined || nextStatus === currentStatus) {
-      return undefined;
-    }
+    if (nextStatus === undefined || nextStatus === currentStatus) return undefined;
 
-    if (role === USER_ROLE.ADMIN && providedReason) {
-      return providedReason;
-    }
+    if (role === USER_ROLE.ADMIN && providedReason) return providedReason;
 
-    if (currentStatus === JOB_POSTING_STATUS.ACTIVE && nextStatus === JOB_POSTING_STATUS.PENDING_APPROVAL) {
+    if (currentStatus === JOB_POSTING_STATUS.ACTIVE && nextStatus === JOB_POSTING_STATUS.PENDING_APPROVAL)
       return 'Job posting edited and resubmitted for approval.';
-    }
 
-    if (currentStatus === JOB_POSTING_STATUS.REJECTED && nextStatus === JOB_POSTING_STATUS.PENDING_APPROVAL) {
+    if (currentStatus === JOB_POSTING_STATUS.REJECTED && nextStatus === JOB_POSTING_STATUS.PENDING_APPROVAL)
       return 'Job posting resubmitted for approval.';
-    }
 
-    if (nextStatus === JOB_POSTING_STATUS.PENDING_APPROVAL) {
-      return 'Job posting submitted for approval.';
-    }
+    if (nextStatus === JOB_POSTING_STATUS.PENDING_APPROVAL) return 'Job posting submitted for approval.';
 
-    if (nextStatus === JOB_POSTING_STATUS.PAUSED) {
-      return 'Job posting paused by recruiter.';
-    }
+    if (nextStatus === JOB_POSTING_STATUS.PAUSED) return 'Job posting paused by recruiter.';
 
-    if (currentStatus === JOB_POSTING_STATUS.PAUSED && nextStatus === JOB_POSTING_STATUS.ACTIVE) {
+    if (currentStatus === JOB_POSTING_STATUS.PAUSED && nextStatus === JOB_POSTING_STATUS.ACTIVE)
       return 'Job posting resumed by recruiter.';
-    }
 
-    if (nextStatus === JOB_POSTING_STATUS.CLOSED) {
-      return `Job posting closed by ${role.toLowerCase()}.`;
-    }
+    if (nextStatus === JOB_POSTING_STATUS.CLOSED) return `Job posting closed by ${role.toLowerCase()}.`;
 
-    if (nextStatus === JOB_POSTING_STATUS.ACTIVE) {
-      return 'Job posting approved by admin.';
-    }
+    if (nextStatus === JOB_POSTING_STATUS.ACTIVE) return 'Job posting approved by admin.';
 
-    if (nextStatus === JOB_POSTING_STATUS.REJECTED) {
-      return 'Job posting rejected by admin.';
-    }
+    if (nextStatus === JOB_POSTING_STATUS.REJECTED) return 'Job posting rejected by admin.';
 
     return undefined;
   }
 
-  async deleteJobPosting(id: string, user: AuthenticatedUser) {
+  async deleteJobPosting(id: unknown, user: AuthenticatedUser): Promise<SingleResult<{ id: number }>> {
+    const idValidationResult = IntegerIdSchema.safeParse({ id });
+
+    if (!idValidationResult.success) {
+      throw new ZodValidationError(idValidationResult.error);
+    }
+
+    const validId = idValidationResult.data.id;
+
+    const record = await this.jobPostingRepository.findById(validId, {
+      companyId: jobPosting.companyId,
+      isDeleted: jobPosting.isDeleted,
+      status: jobPosting.status,
+    });
+
+    if (!record || record.isDeleted) {
+      throw new NotFoundError('Job posting not found.');
+    }
+
+    if (user.role === USER_ROLE.RECRUITER) {
+      if (record.companyId !== user.companyId) {
+        throw new ForbiddenError('User is not authorized to perform this action.', ERROR_CODE.FORBIDDEN);
+      }
+    }
+
+    if (record.status === JOB_POSTING_STATUS.ACTIVE) {
+      throw new BadRequestError(`Can't delete active job posting. Close it or pause it first.`);
+    }
+
+    const result = await this.jobPostingRepository.softDelete(validId);
+
     return {
-      id,
-      userId: user?.id,
+      data: result,
     };
   }
 }

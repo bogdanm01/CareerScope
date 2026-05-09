@@ -6,10 +6,6 @@ import { ApiSuccessResponse, successResponse } from '../lib/api-response.ts';
 import { JobPosting } from '../data/schema/job-posting.schema.ts';
 import { JobPostingDetail, JobPostingListItem } from '../data/repositories/job-posting.repository.ts';
 
-type JobPostingParams = {
-  id: string;
-};
-
 @injectable()
 export class JobPostingController {
   constructor(@inject(TOKENS.jobPostingService) private jobPostingService: JobPostingService) {}
@@ -21,7 +17,7 @@ export class JobPostingController {
    * recruiter's company, creates initial status history, and persists skills
    * when provided.
    *
-   * @param req Express request containing the create payload and authenticated user.
+   * @param req Express request containing the creation payload and authenticated user.
    * @param res Express response returning the created job posting.
    */
   createJobPosting = async (req: Request, res: Response<ApiSuccessResponse<JobPosting>>) => {
@@ -91,7 +87,7 @@ export class JobPostingController {
    * @param req Express request containing the posting id, update payload, and authenticated user.
    * @param res Express response returning the updated job posting.
    */
-  updateJobPosting = async (req: Request<JobPostingParams>, res: Response<ApiSuccessResponse<JobPosting>>) => {
+  updateJobPosting = async (req: Request, res: Response<ApiSuccessResponse<JobPosting>>) => {
     const result = await this.jobPostingService.updateJobPosting(req.params.id, req.body, req.user);
     res.status(200).json(successResponse(result));
   };
@@ -105,8 +101,8 @@ export class JobPostingController {
    * @param req Express request containing the posting id and authenticated user.
    * @param res Express response with no content on success.
    */
-  deleteJobPosting = async (req: Request<JobPostingParams>, res: Response) => {
-    await this.jobPostingService.deleteJobPosting(req.params.id, req.user);
-    res.status(204).send();
+  deleteJobPosting = async (req: Request, res: Response) => {
+    const result = await this.jobPostingService.deleteJobPosting(req.params.id, req.user);
+    res.status(200).json(successResponse(result));
   };
 }

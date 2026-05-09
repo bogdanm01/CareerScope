@@ -52,10 +52,6 @@ export const JobPostingsRequestSchema = z.object({
   limit: z.coerce.number().int().positive().max(100).default(50),
 });
 
-export const JobPostingIdParamSchema = z.object({
-  id: z.coerce.number().int().positive(),
-});
-
 const JobPostingUpdateBaseRequestSchema = z.object({
   title: z.string().trim().min(3).optional(),
   description: z.string().trim().min(60).optional(), // TODO: Decide min length (markdown)
@@ -190,7 +186,6 @@ export const JobPostingDetailRequestSchema = z.object({
 export type ActiveJobPostingsRequest = z.infer<typeof ActiveJobPostingsRequestSchema>;
 export type JobPostingsRequest = z.infer<typeof JobPostingsRequestSchema>;
 export type JobPostingInsertRequest = z.infer<typeof JobPostingInsertRequestSchema>;
-export type JobPostingIdParam = z.infer<typeof JobPostingIdParamSchema>;
 export type RecruiterJobPostingUpdateRequest = z.infer<typeof RecruiterJobPostingUpdateRequestSchema>;
 export type AdminJobPostingUpdateRequest = z.infer<typeof AdminJobPostingUpdateRequestSchema>;
 export type JobPostingUpdateRequest = z.infer<typeof JobPostingUpdateRequestSchema>;
