@@ -16,7 +16,7 @@ type FindJobPostingsResult = {
   totalItems: number;
 };
 
-export type JobPostingListItem = Omit<JobPosting, 'companyId' | 'description'> & {
+export type JobPostingListItem = Omit<JobPosting, 'companyId' | 'description' | 'isDeleted'> & {
   company: {
     id: number;
     name: string;
@@ -24,7 +24,7 @@ export type JobPostingListItem = Omit<JobPosting, 'companyId' | 'description'> &
   };
 };
 
-export type JobPostingDetail = JobPosting & {
+export type JobPostingDetail = Omit<JobPosting, 'isDeleted'> & {
   company?: {
     id: number;
     name: string;
@@ -140,7 +140,7 @@ export class JobPostingRepository extends GenericRepository<JobPosting, JobPosti
       .from(jobPosting)
       .$dynamic();
 
-    const conditions: SQL[] = [];
+    const conditions: SQL[] = [eq(jobPosting.isDeleted, false)];
 
     if (status) {
       conditions.push(eq(jobPosting.status, status));
@@ -189,7 +189,7 @@ export class JobPostingRepository extends GenericRepository<JobPosting, JobPosti
   }
 
   async findJobPosting(id: number, include: JobPostingDetailInclude[] = []): Promise<JobPostingDetail | undefined> {
-    const idFilter: SQL = eq(jobPosting.id, id);
+    const idFilter = and(eq(jobPosting.id, id), eq(jobPosting.isDeleted, false)) as SQL;
 
     const includeFlags = this.getJobPostingDetailIncludeFlags(include);
     const selectFields = this.getJobPostingDetailSelectFields(includeFlags);
