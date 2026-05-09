@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { JOB_POSTING_STATUS } from '../../data/util/constants.ts';
 
 const MIN_EXPIRATION_DAYS = 7;
+const MAX_EXPIRATION_DAYS = 90;
 const ACTIVE_JOB_POSTING_ORDER_BY = ['createdAt', 'expiresAt'] as const;
 const SORT_ORDER = ['asc', 'desc'] as const;
 const CREATE_JOB_POSTING_STATUS = [JOB_POSTING_STATUS.DRAFT, JOB_POSTING_STATUS.PENDING_APPROVAL] as const;
@@ -107,11 +108,22 @@ export const JobPostingReadyForApprovalSchema = z
     const minimumExpiresAt = new Date();
     minimumExpiresAt.setDate(minimumExpiresAt.getDate() + MIN_EXPIRATION_DAYS);
 
+    const maximumExpiresAt = new Date();
+    maximumExpiresAt.setDate(maximumExpiresAt.getDate() + MAX_EXPIRATION_DAYS);
+
     if (data.expiresAt < minimumExpiresAt) {
       ctx.addIssue({
         code: 'custom',
         path: ['expiresAt'],
         message: `expiresAt must be at least ${MIN_EXPIRATION_DAYS} days from now.`,
+      });
+    }
+
+    if (data.expiresAt > maximumExpiresAt) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['expiresAt'],
+        message: `expiresAt cannot be more than ${MAX_EXPIRATION_DAYS} days from now.`,
       });
     }
   });
@@ -149,11 +161,22 @@ export const JobPostingInsertRequestSchema = z
       const minimumExpiresAt = new Date();
       minimumExpiresAt.setDate(minimumExpiresAt.getDate() + MIN_EXPIRATION_DAYS);
 
+      const maximumExpiresAt = new Date();
+      maximumExpiresAt.setDate(maximumExpiresAt.getDate() + MAX_EXPIRATION_DAYS);
+
       if (data.expiresAt < minimumExpiresAt) {
         ctx.addIssue({
           code: 'custom',
           path: ['expiresAt'],
           message: `expiresAt must be at least ${MIN_EXPIRATION_DAYS} days from now.`,
+        });
+      }
+
+      if (data.expiresAt > maximumExpiresAt) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['expiresAt'],
+          message: `expiresAt cannot be more than ${MAX_EXPIRATION_DAYS} days from now.`,
         });
       }
     }
