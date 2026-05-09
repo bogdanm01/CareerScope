@@ -1,4 +1,4 @@
-import { integer, pgTable, text } from 'drizzle-orm/pg-core';
+import { boolean, integer, pgTable, text } from 'drizzle-orm/pg-core';
 import { timestamps } from '../util/utils.ts';
 import { jobPosting } from './job-posting.schema.ts';
 
@@ -9,6 +9,7 @@ export const jobApplication = pgTable('job_application', {
   userId: text('user_id').references(() => user.id),
   jobPostingId: integer('job_posting_id').references(() => jobPosting.id),
   status: text('status').notNull(),
+  isDeleted: boolean('is_deleted').default(false).notNull(),
   ...timestamps,
 });
 

@@ -1,4 +1,4 @@
-import { index, integer, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
+import { boolean, index, integer, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
 import { enumCheckConstraint, timestamps } from '../util/utils.ts';
 import { company } from './company.schema.ts';
 import { JOB_POSTING_STATUS } from '../util/constants.ts';
@@ -18,6 +18,7 @@ export const jobPosting = pgTable(
     createdBy: text('created_by')
       .references(() => user.id)
       .notNull(),
+    isDeleted: boolean('is_deleted').default(false).notNull(),
     ...timestamps,
   },
   (table) => [

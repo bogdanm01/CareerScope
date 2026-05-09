@@ -13,6 +13,7 @@ export const company = pgTable('company', {
   address: text('address').notNull(),
   logoUrl: text('logo_url'),
   websiteUrl: text('website_url'),
+  isDeleted: boolean('is_deleted').default(false).notNull(),
 });
 
 export type Company = typeof company.$inferSelect;

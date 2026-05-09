@@ -13,19 +13,15 @@ const skill = pgTable(
   'skill',
   {
     id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
-
     name: text('name').notNull(),
     description: text('description').notNull(),
     slug: text('slug').notNull().unique(),
-
     categoryId: integer('category_id')
       .notNull()
-      .references(() => skillCategory.id),
-
+      .references(() => skillCategory.id, { onDelete: 'cascade' }),
     searchVector: tsvector('search_vector').generatedAlwaysAs(
       sql`to_tsvector('english', coalesce("name", '') || ' ' || coalesce("description", ''))`,
     ),
-
     ...timestamps,
   },
   (table) => [
