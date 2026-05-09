@@ -82,19 +82,6 @@ export class JobPostingController {
   };
 
   /**
-   * Returns status history for one job posting.
-   *
-   * This is currently a lightweight placeholder for a future audit trail API.
-   *
-   * @param req Express request containing the posting id.
-   * @param res Express response returning status history data.
-   */
-  getJobPostingStatusHistory = async (req: Request<JobPostingParams>, res: Response) => {
-    const result = await this.jobPostingService.getJobPostingStatusHistory(req.params.id);
-    res.status(200).json(result);
-  };
-
-  /**
    * Updates one job posting.
    *
    * Recruiters can edit allowed posting fields and request recruiter-owned

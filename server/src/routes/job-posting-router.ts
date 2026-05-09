@@ -14,8 +14,6 @@ export const getJobPostingRouter = () => {
 
   router.get('/active', jobPostingController.getPublicJobPostings);
 
-  router.get('/:id/status-history', jobPostingController.getJobPostingStatusHistory);
-
   router.get('/:id', optionalAuth, jobPostingController.getJobPostingById);
 
   router.post('/', authGuard([USER_ROLE.RECRUITER]), jobPostingController.createJobPosting);

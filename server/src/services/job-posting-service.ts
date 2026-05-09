@@ -182,15 +182,6 @@ export class JobPostingService {
     return user?.role === USER_ROLE.RECRUITER && user.companyId === jobPosting.companyId;
   }
 
-  async getJobPostingStatusHistory(jobPostingId: string) {
-    return {
-      data: [],
-      meta: {
-        jobPostingId,
-      },
-    };
-  }
-
   async updateJobPosting(id: unknown, payload: unknown, user: AuthenticatedUser): Promise<JobPosting> {
     const idValidationResult = JobPostingIdParamSchema.safeParse({ id });
 
