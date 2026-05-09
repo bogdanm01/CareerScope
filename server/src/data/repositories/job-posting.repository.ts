@@ -3,10 +3,10 @@ import { DbClient } from '../../config/db-client.ts';
 import { jobPosting, JobPosting, JobPostingInsert, JobPostingStatus } from '../schema/job-posting.schema.ts';
 import { TOKENS } from '../../config/dependency-tokens.ts';
 import { GenericRepository } from './generic.repository.ts';
-import { and, asc, countDistinct, desc, eq, getTableColumns, or, SQL } from 'drizzle-orm';
+import { and, asc, countDistinct, desc, eq, getTableColumns, ilike, or, SQL } from 'drizzle-orm';
 import { jobPostingSkill } from '../schema/job-posting-skill.schema.ts';
 import skill from '../schema/skill.schema.ts';
-import type { ActiveJobPostingsRequest, JobPostingDetailInclude } from '../../lib/zod/job-posting.zod-schema.ts';
+import type { JobPostingDetailInclude, JobPostingListRequest } from '../../lib/zod/job-posting.zod-schema.ts';
 import { company } from '../schema/company.schema.ts';
 import { jobPostingStatusHistory } from '../schema/job-posting-status-history.schema.ts';
 import type { SelectedFields } from 'drizzle-orm/pg-core/query-builders/select.types';
@@ -106,10 +106,11 @@ export class JobPostingRepository extends GenericRepository<JobPosting, JobPosti
     status?: JobPostingStatus,
     companyId?: number,
     skills?: string[],
-    orderBy: ActiveJobPostingsRequest['orderBy'] = 'createdAt',
-    sort: ActiveJobPostingsRequest['sort'] = 'desc',
+    orderBy: JobPostingListRequest['orderBy'] = 'createdAt',
+    sort: JobPostingListRequest['sort'] = 'desc',
     page: number = 1,
     limit: number = 50,
+    search?: string,
   ): Promise<FindJobPostingsResult> {
     const skip = (page - 1) * limit;
     const jobPostingSelectColumns = {
@@ -148,6 +149,10 @@ export class JobPostingRepository extends GenericRepository<JobPosting, JobPosti
 
     if (companyId) {
       conditions.push(eq(jobPosting.companyId, companyId));
+    }
+
+    if (search) {
+      conditions.push(ilike(jobPosting.title, `%${search}%`));
     }
 
     if (skills?.length > 0) {
