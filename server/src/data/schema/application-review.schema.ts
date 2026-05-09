@@ -1,4 +1,4 @@
-import { boolean, check, date, integer, pgTable, text } from 'drizzle-orm/pg-core';
+import { check, integer, pgTable, text } from 'drizzle-orm/pg-core';
 import { jobApplication } from './job-application.schema.ts';
 import { timestamps } from '../util/utils.ts';
 import { sql } from 'drizzle-orm';
@@ -7,12 +7,11 @@ import { company } from './company.schema.ts';
 export const applicationReview = pgTable(
   'application_review',
   {
-    id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
-    jobApplicationId: integer('job_application_id').references(() => jobApplication.id),
-    companyId: integer('company_id').references(() => company.id),
-    rating: integer('rating').notNull(),
-    comment: text('comment').notNull(),
-    isDeleted: boolean('is_deleted').default(false).notNull(),
+    id: integer().primaryKey().generatedAlwaysAsIdentity(),
+    jobApplicationId: integer().references(() => jobApplication.id),
+    companyId: integer().references(() => company.id),
+    rating: integer().notNull(),
+    comment: text().notNull(),
     ...timestamps,
   },
   (table) => [check('rating_range_check', sql`${table.rating} BETWEEN 1 AND 5`)],

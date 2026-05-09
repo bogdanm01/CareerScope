@@ -10,8 +10,6 @@ import logger from './config/logger.ts';
 
 import { auth } from './config/auth.ts';
 import { toNodeHandler } from 'better-auth/node';
-import { getApiRouter } from './routes/index.ts';
-import { globalErrorHandler } from './middleware/global-error-handler.ts';
 
 const configureMiddleware = (app: express.Application): void => {
   app.use(helmet());
@@ -19,27 +17,24 @@ const configureMiddleware = (app: express.Application): void => {
   app.use(
     cors({
       origin: env.CLIENT_URL,
-      methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+      methods: ['GET', 'POST', 'PUT', 'DELETE'],
       credentials: true,
     }),
   );
   app.all('/api/auth/*splat', toNodeHandler(auth));
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
-  app.use('/api', getApiRouter());
-  app.use(globalErrorHandler);
+  // TODO: Route registration
 };
 
 const createApp = (): express.Application => {
   const app = express();
   configureMiddleware(app);
+
   return app;
 };
 
-await registerDependencies().catch((err) => {
-  logger.error(err, 'Failed to register dependencies');
-  process.exit(1);
-});
+registerDependencies();
 
 const app = createApp();
 

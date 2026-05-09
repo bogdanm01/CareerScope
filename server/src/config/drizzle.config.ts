@@ -5,9 +5,8 @@ import env from './env.ts';
 export default defineConfig({
   dialect: 'postgresql',
   schema: './src/data/schema/*.schema.ts',
-  out: './src/data/migrations',
+  out: './drizzle',
   dbCredentials: {
     url: env.DRIZZLE_DATABASE_URL,
   },
-  verbose: true,
 });

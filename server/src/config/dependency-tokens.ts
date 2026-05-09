@@ -1,8 +1,4 @@
 export const TOKENS = {
-  db: Symbol('DbClient'),
-  redis: Symbol('RedisClient'),
-
-  jobPostingController: Symbol('JobPostingController'),
-  jobPostingService: Symbol('JobPostingService'),
-  jobPostingRepository: Symbol('JobPostingRepository'),
+  db: Symbol('DB_CLIENT'),
+  redis: Symbol('REDIS_CLIENT'),
 } as const;
