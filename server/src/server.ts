@@ -12,6 +12,7 @@ import { auth } from './config/auth.ts';
 import { toNodeHandler } from 'better-auth/node';
 import { getApiRouter } from './routes/index.ts';
 import { globalErrorHandler } from './middleware/global-error-handler.ts';
+import { registerExpireJobPostingsJob } from './jobs/expire-job-postings.job.ts';
 
 const configureMiddleware = (app: express.Application): void => {
   app.use(helmet());
@@ -32,7 +33,10 @@ const configureMiddleware = (app: express.Application): void => {
 
 const createApp = (): express.Application => {
   const app = express();
+
   configureMiddleware(app);
+  registerExpireJobPostingsJob();
+
   return app;
 };
 

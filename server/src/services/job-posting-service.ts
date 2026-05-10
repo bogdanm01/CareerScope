@@ -22,6 +22,7 @@ import { BadRequestError, ForbiddenError, NotFoundError } from '../lib/app-error
 import { ERROR_CODE } from '../lib/error-codes.ts';
 import { PaginatedResult, SingleResult } from '../lib/api-response.ts';
 import { IntegerIdSchema } from '../lib/zod/integer-id.zod-schema.ts';
+import { toEndOfDayUtc } from '../lib/date.ts';
 
 type AuthenticatedUser = Request['user'];
 type JobPostingSkillState = {
@@ -72,7 +73,7 @@ export class JobPostingService {
       description: newJobPosting.description,
       status: newJobPosting.status,
       createdBy: user.id,
-      expiresAt: newJobPosting.expiresAt,
+      expiresAt: toEndOfDayUtc(newJobPosting.expiresAt),
       skills: newJobPosting.skills,
     });
   }
@@ -250,8 +251,8 @@ export class JobPostingService {
       id,
       {
         title: updatePayload.title,
-        description: updatePayload.description,
-        expiresAt: updatePayload.expiresAt,
+      description: updatePayload.description,
+        expiresAt: updatePayload.expiresAt ? toEndOfDayUtc(updatePayload.expiresAt) : undefined,
         status: nextStatus,
         skills: updatePayload.skills,
         statusHistoryReason: this.getStatusHistoryReason(
@@ -335,7 +336,10 @@ export class JobPostingService {
       return true;
     }
 
-    if (payload.expiresAt !== undefined && payload.expiresAt.getTime() !== existingJobPosting.expiresAt?.getTime()) {
+    if (
+      payload.expiresAt !== undefined &&
+      toEndOfDayUtc(payload.expiresAt).getTime() !== existingJobPosting.expiresAt?.getTime()
+    ) {
       return true;
     }
 
