@@ -1,4 +1,4 @@
-import { getJobPostingRouter } from './job-posting-router.ts';
+import { getJobPostingRouter } from './job-posting.router.ts';
 import express from 'express';
 
 export const getApiRouter = () => {

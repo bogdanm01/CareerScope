@@ -1,5 +1,5 @@
 import { inject, injectable } from 'tsyringe';
-import { JobPostingService } from '../services/job-posting-service.ts';
+import { JobPostingService } from '../services/job-posting.service.ts';
 import { Request, Response } from 'express';
 import { TOKENS } from '../config/dependency-tokens.ts';
 import { ApiSuccessResponse, successResponse } from '../lib/api-response.ts';
@@ -101,8 +101,8 @@ export class JobPostingController {
    * @param req Express request containing the posting id and authenticated user.
    * @param res Express response with no content on success.
    */
-  deleteJobPosting = async (req: Request, res: Response) => {
+  async deleteJobPosting(req: Request, res: Response) {
     const result = await this.jobPostingService.deleteJobPosting(req.params.id, req.user);
     res.status(200).json(successResponse(result));
-  };
+  }
 }
