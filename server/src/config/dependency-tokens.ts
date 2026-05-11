@@ -5,4 +5,8 @@ export const TOKENS = {
   jobPostingController: Symbol('JobPostingController'),
   jobPostingService: Symbol('JobPostingService'),
   jobPostingRepository: Symbol('JobPostingRepository'),
+
+  jobApplicationController: Symbol('JobApplicationController'),
+  jobApplicationService: Symbol('JobApplicationService'),
+  jobApplicationRepository: Symbol('JobApplicationRepository'),
 } as const;
