@@ -10,25 +10,16 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@mantine/charts": "^9.1.1",
-    "@mantine/core": "^9.1.1",
-    "@mantine/dates": "^9.1.1",
-    "@mantine/dropzone": "^9.1.1",
-    "@mantine/form": "^9.1.1",
-    "@mantine/hooks": "^9.1.1",
-    "@mantine/modals": "^9.1.1",
-    "@mantine/notifications": "^9.1.1",
-    "@mantine/tiptap": "^9.1.1",
-    "@tiptap/extension-link": "^3.22.5",
-    "@tiptap/pm": "^3.22.5",
-    "@tiptap/react": "^3.22.5",
-    "@tiptap/starter-kit": "^3.22.5",
+    "@heroui/react": "^3.0.4",
+    "@heroui/styles": "^3.0.4",
+    "@tailwindcss/vite": "^4.3.0",
     "dayjs": "^1.11.20",
     "jotai": "^2.19.1",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "react-router-dom": "^7.14.2",
-    "recharts": "^3.8.1"
+    "recharts": "^3.8.1",
+    "tailwindcss": "^4.3.0"
   },
   "devDependencies": {
     "@babel/core": "^7.29.0",
