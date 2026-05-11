@@ -7,10 +7,8 @@ import { Request, Response } from 'express';
 export class JobApplicationController {
   constructor(@inject(TOKENS.jobApplicationService) private jobApplicationService: JobApplicationService) {}
 
-  createJobApplication = async (_req: Request, res: Response) => {
-    res.status(501).json({
-      success: false,
-      message: 'Job application creation is not implemented yet.',
-    });
+  createJobApplication = async (req: Request, res: Response) => {
+    await this.jobApplicationService.createJobApplication(req.params.jobPostingId, req.body);
+    res.status(201).send();
   };
 }
