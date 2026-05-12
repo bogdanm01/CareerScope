@@ -8,7 +8,7 @@ export class JobApplicationController {
   constructor(@inject(TOKENS.jobApplicationService) private jobApplicationService: JobApplicationService) {}
 
   createJobApplication = async (req: Request, res: Response) => {
-    await this.jobApplicationService.createJobApplication(req.params.jobPostingId, req.body);
+    await this.jobApplicationService.createJobApplication(req.params.jobPostingId, req.body, req.user);
     res.status(201).send();
   };
 }
