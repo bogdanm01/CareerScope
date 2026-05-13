@@ -4,6 +4,7 @@ import { JobApplicationService } from '../services/job-application.service.ts';
 import { Request, Response } from 'express';
 import { successResponse } from '../lib/api-response.ts';
 import { JobApplication } from '../data/schema/job-application.schema.ts';
+import { JobApplicationDetail } from '../data/repositories/job-application.repository.ts';
 
 @injectable()
 export class JobApplicationController {
@@ -25,9 +26,14 @@ export class JobApplicationController {
   }
 
   /**
+   * Returns job applications for one job posting.
    *
-   * @param req
-   * @param res
+   * Admins can retrieve applications for any posting, while recruiters are
+   * scoped to postings owned by their company. The service validates the job
+   * posting id, query pagination, and access rules.
+   *
+   * @param req Express request containing the job posting id, query parameters, and authenticated user.
+   * @param res Express response returning paginated job applications with applicant details.
    */
   async getJobApplications(req: Request, res: Response) {
     const result = await this.jobApplicationService.getJobApplications(req.params.id, req.query, req.user);
@@ -35,11 +41,17 @@ export class JobApplicationController {
   }
 
   /**
+   * Returns one job application with candidate and job posting context.
    *
-   * @param req
-   * @param res
+   * The service validates the application id and applies recruiter company
+   * scoping before returning applicant details, candidate skills, compact job
+   * posting data, and required job posting skills.
+   *
+   * @param req Express request containing the job application id and authenticated user.
+   * @param res Express response returning the job application detail.
    */
   async getJobApplication(req: Request, res: Response) {
-    throw Error('Not implemented');
+    const result = await this.jobApplicationService.getJobApplicationById(req.params.id, req.user);
+    res.status(200).json(successResponse<JobApplicationDetail>(result.data));
   }
 }

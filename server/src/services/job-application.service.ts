@@ -1,6 +1,7 @@
 import { inject, injectable } from 'tsyringe';
 import { TOKENS } from '../config/dependency-tokens.ts';
 import {
+  JobApplicationDetail,
   JobApplicationListItem,
   JobApplicationRepository,
 } from '../data/repositories/job-application.repository.ts';
@@ -18,7 +19,7 @@ import { JOB_APPLICATION_STATUS, JOB_POSTING_STATUS, USER_ROLE } from '../data/u
 import { Request } from 'express';
 import { JobApplication } from '../data/schema/job-application.schema.ts';
 import { ERROR_CODE } from '../lib/error-codes.ts';
-import { PaginatedResult } from '../lib/api-response.ts';
+import { PaginatedResult, SingleResult } from '../lib/api-response.ts';
 
 type AuthenticatedUser = Request['user'];
 const DUPLICATE_JOB_APPLICATION_CONSTRAINT = 'user_id_job_posting_id_unq';
@@ -125,6 +126,39 @@ export class JobApplicationService {
         totalPages: Math.ceil(result.totalItems / query.limit),
         totalItems: result.totalItems,
       },
+    };
+  }
+
+  async getJobApplicationById(
+    jobApplicationId: unknown,
+    user: AuthenticatedUser,
+  ): Promise<SingleResult<JobApplicationDetail>> {
+    const idValidationResult = IntegerIdSchema.safeParse({ id: jobApplicationId });
+
+    if (!idValidationResult.success) {
+      throw new ZodValidationError(idValidationResult.error);
+    }
+
+    let companyId: number | undefined;
+
+    if (user.role === USER_ROLE.RECRUITER) {
+      if (!user.companyId) {
+        throw new ForbiddenError('User is not assigned to a company.');
+      }
+
+      companyId = user.companyId;
+    }
+
+    const validId = idValidationResult.data.id;
+
+    const result = await this.jobApplicationRepository.findJobApplication(validId, companyId);
+
+    if (!result) {
+      throw new NotFoundError(`No job application found with provided id.`);
+    }
+
+    return {
+      data: result,
     };
   }
 

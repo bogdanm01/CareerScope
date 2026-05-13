@@ -3,7 +3,6 @@ import { container } from 'tsyringe';
 import { TOKENS } from '../config/dependency-tokens.ts';
 import { authGuard } from '../middleware/auth-guard.ts';
 import { USER_ROLE } from '../data/util/constants.ts';
-import { optionalAuth } from '../middleware/optional-auth.ts';
 import { JobApplicationController } from '../controllers/job-application.controller.ts';
 
 export const getJobApplicationRouter = () => {
@@ -13,7 +12,7 @@ export const getJobApplicationRouter = () => {
   router.get(
     '/:id',
     authGuard([USER_ROLE.RECRUITER, USER_ROLE.ADMIN]),
-    jobApplicationController.getJobApplications.bind(jobApplicationController),
+    jobApplicationController.getJobApplication.bind(jobApplicationController),
   );
 
   return router;
