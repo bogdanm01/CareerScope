@@ -4,7 +4,7 @@ import { JobApplicationService } from '../services/job-application.service.ts';
 import { Request, Response } from 'express';
 import { successResponse } from '../lib/api-response.ts';
 import { JobApplication } from '../data/schema/job-application.schema.ts';
-import { JobApplicationDetail } from '../data/repositories/job-application.repository.ts';
+import { JobApplicationDetail, JobApplicationListItem } from '../data/repositories/job-application.repository.ts';
 
 @injectable()
 export class JobApplicationController {
@@ -52,6 +52,16 @@ export class JobApplicationController {
    */
   async getJobApplication(req: Request, res: Response) {
     const result = await this.jobApplicationService.getJobApplicationById(req.params.id, req.user);
+    res.status(200).json(successResponse<JobApplicationDetail>(result.data));
+  }
+
+  async getMyJobApplications(req: Request, res: Response) {
+    const result = await this.jobApplicationService.getMyJobApplications(req.query, req.user);
+    res.status(200).json(successResponse<JobApplicationListItem[]>(result.data, undefined, result.pagination));
+  }
+
+  async getMyJobApplication(req: Request, res: Response) {
+    const result = await this.jobApplicationService.getMyJobApplicationById(req.params.id, req.user);
     res.status(200).json(successResponse<JobApplicationDetail>(result.data));
   }
 }

@@ -11,7 +11,7 @@ import {
   JobApplicationCreateRequestSchema,
   JobApplicationListRequestSchema,
 } from '../lib/zod/job-application.zod-schema.ts';
-import { ConflictError, ForbiddenError, NotFoundError } from '../lib/app-error.ts';
+import { AppError, ConflictError, ForbiddenError, NotFoundError } from '../lib/app-error.ts';
 import { JobPostingRepository } from '../data/repositories/job-posting.repository.ts';
 import { jobPosting } from '../data/schema/job-posting.schema.ts';
 import { and, eq, gte } from 'drizzle-orm';
@@ -160,6 +160,26 @@ export class JobApplicationService {
     return {
       data: result,
     };
+  }
+
+  async getMyJobApplications(
+    payload: unknown,
+    user: AuthenticatedUser,
+  ): Promise<PaginatedResult<JobApplicationListItem>> {
+    void payload;
+    void user;
+
+    throw new AppError(501, 'Candidate job application list endpoint is not implemented yet.');
+  }
+
+  async getMyJobApplicationById(
+    jobApplicationId: unknown,
+    user: AuthenticatedUser,
+  ): Promise<SingleResult<JobApplicationDetail>> {
+    void jobApplicationId;
+    void user;
+
+    throw new AppError(501, 'Candidate job application detail endpoint is not implemented yet.');
   }
 
   private isDuplicateJobApplicationError(error: unknown): boolean {
