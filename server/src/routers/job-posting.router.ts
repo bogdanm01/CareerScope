@@ -12,34 +12,33 @@ export const getJobPostingRouter = () => {
   const jobPostingController = container.resolve<JobPostingController>(TOKENS.jobPostingController);
   const jobApplicationController = container.resolve<JobApplicationController>(TOKENS.jobApplicationController);
 
+  router.get('/active', jobPostingController.getPublicJobPostings.bind(jobPostingController));
+
   router.get(
     '/',
     authGuard([USER_ROLE.RECRUITER, USER_ROLE.ADMIN]),
     jobPostingController.getJobPostings.bind(jobPostingController),
   );
 
-  router.get('/active', jobPostingController.getPublicJobPostings.bind(jobPostingController));
-
   router.post(
-    '/:jobPostingId/applications',
-    authGuard([USER_ROLE.CANDIDATE]),
-    jobApplicationController.createJobApplication.bind(jobApplicationController),
+    '/',
+    authGuard([USER_ROLE.RECRUITER]),
+    jobPostingController.createJobPosting.bind(jobPostingController),
   );
 
-  // GET /api/job-postings/:jobPostingId/applications
   router.get(
     '/:id/applications',
     authGuard([USER_ROLE.RECRUITER, USER_ROLE.ADMIN]),
     jobApplicationController.getJobApplications.bind(jobApplicationController),
   );
 
-  router.get('/:id', optionalAuth, jobPostingController.getJobPostingById.bind(jobPostingController));
-
   router.post(
-    '/',
-    authGuard([USER_ROLE.RECRUITER]),
-    jobPostingController.createJobPosting.bind(jobPostingController),
+    '/:id/applications',
+    authGuard([USER_ROLE.CANDIDATE]),
+    jobApplicationController.createJobApplication.bind(jobApplicationController),
   );
+
+  router.get('/:id', optionalAuth, jobPostingController.getJobPostingById.bind(jobPostingController));
 
   router.patch(
     '/:id',
