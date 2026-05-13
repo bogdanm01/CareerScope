@@ -151,7 +151,7 @@ export class JobApplicationService {
 
     const validId = idValidationResult.data.id;
 
-    const result = await this.jobApplicationRepository.findJobApplication(validId, companyId);
+    const result = await this.jobApplicationRepository.findJobApplicationDetail(validId, companyId);
 
     if (!result) {
       throw new NotFoundError(`No job application found with provided id.`);

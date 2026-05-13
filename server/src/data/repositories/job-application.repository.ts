@@ -128,7 +128,7 @@ export class JobApplicationRepository extends GenericRepository<JobApplication, 
     };
   }
 
-  async findJobApplication(jobApplicationId: number, companyId?: number): Promise<JobApplicationDetail | null> {
+  async findJobApplicationDetail(jobApplicationId: number, companyId?: number): Promise<JobApplicationDetail | null> {
     const baseFilters: SQL[] = [
       eq(jobApplication.id, jobApplicationId),
       eq(jobApplication.isDeleted, false),
