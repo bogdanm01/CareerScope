@@ -19,8 +19,15 @@ export class JobApplicationController {
    * @param req Express request containing the job posting id, creation payload, and authenticated user.
    * @param res Express response returning the created job application.
    */
-  createJobApplication = async (req: Request, res: Response) => {
+  async createJobApplication(req: Request, res: Response) {
     const result = await this.jobApplicationService.createJobApplication(req.params.jobPostingId, req.body, req.user);
     res.status(201).send(successResponse<JobApplication>(result, 'Job application created'));
-  };
+  }
+
+  async getJobApplications(_req: Request, res: Response) {
+    res.status(501).json({
+      success: false,
+      message: 'Job application listing is not implemented yet.',
+    });
+  }
 }
