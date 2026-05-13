@@ -20,14 +20,17 @@ export class JobApplicationController {
    * @param res Express response returning the created job application.
    */
   async createJobApplication(req: Request, res: Response) {
-    const result = await this.jobApplicationService.createJobApplication(req.params.jobPostingId, req.body, req.user);
+    const result = await this.jobApplicationService.createJobApplication(req.params.id, req.body, req.user);
     res.status(201).send(successResponse<JobApplication>(result, 'Job application created'));
   }
 
-  async getJobApplications(_req: Request, res: Response) {
-    res.status(501).json({
-      success: false,
-      message: 'Job application listing is not implemented yet.',
-    });
+  /**
+   *
+   * @param req
+   * @param res
+   */
+  async getJobApplications(req: Request, res: Response) {
+    const result = await this.jobApplicationService.getJobApplications(req.params.id, req.query, req.user);
+    res.status(200).json(successResponse(result.data, undefined, result.pagination));
   }
 }
