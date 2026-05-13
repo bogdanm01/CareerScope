@@ -33,4 +33,13 @@ export class JobApplicationController {
     const result = await this.jobApplicationService.getJobApplications(req.params.id, req.query, req.user);
     res.status(200).json(successResponse(result.data, undefined, result.pagination));
   }
+
+  /**
+   *
+   * @param req
+   * @param res
+   */
+  async getJobApplication(req: Request, res: Response) {
+    throw Error('Not implemented');
+  }
 }
