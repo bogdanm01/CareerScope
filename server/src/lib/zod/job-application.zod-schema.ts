@@ -4,7 +4,7 @@ export const JobApplicationCreateRequestSchema = z
   .object({
     status: z.never({
       error: 'status cannot be provided when creating a job application.',
-    }),
+    }).optional(),
   })
   .strict();
 

@@ -22,7 +22,7 @@ export class JobPostingController {
    */
   createJobPosting = async (req: Request, res: Response<ApiSuccessResponse<JobPosting>>) => {
     const result = await this.jobPostingService.createJobPosting(req.body, req.user);
-    res.status(201).json(successResponse<JobPosting>(result));
+    res.status(201).json(successResponse<JobPosting>(result, 'Job posting created'));
   };
 
   /**
