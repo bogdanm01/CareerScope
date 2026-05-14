@@ -16,6 +16,20 @@ type FindJobPostingsResult = {
   totalItems: number;
 };
 
+type FindJobPostingsFilters = {
+  status?: JobPostingStatus;
+  companyId?: number;
+  skills?: string[];
+  orderBy?: JobPostingListRequest['orderBy'];
+  sort?: JobPostingListRequest['sort'];
+  search?: string;
+};
+
+type FindJobPostingsPagination = {
+  page?: number;
+  pageSize?: number;
+};
+
 export type JobPostingListItem = Omit<JobPosting, 'companyId' | 'description' | 'isDeleted'> & {
   company: {
     id: number;
@@ -103,16 +117,12 @@ export class JobPostingRepository extends GenericRepository<JobPosting, JobPosti
   }
 
   async findJobPostings(
-    status?: JobPostingStatus,
-    companyId?: number,
-    skills?: string[],
-    orderBy: JobPostingListRequest['orderBy'] = 'createdAt',
-    sort: JobPostingListRequest['sort'] = 'desc',
-    page: number = 1,
-    limit: number = 50,
-    search?: string,
+    filters: FindJobPostingsFilters = {},
+    pagination: FindJobPostingsPagination = {},
   ): Promise<FindJobPostingsResult> {
-    const skip = (page - 1) * limit;
+    const { status, companyId, skills, orderBy = 'createdAt', sort = 'desc', search } = filters;
+    const { page = 1, pageSize = 50 } = pagination;
+    const skip = (page - 1) * pageSize;
     const jobPostingSelectColumns = {
       id: jobPosting.id,
       title: jobPosting.title,
@@ -182,7 +192,7 @@ export class JobPostingRepository extends GenericRepository<JobPosting, JobPosti
       query = query.orderBy(asc(jobPosting[orderBy]));
     }
 
-    query = query.limit(limit);
+    query = query.limit(pageSize);
     query = query.offset(skip);
 
     const [data, [countResult]] = await Promise.all([query, countQuery]);

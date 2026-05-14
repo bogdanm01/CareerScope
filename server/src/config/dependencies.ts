@@ -2,9 +2,13 @@ import { DbClient, getDbClient } from './db-client.ts';
 import { getRedisClient, RedisClient } from './redis-client.ts';
 import { container } from 'tsyringe';
 import { TOKENS } from './dependency-tokens.ts';
-import { JobPostingService } from '../services/job-posting-service.ts';
-import { JobPostingController } from '../controllers/job-posting-controller.ts';
+import { JobPostingService } from '../services/job-posting.service.ts';
+import { JobPostingController } from '../controllers/job-posting.controller.ts';
 import { JobPostingRepository } from '../data/repositories/job-posting.repository.ts';
+
+import { JobApplicationController } from '../controllers/job-application.controller.ts';
+import { JobApplicationService } from '../services/job-application.service.ts';
+import { JobApplicationRepository } from '../data/repositories/job-application.repository.ts';
 
 export const registerDependencies = async () => {
   const dbClient = getDbClient();
@@ -16,4 +20,8 @@ export const registerDependencies = async () => {
   container.register<JobPostingController>(TOKENS.jobPostingController, { useClass: JobPostingController });
   container.register<JobPostingService>(TOKENS.jobPostingService, { useClass: JobPostingService });
   container.register<JobPostingRepository>(TOKENS.jobPostingRepository, { useClass: JobPostingRepository });
+
+  container.register<JobApplicationController>(TOKENS.jobApplicationController, { useClass: JobApplicationController });
+  container.register<JobApplicationService>(TOKENS.jobApplicationService, { useClass: JobApplicationService });
+  container.register<JobApplicationRepository>(TOKENS.jobApplicationRepository, { useClass: JobApplicationRepository });
 };
