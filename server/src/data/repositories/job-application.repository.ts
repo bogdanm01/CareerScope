@@ -4,7 +4,7 @@ import { inject, injectable } from 'tsyringe';
 import { TOKENS } from '../../config/dependency-tokens.ts';
 import { DbClient } from '../../config/db-client.ts';
 import { applicationStatusHistory } from '../schema/application-status-history.schema.ts';
-import { and, asc, count, eq, SQL, sql } from 'drizzle-orm';
+import { and, asc, count, desc, eq, SQL, sql } from 'drizzle-orm';
 import { user } from '../schema/auth.schema.ts';
 import { jobPosting } from '../schema/job-posting.schema.ts';
 import { userSkill } from '../schema/user-skill.schema.ts';
@@ -27,6 +27,20 @@ export type JobApplicationListItem = JobApplication & {
     fullName: string;
     email: string;
     image: string | null;
+  };
+};
+
+export type CandidateJobApplicationListItem = JobApplication & {
+  jobPosting: {
+    id: number;
+    title: string | null;
+    status: string;
+    expiresAt: Date | null;
+    company: {
+      id: number;
+      name: string;
+      logoUrl: string | null;
+    };
   };
 };
 
@@ -124,6 +138,78 @@ export class JobApplicationRepository extends GenericRepository<JobApplication, 
 
     return {
       data,
+      totalItems: countResult?.totalItems ?? 0,
+    };
+  }
+
+  async findByUserId(userId: string, pagination: FindByJobPostingPagination = {}): Promise<{
+    data: CandidateJobApplicationListItem[];
+    totalItems: number;
+  }> {
+    const page = pagination.page ?? 1;
+    const pageSize = pagination.pageSize ?? 50;
+    const offset = (page - 1) * pageSize;
+    const filters = and(
+      eq(jobApplication.userId, userId),
+      eq(jobApplication.isDeleted, false),
+      eq(jobPosting.isDeleted, false),
+      eq(company.isDeleted, false),
+    );
+
+    const query = this.db
+      .select({
+        id: jobApplication.id,
+        userId: jobApplication.userId,
+        jobPostingId: jobApplication.jobPostingId,
+        status: jobApplication.status,
+        isDeleted: jobApplication.isDeleted,
+        createdAt: jobApplication.createdAt,
+        updatedAt: jobApplication.updatedAt,
+        jobPostingTitle: jobPosting.title,
+        jobPostingStatus: jobPosting.status,
+        jobPostingExpiresAt: jobPosting.expiresAt,
+        companyId: company.id,
+        companyName: company.name,
+        companyLogoUrl: company.logoUrl,
+      })
+      .from(jobApplication)
+      .innerJoin(jobPosting, eq(jobApplication.jobPostingId, jobPosting.id))
+      .innerJoin(company, eq(jobPosting.companyId, company.id))
+      .where(filters)
+      .orderBy(desc(jobApplication.createdAt))
+      .limit(pageSize)
+      .offset(offset);
+
+    const countQuery = this.db
+      .select({ totalItems: count() })
+      .from(jobApplication)
+      .innerJoin(jobPosting, eq(jobApplication.jobPostingId, jobPosting.id))
+      .innerJoin(company, eq(jobPosting.companyId, company.id))
+      .where(filters);
+
+    const [data, [countResult]] = await Promise.all([query, countQuery]);
+
+    return {
+      data: data.map((record) => ({
+        id: record.id,
+        userId: record.userId,
+        jobPostingId: record.jobPostingId,
+        status: record.status,
+        isDeleted: record.isDeleted,
+        createdAt: record.createdAt,
+        updatedAt: record.updatedAt,
+        jobPosting: {
+          id: record.jobPostingId,
+          title: record.jobPostingTitle,
+          status: record.jobPostingStatus,
+          expiresAt: record.jobPostingExpiresAt,
+          company: {
+            id: record.companyId,
+            name: record.companyName,
+            logoUrl: record.companyLogoUrl,
+          },
+        },
+      })),
       totalItems: countResult?.totalItems ?? 0,
     };
   }

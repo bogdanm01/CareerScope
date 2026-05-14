@@ -1,6 +1,7 @@
 import { inject, injectable } from 'tsyringe';
 import { TOKENS } from '../config/dependency-tokens.ts';
 import {
+  CandidateJobApplicationListItem,
   JobApplicationDetail,
   JobApplicationListItem,
   JobApplicationRepository,
@@ -165,11 +166,28 @@ export class JobApplicationService {
   async getMyJobApplications(
     payload: unknown,
     user: AuthenticatedUser,
-  ): Promise<PaginatedResult<JobApplicationListItem>> {
-    void payload;
-    void user;
+  ): Promise<PaginatedResult<CandidateJobApplicationListItem>> {
+    const validationResult = JobApplicationListRequestSchema.safeParse(payload);
 
-    throw new AppError(501, 'Candidate job application list endpoint is not implemented yet.');
+    if (!validationResult.success) {
+      throw new ZodValidationError(validationResult.error);
+    }
+
+    const query = validationResult.data;
+    const result = await this.jobApplicationRepository.findByUserId(user.id, {
+      page: query.page,
+      pageSize: query.limit,
+    });
+
+    return {
+      data: result.data,
+      pagination: {
+        currentPage: query.page,
+        pageSize: query.limit,
+        totalPages: Math.ceil(result.totalItems / query.limit),
+        totalItems: result.totalItems,
+      },
+    };
   }
 
   async getMyJobApplicationById(
