@@ -73,7 +73,7 @@ export class JobPostingService {
       description: newJobPosting.description,
       status: newJobPosting.status,
       createdBy: user.id,
-      expiresAt: toEndOfDayUtc(newJobPosting.expiresAt),
+      expiresAt: newJobPosting.expiresAt ? toEndOfDayUtc(newJobPosting.expiresAt) : undefined,
       skills: newJobPosting.skills,
     });
   }

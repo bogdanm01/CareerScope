@@ -6,9 +6,11 @@ import { redisStorage } from '@better-auth/redis-storage';
 import { USER_ROLE } from '../data/util/constants.ts';
 import { getDbClient } from './db-client.ts';
 import { getRedisClient } from './redis-client.ts';
+import env from './env.ts';
 
 export const auth = betterAuth({
   database: drizzleAdapter(getDbClient(), { provider: 'pg', schema }),
+  trustedOrigins: [env.CLIENT_URL],
   emailAndPassword: { enabled: true },
   secondaryStorage: redisStorage({
     client: getRedisClient(),
