@@ -58,11 +58,29 @@ export class JobApplicationController {
     res.status(200).json(successResponse<JobApplicationDetail>(result.data));
   }
 
+  /**
+   * Returns job applications for the authenticated candidate.
+   *
+   * The service validates pagination and scopes results to the authenticated
+   * candidate. Each result includes compact job posting and company context.
+   *
+   * @param req Express request containing query parameters and authenticated candidate.
+   * @param res Express response returning paginated candidate job applications.
+   */
   async getMyJobApplications(req: Request, res: Response) {
     const result = await this.jobApplicationService.getMyJobApplications(req.query, req.user);
     res.status(200).json(successResponse<CandidateJobApplicationListItem[]>(result.data, undefined, result.pagination));
   }
 
+  /**
+   * Returns one job application for the authenticated candidate.
+   *
+   * The service validates the application id and ensures the application
+   * belongs to the authenticated candidate before returning the detail DTO.
+   *
+   * @param req Express request containing the job application id and authenticated candidate.
+   * @param res Express response returning the candidate job application detail.
+   */
   async getMyJobApplication(req: Request, res: Response) {
     const result = await this.jobApplicationService.getMyJobApplicationById(req.params.id, req.user);
     res.status(200).json(successResponse<JobApplicationDetail>(result.data));

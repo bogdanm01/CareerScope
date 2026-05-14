@@ -22,6 +22,11 @@ type FindByJobPostingResult = {
   totalItems: number;
 };
 
+type FindJobApplicationDetailScope = {
+  companyId?: number;
+  userId?: string;
+};
+
 export type JobApplicationListItem = JobApplication & {
   user: {
     fullName: string;
@@ -214,7 +219,10 @@ export class JobApplicationRepository extends GenericRepository<JobApplication, 
     };
   }
 
-  async findJobApplicationDetail(jobApplicationId: number, companyId?: number): Promise<JobApplicationDetail | null> {
+  async findJobApplicationDetail(
+    jobApplicationId: number,
+    scope: FindJobApplicationDetailScope = {},
+  ): Promise<JobApplicationDetail | null> {
     const baseFilters: SQL[] = [
       eq(jobApplication.id, jobApplicationId),
       eq(jobApplication.isDeleted, false),
@@ -223,8 +231,12 @@ export class JobApplicationRepository extends GenericRepository<JobApplication, 
       eq(user.isDeleted, false),
     ];
 
-    if (companyId !== undefined) {
-      baseFilters.push(eq(jobPosting.companyId, companyId));
+    if (scope.companyId !== undefined) {
+      baseFilters.push(eq(jobPosting.companyId, scope.companyId));
+    }
+
+    if (scope.userId !== undefined) {
+      baseFilters.push(eq(jobApplication.userId, scope.userId));
     }
 
     const [record] = await this.db

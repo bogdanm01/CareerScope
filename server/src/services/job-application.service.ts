@@ -12,7 +12,7 @@ import {
   JobApplicationCreateRequestSchema,
   JobApplicationListRequestSchema,
 } from '../lib/zod/job-application.zod-schema.ts';
-import { AppError, ConflictError, ForbiddenError, NotFoundError } from '../lib/app-error.ts';
+import { ConflictError, ForbiddenError, NotFoundError } from '../lib/app-error.ts';
 import { JobPostingRepository } from '../data/repositories/job-posting.repository.ts';
 import { jobPosting } from '../data/schema/job-posting.schema.ts';
 import { and, eq, gte } from 'drizzle-orm';
@@ -152,7 +152,7 @@ export class JobApplicationService {
 
     const validId = idValidationResult.data.id;
 
-    const result = await this.jobApplicationRepository.findJobApplicationDetail(validId, companyId);
+    const result = await this.jobApplicationRepository.findJobApplicationDetail(validId, { companyId });
 
     if (!result) {
       throw new NotFoundError(`No job application found with provided id.`);
@@ -194,10 +194,22 @@ export class JobApplicationService {
     jobApplicationId: unknown,
     user: AuthenticatedUser,
   ): Promise<SingleResult<JobApplicationDetail>> {
-    void jobApplicationId;
-    void user;
+    const idValidationResult = IntegerIdSchema.safeParse({ id: jobApplicationId });
 
-    throw new AppError(501, 'Candidate job application detail endpoint is not implemented yet.');
+    if (!idValidationResult.success) {
+      throw new ZodValidationError(idValidationResult.error);
+    }
+
+    const validId = idValidationResult.data.id;
+    const result = await this.jobApplicationRepository.findJobApplicationDetail(validId, { userId: user.id });
+
+    if (!result) {
+      throw new NotFoundError(`No job application found with provided id.`);
+    }
+
+    return {
+      data: result,
+    };
   }
 
   private isDuplicateJobApplicationError(error: unknown): boolean {
