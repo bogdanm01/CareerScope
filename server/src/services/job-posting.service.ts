@@ -29,6 +29,9 @@ type JobPostingSkillState = {
   skillId: number;
   yoe?: number;
 };
+type PublicJobPostingsOptions = {
+  includeCompany?: boolean;
+};
 
 const RECRUITER_ALLOWED_STATUS_TRANSITIONS: Partial<Record<JobPostingStatus, JobPostingStatus[]>> = {
   [JOB_POSTING_STATUS.DRAFT]: [JOB_POSTING_STATUS.PENDING_APPROVAL],
@@ -70,6 +73,7 @@ export class JobPostingService {
     return await this.jobPostingRepository.insertWithSkills({
       companyId: user.companyId,
       title: newJobPosting.title,
+      shortDescription: newJobPosting.shortDescription,
       description: newJobPosting.description,
       status: newJobPosting.status,
       createdBy: user.id,
@@ -96,17 +100,20 @@ export class JobPostingService {
       companyId = user.companyId;
     }
 
-    const result = await this.jobPostingRepository.findJobPostings({
-      status: query.status,
-      companyId,
-      skills: query.skills,
-      orderBy: query.orderBy,
-      sort: query.sort,
-      search: query.search,
-    }, {
-      page: query.page,
-      pageSize: query.limit,
-    });
+    const result = await this.jobPostingRepository.findJobPostings(
+      {
+        status: query.status,
+        companyId,
+        skills: query.skills,
+        orderBy: query.orderBy,
+        sort: query.sort,
+        search: query.search,
+      },
+      {
+        page: query.page,
+        pageSize: query.limit,
+      },
+    );
 
     return {
       data: result.data,
@@ -119,7 +126,10 @@ export class JobPostingService {
     };
   }
 
-  async getPublicJobPostings(payload: unknown): Promise<PaginatedResult<JobPostingListItem>> {
+  async getPublicJobPostings(
+    payload: unknown,
+    options: PublicJobPostingsOptions = {},
+  ): Promise<PaginatedResult<JobPostingListItem>> {
     const validationResult = JobPostingListRequestSchema.safeParse(payload);
 
     if (!validationResult.success) {
@@ -128,17 +138,24 @@ export class JobPostingService {
 
     const query = validationResult.data;
 
-    const result = await this.jobPostingRepository.findJobPostings({
-      status: JOB_POSTING_STATUS.ACTIVE,
-      companyId: query.companyId,
-      skills: query.skills,
-      orderBy: query.orderBy,
-      sort: query.sort,
-      search: query.search,
-    }, {
-      page: query.page,
-      pageSize: query.limit,
-    });
+    const result = await this.jobPostingRepository.findJobPostings(
+      {
+        status: JOB_POSTING_STATUS.ACTIVE,
+        expiresAtFrom: new Date(),
+        companyId: query.companyId,
+        skills: query.skills,
+        orderBy: query.orderBy,
+        sort: query.sort,
+        search: query.search,
+      },
+      {
+        page: query.page,
+        pageSize: query.limit,
+      },
+      {
+        includeCompany: options.includeCompany,
+      },
+    );
 
     return {
       data: result.data,
@@ -239,6 +256,7 @@ export class JobPostingService {
     if (nextStatus === JOB_POSTING_STATUS.PENDING_APPROVAL) {
       const approvalReadyValidationResult = JobPostingReadyForApprovalSchema.safeParse({
         title: updatePayload.title ?? existingJobPosting.title,
+        shortDescription: updatePayload.shortDescription ?? existingJobPosting.shortDescription,
         description: updatePayload.description ?? existingJobPosting.description,
         expiresAt: updatePayload.expiresAt ?? existingJobPosting.expiresAt,
         skills: nextSkills,
@@ -253,7 +271,8 @@ export class JobPostingService {
       id,
       {
         title: updatePayload.title,
-      description: updatePayload.description,
+        shortDescription: updatePayload.shortDescription,
+        description: updatePayload.description,
         expiresAt: updatePayload.expiresAt ? toEndOfDayUtc(updatePayload.expiresAt) : undefined,
         status: nextStatus,
         skills: updatePayload.skills,
@@ -335,6 +354,10 @@ export class JobPostingService {
     }
 
     if (payload.description !== undefined && payload.description !== existingJobPosting.description) {
+      return true;
+    }
+
+    if (payload.shortDescription !== undefined && payload.shortDescription !== existingJobPosting.shortDescription) {
       return true;
     }
 

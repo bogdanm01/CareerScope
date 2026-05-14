@@ -9,6 +9,9 @@ import { JobPostingRepository } from '../data/repositories/job-posting.repositor
 import { JobApplicationController } from '../controllers/job-application.controller.ts';
 import { JobApplicationService } from '../services/job-application.service.ts';
 import { JobApplicationRepository } from '../data/repositories/job-application.repository.ts';
+import { CompanyController } from '../controllers/company.controller.ts';
+import { CompanyService } from '../services/company.service.ts';
+import { CompanyRepository } from '../data/repositories/company.repository.ts';
 
 export const registerDependencies = async () => {
   const dbClient = getDbClient();
@@ -24,4 +27,8 @@ export const registerDependencies = async () => {
   container.register<JobApplicationController>(TOKENS.jobApplicationController, { useClass: JobApplicationController });
   container.register<JobApplicationService>(TOKENS.jobApplicationService, { useClass: JobApplicationService });
   container.register<JobApplicationRepository>(TOKENS.jobApplicationRepository, { useClass: JobApplicationRepository });
+
+  container.register<CompanyController>(TOKENS.companyController, { useClass: CompanyController });
+  container.register<CompanyService>(TOKENS.companyService, { useClass: CompanyService });
+  container.register<CompanyRepository>(TOKENS.companyRepository, { useClass: CompanyRepository });
 };

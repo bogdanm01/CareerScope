@@ -3,7 +3,7 @@ import { DbClient } from '../../config/db-client.ts';
 import { jobPosting, JobPosting, JobPostingInsert, JobPostingStatus } from '../schema/job-posting.schema.ts';
 import { TOKENS } from '../../config/dependency-tokens.ts';
 import { GenericRepository } from './generic.repository.ts';
-import { and, asc, countDistinct, desc, eq, getTableColumns, ilike, or, SQL } from 'drizzle-orm';
+import { and, asc, countDistinct, desc, eq, getTableColumns, gte, ilike, or, SQL } from 'drizzle-orm';
 import { jobPostingSkill } from '../schema/job-posting-skill.schema.ts';
 import skill from '../schema/skill.schema.ts';
 import type { JobPostingDetailInclude, JobPostingListRequest } from '../../lib/zod/job-posting.zod-schema.ts';
@@ -23,6 +23,7 @@ type FindJobPostingsFilters = {
   orderBy?: JobPostingListRequest['orderBy'];
   sort?: JobPostingListRequest['sort'];
   search?: string;
+  expiresAtFrom?: Date;
 };
 
 type FindJobPostingsPagination = {
@@ -30,8 +31,12 @@ type FindJobPostingsPagination = {
   pageSize?: number;
 };
 
+type FindJobPostingsOptions = {
+  includeCompany?: boolean;
+};
+
 export type JobPostingListItem = Omit<JobPosting, 'companyId' | 'description' | 'isDeleted'> & {
-  company: {
+  company?: {
     id: number;
     name: string;
     logo: string | null;
@@ -103,6 +108,7 @@ type JobPostingSkillUpdate = {
 
 type JobPostingUpdateWithSkillsPayload = {
   title?: string;
+  shortDescription?: string;
   description?: string;
   expiresAt?: Date;
   status?: JobPostingStatus;
@@ -119,29 +125,35 @@ export class JobPostingRepository extends GenericRepository<JobPosting, JobPosti
   async findJobPostings(
     filters: FindJobPostingsFilters = {},
     pagination: FindJobPostingsPagination = {},
+    options: FindJobPostingsOptions = {},
   ): Promise<FindJobPostingsResult> {
-    const { status, companyId, skills, orderBy = 'createdAt', sort = 'desc', search } = filters;
+    const { status, companyId, skills, orderBy = 'createdAt', sort = 'desc', search, expiresAtFrom } = filters;
     const { page = 1, pageSize = 50 } = pagination;
+    const { includeCompany = true } = options;
     const skip = (page - 1) * pageSize;
     const jobPostingSelectColumns = {
       id: jobPosting.id,
       title: jobPosting.title,
+      shortDescription: jobPosting.shortDescription,
       status: jobPosting.status,
       expiresAt: jobPosting.expiresAt,
       createdBy: jobPosting.createdBy,
       createdAt: jobPosting.createdAt,
       updatedAt: jobPosting.updatedAt,
     };
+    const selectFields = includeCompany
+      ? {
+          ...jobPostingSelectColumns,
+          company: {
+            id: company.id,
+            name: company.name,
+            logo: company.logoUrl,
+          },
+        }
+      : jobPostingSelectColumns;
 
     let query = this.db
-      .selectDistinct({
-        ...jobPostingSelectColumns,
-        company: {
-          id: company.id,
-          name: company.name,
-          logo: company.logoUrl,
-        },
-      })
+      .selectDistinct(selectFields)
       .from(jobPosting)
       .innerJoin(company, eq(jobPosting.companyId, company.id))
       .$dynamic();
@@ -155,6 +167,10 @@ export class JobPostingRepository extends GenericRepository<JobPosting, JobPosti
 
     if (status) {
       conditions.push(eq(jobPosting.status, status));
+    }
+
+    if (expiresAtFrom) {
+      conditions.push(gte(jobPosting.expiresAt, expiresAtFrom));
     }
 
     if (companyId) {
@@ -291,6 +307,7 @@ export class JobPostingRepository extends GenericRepository<JobPosting, JobPosti
       id: firstRow.id,
       companyId: firstRow.companyId,
       title: firstRow.title,
+      shortDescription: firstRow.shortDescription,
       description: firstRow.description,
       status: firstRow.status,
       expiresAt: firstRow.expiresAt,
@@ -340,6 +357,10 @@ export class JobPostingRepository extends GenericRepository<JobPosting, JobPosti
 
       if (payload.title !== undefined) {
         jobPostingUpdate.title = payload.title;
+      }
+
+      if (payload.shortDescription !== undefined) {
+        jobPostingUpdate.shortDescription = payload.shortDescription;
       }
 
       if (payload.description !== undefined) {
