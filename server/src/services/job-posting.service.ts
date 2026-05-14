@@ -23,11 +23,17 @@ import { ERROR_CODE } from '../lib/error-codes.ts';
 import { PaginatedResult, SingleResult } from '../lib/api-response.ts';
 import { IntegerIdSchema } from '../lib/zod/integer-id.zod-schema.ts';
 import { toEndOfDayUtc } from '../lib/date.ts';
+import { JobApplicationRepository } from '../data/repositories/job-application.repository.ts';
+import { jobApplication } from '../data/schema/job-application.schema.ts';
+import { and, eq } from 'drizzle-orm';
 
 type AuthenticatedUser = Request['user'];
 type JobPostingSkillState = {
   skillId: number;
   yoe?: number;
+};
+type PublicJobPostingsOptions = {
+  includeCompany?: boolean;
 };
 
 const RECRUITER_ALLOWED_STATUS_TRANSITIONS: Partial<Record<JobPostingStatus, JobPostingStatus[]>> = {
@@ -50,9 +56,19 @@ const ADMIN_ALLOWED_STATUS_TRANSITIONS: Partial<Record<JobPostingStatus, JobPost
   [JOB_POSTING_STATUS.ACTIVE]: [JOB_POSTING_STATUS.CLOSED, JOB_POSTING_STATUS.PAUSED],
 };
 
+const APPLIED_CANDIDATE_VISIBLE_STATUSES: JobPostingStatus[] = [
+  JOB_POSTING_STATUS.ACTIVE,
+  JOB_POSTING_STATUS.PAUSED,
+  JOB_POSTING_STATUS.CLOSED,
+  JOB_POSTING_STATUS.EXPIRED,
+];
+
 @injectable()
 export class JobPostingService {
-  constructor(@inject(TOKENS.jobPostingRepository) private jobPostingRepository: JobPostingRepository) {}
+  constructor(
+    @inject(TOKENS.jobPostingRepository) private jobPostingRepository: JobPostingRepository,
+    @inject(TOKENS.jobApplicationRepository) private jobApplicationRepository: JobApplicationRepository,
+  ) {}
 
   async createJobPosting(payload: unknown, user: AuthenticatedUser): Promise<JobPosting> {
     const validationResult = JobPostingInsertRequestSchema.safeParse(payload);
@@ -70,6 +86,7 @@ export class JobPostingService {
     return await this.jobPostingRepository.insertWithSkills({
       companyId: user.companyId,
       title: newJobPosting.title,
+      shortDescription: newJobPosting.shortDescription,
       description: newJobPosting.description,
       status: newJobPosting.status,
       createdBy: user.id,
@@ -96,17 +113,20 @@ export class JobPostingService {
       companyId = user.companyId;
     }
 
-    const result = await this.jobPostingRepository.findJobPostings({
-      status: query.status,
-      companyId,
-      skills: query.skills,
-      orderBy: query.orderBy,
-      sort: query.sort,
-      search: query.search,
-    }, {
-      page: query.page,
-      pageSize: query.limit,
-    });
+    const result = await this.jobPostingRepository.findJobPostings(
+      {
+        status: query.status,
+        companyId,
+        skills: query.skills,
+        orderBy: query.orderBy,
+        sort: query.sort,
+        search: query.search,
+      },
+      {
+        page: query.page,
+        pageSize: query.limit,
+      },
+    );
 
     return {
       data: result.data,
@@ -119,7 +139,10 @@ export class JobPostingService {
     };
   }
 
-  async getPublicJobPostings(payload: unknown): Promise<PaginatedResult<JobPostingListItem>> {
+  async getPublicJobPostings(
+    payload: unknown,
+    options: PublicJobPostingsOptions = {},
+  ): Promise<PaginatedResult<JobPostingListItem>> {
     const validationResult = JobPostingListRequestSchema.safeParse(payload);
 
     if (!validationResult.success) {
@@ -128,17 +151,24 @@ export class JobPostingService {
 
     const query = validationResult.data;
 
-    const result = await this.jobPostingRepository.findJobPostings({
-      status: JOB_POSTING_STATUS.ACTIVE,
-      companyId: query.companyId,
-      skills: query.skills,
-      orderBy: query.orderBy,
-      sort: query.sort,
-      search: query.search,
-    }, {
-      page: query.page,
-      pageSize: query.limit,
-    });
+    const result = await this.jobPostingRepository.findJobPostings(
+      {
+        status: JOB_POSTING_STATUS.ACTIVE,
+        expiresAtFrom: new Date(),
+        companyId: query.companyId,
+        skills: query.skills,
+        orderBy: query.orderBy,
+        sort: query.sort,
+        search: query.search,
+      },
+      {
+        page: query.page,
+        pageSize: query.limit,
+      },
+      {
+        includeCompany: options.includeCompany,
+      },
+    );
 
     return {
       data: result.data,
@@ -165,7 +195,7 @@ export class JobPostingService {
       throw new NotFoundError('Job posting not found.');
     }
 
-    if (!this.canViewJobPostingDetail(result, user)) {
+    if (!(await this.canViewJobPostingDetail(result, user))) {
       throw new NotFoundError('Job posting not found.');
     }
 
@@ -174,7 +204,7 @@ export class JobPostingService {
     };
   }
 
-  private canViewJobPostingDetail(jobPosting: JobPostingDetail, user?: AuthenticatedUser): boolean {
+  private async canViewJobPostingDetail(jobPosting: JobPostingDetail, user?: AuthenticatedUser): Promise<boolean> {
     if (jobPosting.status === JOB_POSTING_STATUS.ACTIVE) {
       return true;
     }
@@ -183,7 +213,27 @@ export class JobPostingService {
       return true;
     }
 
-    return user?.role === USER_ROLE.RECRUITER && user.companyId === jobPosting.companyId;
+    if (user?.role === USER_ROLE.RECRUITER) {
+      return user.companyId === jobPosting.companyId;
+    }
+
+    if (user?.role === USER_ROLE.CANDIDATE) {
+      const jobApplicationRecords = await this.jobApplicationRepository.find(
+        { id: jobApplication.id },
+        and(
+          eq(jobApplication.userId, user.id),
+          eq(jobApplication.jobPostingId, jobPosting.id),
+          eq(jobApplication.isDeleted, false),
+        ),
+      );
+
+      return (
+        jobApplicationRecords.data.length > 0 &&
+        APPLIED_CANDIDATE_VISIBLE_STATUSES.includes(jobPosting.status as JobPostingStatus)
+      );
+    }
+
+    return false;
   }
 
   async updateJobPosting(id: unknown, payload: unknown, user: AuthenticatedUser): Promise<JobPosting> {
@@ -239,6 +289,7 @@ export class JobPostingService {
     if (nextStatus === JOB_POSTING_STATUS.PENDING_APPROVAL) {
       const approvalReadyValidationResult = JobPostingReadyForApprovalSchema.safeParse({
         title: updatePayload.title ?? existingJobPosting.title,
+        shortDescription: updatePayload.shortDescription ?? existingJobPosting.shortDescription,
         description: updatePayload.description ?? existingJobPosting.description,
         expiresAt: updatePayload.expiresAt ?? existingJobPosting.expiresAt,
         skills: nextSkills,
@@ -253,7 +304,8 @@ export class JobPostingService {
       id,
       {
         title: updatePayload.title,
-      description: updatePayload.description,
+        shortDescription: updatePayload.shortDescription,
+        description: updatePayload.description,
         expiresAt: updatePayload.expiresAt ? toEndOfDayUtc(updatePayload.expiresAt) : undefined,
         status: nextStatus,
         skills: updatePayload.skills,
@@ -335,6 +387,10 @@ export class JobPostingService {
     }
 
     if (payload.description !== undefined && payload.description !== existingJobPosting.description) {
+      return true;
+    }
+
+    if (payload.shortDescription !== undefined && payload.shortDescription !== existingJobPosting.shortDescription) {
       return true;
     }
 

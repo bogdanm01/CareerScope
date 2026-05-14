@@ -9,4 +9,8 @@ export const TOKENS = {
   jobApplicationController: Symbol('JobApplicationController'),
   jobApplicationService: Symbol('JobApplicationService'),
   jobApplicationRepository: Symbol('JobApplicationRepository'),
+
+  companyController: Symbol('CompanyController'),
+  companyService: Symbol('CompanyService'),
+  companyRepository: Symbol('CompanyRepository'),
 } as const;

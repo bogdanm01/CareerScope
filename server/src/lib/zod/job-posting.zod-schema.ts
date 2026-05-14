@@ -48,6 +48,7 @@ export const JobPostingListRequestSchema = z.object({
 
 const JobPostingUpdateBaseRequestSchema = z.object({
   title: z.string().trim().min(3).optional(),
+  shortDescription: z.string().trim().max(80).optional(),
   description: z.string().trim().min(60).optional(), // TODO: Decide min length (markdown)
   expiresAt: z.coerce.date().optional(),
   skills: z.array(JobPostingSkillSchema).optional(),
@@ -87,6 +88,11 @@ export const JobPostingReadyForApprovalSchema = z
     title: z.string().trim().min(10, {
       error: 'Title must be at least 10 characters long when submitting for approval.',
     }),
+    shortDescription: z.string().trim().min(1, {
+      error: 'Short description is required when submitting job posting for approval.',
+    }).max(80, {
+      error: 'Short description cannot be more than 80 characters long.',
+    }),
     description: z.string().trim().min(60, {
       error: 'Description is required when submitting job posting for approval.',
     }),
@@ -124,6 +130,9 @@ export const JobPostingReadyForApprovalSchema = z
 export const JobPostingInsertRequestSchema = z
   .object({
     title: z.string().trim().min(3),
+    shortDescription: z.string().trim().max(80, {
+      error: 'Short description cannot be more than 80 characters long.',
+    }).optional(),
     description: z.string().trim().optional(),
     status: z.enum(CREATE_JOB_POSTING_STATUS, {
       error: 'Invalid status. New job postings can only be created as Draft or PendingApproval.',
@@ -141,6 +150,14 @@ export const JobPostingInsertRequestSchema = z
         code: 'custom',
         path: ['description'],
         message: 'Description is required when submitting job posting for approval.',
+      });
+    }
+
+    if (!data.shortDescription) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['shortDescription'],
+        message: 'Short description is required when submitting job posting for approval.',
       });
     }
 

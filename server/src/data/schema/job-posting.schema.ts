@@ -12,6 +12,7 @@ export const jobPosting = pgTable(
       .references(() => company.id)
       .notNull(),
     title: text('title'),
+    shortDescription: text('short_description'),
     description: text('description'),
     status: text('status').notNull(),
     expiresAt: timestamp('expires_at', { withTimezone: true }),
