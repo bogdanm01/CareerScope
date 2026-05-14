@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import { registerDependencies } from './config/dependencies.ts';
+import { registerDependencies } from './config/dependency-container.ts';
 
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
