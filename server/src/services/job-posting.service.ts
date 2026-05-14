@@ -73,7 +73,7 @@ export class JobPostingService {
       description: newJobPosting.description,
       status: newJobPosting.status,
       createdBy: user.id,
-      expiresAt: toEndOfDayUtc(newJobPosting.expiresAt),
+      expiresAt: newJobPosting.expiresAt ? toEndOfDayUtc(newJobPosting.expiresAt) : undefined,
       skills: newJobPosting.skills,
     });
   }
@@ -96,16 +96,17 @@ export class JobPostingService {
       companyId = user.companyId;
     }
 
-    const result = await this.jobPostingRepository.findJobPostings(
-      query.status,
+    const result = await this.jobPostingRepository.findJobPostings({
+      status: query.status,
       companyId,
-      query.skills,
-      query.orderBy,
-      query.sort,
-      query.page,
-      query.limit,
-      query.search,
-    );
+      skills: query.skills,
+      orderBy: query.orderBy,
+      sort: query.sort,
+      search: query.search,
+    }, {
+      page: query.page,
+      pageSize: query.limit,
+    });
 
     return {
       data: result.data,
@@ -127,16 +128,17 @@ export class JobPostingService {
 
     const query = validationResult.data;
 
-    const result = await this.jobPostingRepository.findJobPostings(
-      JOB_POSTING_STATUS.ACTIVE,
-      query.companyId,
-      query.skills,
-      query.orderBy,
-      query.sort,
-      query.page,
-      query.limit,
-      query.search,
-    );
+    const result = await this.jobPostingRepository.findJobPostings({
+      status: JOB_POSTING_STATUS.ACTIVE,
+      companyId: query.companyId,
+      skills: query.skills,
+      orderBy: query.orderBy,
+      sort: query.sort,
+      search: query.search,
+    }, {
+      page: query.page,
+      pageSize: query.limit,
+    });
 
     return {
       data: result.data,

@@ -1,5 +1,5 @@
 import { inject, injectable } from 'tsyringe';
-import { JobPostingService } from '../services/job-posting-service.ts';
+import { JobPostingService } from '../services/job-posting.service.ts';
 import { Request, Response } from 'express';
 import { TOKENS } from '../config/dependency-tokens.ts';
 import { ApiSuccessResponse, successResponse } from '../lib/api-response.ts';
@@ -20,10 +20,10 @@ export class JobPostingController {
    * @param req Express request containing the creation payload and authenticated user.
    * @param res Express response returning the created job posting.
    */
-  createJobPosting = async (req: Request, res: Response<ApiSuccessResponse<JobPosting>>) => {
+  async createJobPosting(req: Request, res: Response<ApiSuccessResponse<JobPosting>>) {
     const result = await this.jobPostingService.createJobPosting(req.body, req.user);
-    res.status(201).json(successResponse<JobPosting>(result));
-  };
+    res.status(201).json(successResponse<JobPosting>(result, 'Job posting created'));
+  }
 
   /**
    * Returns public active job postings.
@@ -34,10 +34,10 @@ export class JobPostingController {
    * @param req Express request containing public list query parameters.
    * @param res Express response returning paginated active job postings.
    */
-  getPublicJobPostings = async (req: Request, res: Response<ApiSuccessResponse<JobPostingListItem[]>>) => {
+  async getPublicJobPostings(req: Request, res: Response<ApiSuccessResponse<JobPostingListItem[]>>) {
     const result = await this.jobPostingService.getPublicJobPostings(req.query);
     res.status(200).json(successResponse(result.data, undefined, result.pagination));
-  };
+  }
 
   /**
    * Returns job postings for recruiter/admin dashboards.
@@ -48,10 +48,10 @@ export class JobPostingController {
    * @param req Express request containing authenticated list query parameters.
    * @param res Express response returning paginated job postings.
    */
-  getJobPostings = async (req: Request, res: Response<ApiSuccessResponse<JobPostingListItem[]>>) => {
+  async getJobPostings(req: Request, res: Response<ApiSuccessResponse<JobPostingListItem[]>>) {
     const result = await this.jobPostingService.getJobPostings(req.query, req.user);
     res.status(200).json(successResponse(result.data, undefined, result.pagination));
-  };
+  }
 
   /**
    * Returns one job posting by id.
@@ -62,10 +62,10 @@ export class JobPostingController {
    * @param req Express request containing the posting id and optional includes.
    * @param res Express response returning the job posting detail.
    */
-  getJobPostingById = async (
+  async getJobPostingById(
     req: Request<{ id: string }, undefined, undefined, { include?: string }>,
     res: Response<ApiSuccessResponse<JobPostingDetail>>,
-  ) => {
+  ) {
     const result = await this.jobPostingService.getJobPostingById(
       {
         id: req.params.id,
@@ -75,7 +75,7 @@ export class JobPostingController {
     );
 
     res.status(200).json(successResponse(result.data));
-  };
+  }
 
   /**
    * Updates one job posting.
@@ -87,10 +87,10 @@ export class JobPostingController {
    * @param req Express request containing the posting id, update payload, and authenticated user.
    * @param res Express response returning the updated job posting.
    */
-  updateJobPosting = async (req: Request, res: Response<ApiSuccessResponse<JobPosting>>) => {
+  async updateJobPosting(req: Request, res: Response<ApiSuccessResponse<JobPosting>>) {
     const result = await this.jobPostingService.updateJobPosting(req.params.id, req.body, req.user);
     res.status(200).json(successResponse(result));
-  };
+  }
 
   /**
    * Deletes one job posting.
@@ -101,8 +101,8 @@ export class JobPostingController {
    * @param req Express request containing the posting id and authenticated user.
    * @param res Express response with no content on success.
    */
-  deleteJobPosting = async (req: Request, res: Response) => {
+  async deleteJobPosting(req: Request, res: Response) {
     const result = await this.jobPostingService.deleteJobPosting(req.params.id, req.user);
     res.status(200).json(successResponse(result));
-  };
+  }
 }

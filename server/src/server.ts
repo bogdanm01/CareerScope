@@ -10,7 +10,7 @@ import logger from './config/logger.ts';
 
 import { auth } from './config/auth.ts';
 import { toNodeHandler } from 'better-auth/node';
-import { getApiRouter } from './routes/index.ts';
+import { getApiRouter } from './routers/index.ts';
 import { globalErrorHandler } from './middleware/global-error-handler.ts';
 import { registerExpireJobPostingsJob } from './jobs/expire-job-postings.job.ts';
 
