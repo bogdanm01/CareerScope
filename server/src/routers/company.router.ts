@@ -9,7 +9,6 @@ export const getCompanyRouter = () => {
 
   router.get('/:id/job-postings', companyController.getPublicJobPostings.bind(companyController));
 
-  // GET /api/companies/:id -> public company profile
   router.get('/:id', companyController.getCompany.bind(companyController));
 
   return router;

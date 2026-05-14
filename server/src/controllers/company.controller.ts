@@ -32,9 +32,14 @@ export class CompanyController {
   }
 
   /**
+   * Returns public company profile details.
    *
-   * @param req
-   * @param res
+   * The service validates the company id and returns only approved,
+   * non-deleted companies. Sensitive/internal fields are omitted from the
+   * public response.
+   *
+   * @param req Express request containing the company id.
+   * @param res Express response returning public company profile details.
    */
   async getCompany(req: Request, res: Response) {
     const result = await this.companyService.getCompany(req.params.id);
