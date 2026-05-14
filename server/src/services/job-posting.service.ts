@@ -23,6 +23,9 @@ import { ERROR_CODE } from '../lib/error-codes.ts';
 import { PaginatedResult, SingleResult } from '../lib/api-response.ts';
 import { IntegerIdSchema } from '../lib/zod/integer-id.zod-schema.ts';
 import { toEndOfDayUtc } from '../lib/date.ts';
+import { JobApplicationRepository } from '../data/repositories/job-application.repository.ts';
+import { jobApplication } from '../data/schema/job-application.schema.ts';
+import { and, eq } from 'drizzle-orm';
 
 type AuthenticatedUser = Request['user'];
 type JobPostingSkillState = {
@@ -53,9 +56,19 @@ const ADMIN_ALLOWED_STATUS_TRANSITIONS: Partial<Record<JobPostingStatus, JobPost
   [JOB_POSTING_STATUS.ACTIVE]: [JOB_POSTING_STATUS.CLOSED, JOB_POSTING_STATUS.PAUSED],
 };
 
+const APPLIED_CANDIDATE_VISIBLE_STATUSES: JobPostingStatus[] = [
+  JOB_POSTING_STATUS.ACTIVE,
+  JOB_POSTING_STATUS.PAUSED,
+  JOB_POSTING_STATUS.CLOSED,
+  JOB_POSTING_STATUS.EXPIRED,
+];
+
 @injectable()
 export class JobPostingService {
-  constructor(@inject(TOKENS.jobPostingRepository) private jobPostingRepository: JobPostingRepository) {}
+  constructor(
+    @inject(TOKENS.jobPostingRepository) private jobPostingRepository: JobPostingRepository,
+    @inject(TOKENS.jobApplicationRepository) private jobApplicationRepository: JobApplicationRepository,
+  ) {}
 
   async createJobPosting(payload: unknown, user: AuthenticatedUser): Promise<JobPosting> {
     const validationResult = JobPostingInsertRequestSchema.safeParse(payload);
@@ -182,7 +195,7 @@ export class JobPostingService {
       throw new NotFoundError('Job posting not found.');
     }
 
-    if (!this.canViewJobPostingDetail(result, user)) {
+    if (!(await this.canViewJobPostingDetail(result, user))) {
       throw new NotFoundError('Job posting not found.');
     }
 
@@ -191,7 +204,7 @@ export class JobPostingService {
     };
   }
 
-  private canViewJobPostingDetail(jobPosting: JobPostingDetail, user?: AuthenticatedUser): boolean {
+  private async canViewJobPostingDetail(jobPosting: JobPostingDetail, user?: AuthenticatedUser): Promise<boolean> {
     if (jobPosting.status === JOB_POSTING_STATUS.ACTIVE) {
       return true;
     }
@@ -200,7 +213,27 @@ export class JobPostingService {
       return true;
     }
 
-    return user?.role === USER_ROLE.RECRUITER && user.companyId === jobPosting.companyId;
+    if (user?.role === USER_ROLE.RECRUITER) {
+      return user.companyId === jobPosting.companyId;
+    }
+
+    if (user?.role === USER_ROLE.CANDIDATE) {
+      const jobApplicationRecords = await this.jobApplicationRepository.find(
+        { id: jobApplication.id },
+        and(
+          eq(jobApplication.userId, user.id),
+          eq(jobApplication.jobPostingId, jobPosting.id),
+          eq(jobApplication.isDeleted, false),
+        ),
+      );
+
+      return (
+        jobApplicationRecords.data.length > 0 &&
+        APPLIED_CANDIDATE_VISIBLE_STATUSES.includes(jobPosting.status as JobPostingStatus)
+      );
+    }
+
+    return false;
   }
 
   async updateJobPosting(id: unknown, payload: unknown, user: AuthenticatedUser): Promise<JobPosting> {
