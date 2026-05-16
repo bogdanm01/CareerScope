@@ -5,6 +5,7 @@ import { authGuard } from '../middleware/auth-guard.ts';
 import { USER_ROLE } from '../data/util/constants.ts';
 import { JobApplicationController } from '../controllers/job-application.controller.ts';
 import { MeController } from '../controllers/me.controller.ts';
+import { cvUploadMiddleware } from '../middleware/cv-upload.middleware.ts';
 
 export const getMeRouter = () => {
   const router = express.Router();
@@ -25,6 +26,14 @@ export const getMeRouter = () => {
 
   // PUT /api/me/skills
   router.put('/skills', authGuard([USER_ROLE.CANDIDATE]), meController.replaceCandidateSkills.bind(meController));
+
+  // POST /api/me/cv
+  router.post(
+    '/cv',
+    authGuard([USER_ROLE.CANDIDATE]),
+    cvUploadMiddleware,
+    meController.uploadCandidateCv.bind(meController),
+  );
 
   return router;
 };

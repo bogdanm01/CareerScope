@@ -10,6 +10,16 @@ import { SkillRepository } from '../data/repositories/skill.repository.ts';
 import skill from '../data/schema/skill.schema.ts';
 import { inArray } from 'drizzle-orm';
 import { BadRequestError } from '../lib/app-error.ts';
+import { ONBOARDING_STATUS } from '../data/util/constants.ts';
+import { deleteCvFile, toCvUrl } from '../middleware/cv-upload.middleware.ts';
+
+type CandidateCvUploadPlaceholder = {
+  fileName: string;
+  mimeType: string;
+  size: number;
+  cvUrl: string;
+  onboardingStatus: string;
+};
 
 @injectable()
 export class MeService {
@@ -49,10 +59,45 @@ export class MeService {
       yearsOfExperience: skill.yearsOfExperience,
     }));
 
-    const newSkills = await this.userRepository.replaceUserSkills(user.id, mappedSkills);
+    const newSkills = await this.userRepository.replaceUserSkills(
+      user.id,
+      mappedSkills,
+      ONBOARDING_STATUS.SKILLS_ADDED,
+    );
 
     return {
       data: newSkills,
+    };
+  }
+
+  async uploadCandidateCv(
+    file: Express.Multer.File | undefined,
+    user: AuthenticatedUser,
+  ): Promise<SingleResult<CandidateCvUploadPlaceholder>> {
+    if (!file) {
+      throw new BadRequestError('CV file is required.');
+    }
+
+    if (file.mimetype !== 'application/pdf') {
+      throw new BadRequestError('CV file must be a PDF.');
+    }
+
+    const cvUrl = toCvUrl(file.filename);
+    const previousCvUrl = await this.userRepository.findCvUrl(user.id);
+    const updatedUser = await this.userRepository.updateCandidateCv(user.id, cvUrl, ONBOARDING_STATUS.CV_UPLOADED);
+
+    if (previousCvUrl && previousCvUrl !== cvUrl) {
+      await deleteCvFile(previousCvUrl);
+    }
+
+    return {
+      data: {
+        fileName: file.originalname,
+        mimeType: file.mimetype,
+        size: file.size,
+        cvUrl,
+        onboardingStatus: updatedUser.onboardingStatus,
+      },
     };
   }
 }

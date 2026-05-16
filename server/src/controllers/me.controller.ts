@@ -17,4 +17,14 @@ export class MeController {
     const result = await this.meService.replaceCandidateSkills(req.body, req.user);
     res.status(200).send(successResponse(result.data));
   }
+
+  /**
+   *
+   * @param req
+   * @param res
+   */
+  async uploadCandidateCv(req: Request, res: Response) {
+    const result = await this.meService.uploadCandidateCv(req.file, req.user);
+    res.status(200).send(successResponse(result.data));
+  }
 }
