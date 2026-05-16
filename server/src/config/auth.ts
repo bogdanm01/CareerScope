@@ -16,6 +16,9 @@ export const auth = betterAuth({
     client: getRedisClient(),
     keyPrefix: 'better-auth:',
   }),
+  session: {
+    storeSessionInDatabase: false,
+  },
   user: {
     additionalFields: {
       role: {
