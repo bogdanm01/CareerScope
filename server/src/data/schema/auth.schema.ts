@@ -1,6 +1,7 @@
 import { relations } from 'drizzle-orm';
 import { pgTable, text, timestamp, boolean, index, integer, date } from 'drizzle-orm/pg-core';
 import { company } from './company.schema.ts';
+import { ONBOARDING_STATUS } from '../util/constants.ts';
 
 export const user = pgTable('user', {
   id: text('id').primaryKey(),
@@ -14,7 +15,7 @@ export const user = pgTable('user', {
   role: text('role').notNull(),
   dateOfBirth: date('date_of_birth').notNull(),
   isDeleted: boolean('is_deleted').default(false).notNull(),
-  onboardingStep: integer('onboarding_step').default(1).notNull(),
+  onboardingStatus: text('onboarding_status').default(ONBOARDING_STATUS.PROFILE_CREATED).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at')
     .defaultNow()

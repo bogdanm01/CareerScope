@@ -3,7 +3,7 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 
 import * as schema from '../data/schema/auth.schema.ts';
 import { redisStorage } from '@better-auth/redis-storage';
-import { USER_ROLE } from '../data/util/constants.ts';
+import { ONBOARDING_STATUS, USER_ROLE } from '../data/util/constants.ts';
 import { getDbClient } from './db-client.ts';
 import { getRedisClient } from './redis-client.ts';
 import env from './env.ts';
@@ -47,10 +47,18 @@ export const auth = betterAuth({
         required: true,
         defaultValue: false,
       },
-      onboardingStep: {
-        type: 'number',
-        required: false,
+      onboardingStatus: {
+        type: [
+          ONBOARDING_STATUS.PROFILE_CREATED,
+          ONBOARDING_STATUS.SKILLS_ADDED,
+          ONBOARDING_STATUS.CV_UPLOADED,
+          ONBOARDING_STATUS.COMPANY_PENDING_APPROVAL,
+          ONBOARDING_STATUS.COMPANY_REJECTED,
+          ONBOARDING_STATUS.COMPLETED,
+        ],
+        required: true,
         input: false,
+        defaultValue: ONBOARDING_STATUS.PROFILE_CREATED,
       },
     },
   },
