@@ -5,36 +5,22 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1778096106454,
-      "tag": "0000_sleepy_purifiers",
+      "when": 1778956553336,
+      "tag": "0000_initial_migration",
       "breakpoints": true
     },
     {
       "idx": 1,
       "version": "7",
-      "when": 1778096159769,
-      "tag": "0001_seed-skills",
+      "when": 1778956563626,
+      "tag": "0001_seed_skills",
       "breakpoints": true
     },
     {
       "idx": 2,
       "version": "7",
-      "when": 1778098188415,
-      "tag": "0002_seed-companies",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1778330091895,
-      "tag": "0003_add_is_deleted_column",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1778654493280,
-      "tag": "0004_add_job_application_history_schema",
+      "when": 1778956571091,
+      "tag": "0002_seed_companies",
       "breakpoints": true
     }
   ]
