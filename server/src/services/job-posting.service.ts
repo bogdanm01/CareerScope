@@ -1,5 +1,4 @@
 import { inject, injectable } from 'tsyringe';
-import { Request } from 'express';
 import {
   JobPostingDetail,
   JobPostingListItem,
@@ -26,8 +25,8 @@ import { toEndOfDayUtc } from '../lib/date.ts';
 import { JobApplicationRepository } from '../data/repositories/job-application.repository.ts';
 import { jobApplication } from '../data/schema/job-application.schema.ts';
 import { and, eq } from 'drizzle-orm';
+import { AuthenticatedUser } from '../data/util/utils.ts';
 
-type AuthenticatedUser = Request['user'];
 type JobPostingSkillState = {
   skillId: number;
   yoe?: number;

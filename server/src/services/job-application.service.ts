@@ -17,12 +17,11 @@ import { JobPostingRepository } from '../data/repositories/job-posting.repositor
 import { jobPosting } from '../data/schema/job-posting.schema.ts';
 import { and, eq, gte } from 'drizzle-orm';
 import { JOB_APPLICATION_STATUS, JOB_POSTING_STATUS, USER_ROLE } from '../data/util/constants.ts';
-import { Request } from 'express';
 import { JobApplication } from '../data/schema/job-application.schema.ts';
 import { ERROR_CODE } from '../lib/error-codes.ts';
 import { PaginatedResult, SingleResult } from '../lib/api-response.ts';
+import { AuthenticatedUser } from '../data/util/utils.ts';
 
-type AuthenticatedUser = Request['user'];
 const DUPLICATE_JOB_APPLICATION_CONSTRAINT = 'user_id_job_posting_id_unq';
 
 @injectable()
