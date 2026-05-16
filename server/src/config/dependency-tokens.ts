@@ -2,6 +2,9 @@ export const TOKENS = {
   db: Symbol('DbClient'),
   redis: Symbol('RedisClient'),
 
+  userRepository: Symbol('UserRepository'),
+  skillRepository: Symbol('SkillRepository'),
+
   jobPostingController: Symbol('JobPostingController'),
   jobPostingService: Symbol('JobPostingService'),
   jobPostingRepository: Symbol('JobPostingRepository'),

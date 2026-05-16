@@ -480,7 +480,7 @@ export class JobPostingService {
 
     const validId = idValidationResult.data.id;
 
-    const record = await this.jobPostingRepository.findById(validId, {
+    const record = await this.jobPostingRepository.findOne(validId, {
       companyId: jobPosting.companyId,
       isDeleted: jobPosting.isDeleted,
       status: jobPosting.status,

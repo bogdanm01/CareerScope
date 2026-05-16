@@ -50,7 +50,7 @@ export class JobApplicationService {
 
     const validJobPostingId = idValidationResult.data.id;
 
-    const record = await this.jobPostingRepository.findById(
+    const record = await this.jobPostingRepository.findOne(
       validJobPostingId,
       { id: jobPosting.id },
       and(
@@ -99,7 +99,7 @@ export class JobApplicationService {
     const validJobPostingId = idValidationResult.data.id;
     const query = validationResult.data;
 
-    const existingJobPosting = await this.jobPostingRepository.findById(
+    const existingJobPosting = await this.jobPostingRepository.findOne(
       validJobPostingId,
       { id: jobPosting.id, companyId: jobPosting.companyId },
       and(eq(jobPosting.isDeleted, false)),

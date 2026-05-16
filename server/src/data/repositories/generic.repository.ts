@@ -7,7 +7,7 @@ type FindPaginationOptions = {
   pageSize?: number;
 };
 
-type FindResult<TData> = {
+export type FindResult<TData> = {
   data: TData[];
   totalItems: number;
 };
@@ -54,7 +54,7 @@ export class GenericRepository<TSelect, TInsert extends Record<string, any>, TId
     };
   }
 
-  public async findById<TColumns extends Partial<Record<keyof TSelect, never>>>(
+  public async findOne<TColumns extends Partial<Record<keyof TSelect, never>>>(
     id: TId,
     select?: { [K in keyof TColumns]: (typeof this.table)[K] },
     filter?: SQL,

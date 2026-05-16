@@ -14,6 +14,8 @@ import { CompanyService } from '../services/company.service.ts';
 import { CompanyRepository } from '../data/repositories/company.repository.ts';
 import { MeController } from '../controllers/me.controller.ts';
 import { MeService } from '../services/me.service.ts';
+import { UserRepository } from '../data/repositories/user.repository.ts';
+import { SkillRepository } from '../data/repositories/skill.repository.ts';
 
 export const registerDependencies = async () => {
   const dbClient = getDbClient();
@@ -21,6 +23,9 @@ export const registerDependencies = async () => {
 
   container.registerInstance<DbClient>(TOKENS.db, dbClient);
   container.registerInstance<RedisClient>(TOKENS.redis, redisClient);
+
+  container.register<UserRepository>(TOKENS.userRepository, { useClass: UserRepository });
+  container.register<SkillRepository>(TOKENS.skillRepository, { useClass: SkillRepository });
 
   container.register<JobPostingController>(TOKENS.jobPostingController, { useClass: JobPostingController });
   container.register<JobPostingService>(TOKENS.jobPostingService, { useClass: JobPostingService });

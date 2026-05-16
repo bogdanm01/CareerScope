@@ -23,8 +23,8 @@ export const getMeRouter = () => {
     jobApplicationController.getMyJobApplication.bind(jobApplicationController),
   );
 
-  // POST /api/me/skills
-  router.post('/skills', authGuard([USER_ROLE.CANDIDATE]), meController.addCandidateSkills.bind(meController));
+  // PUT /api/me/skills
+  router.put('/skills', authGuard([USER_ROLE.CANDIDATE]), meController.replaceCandidateSkills.bind(meController));
 
   return router;
 };
