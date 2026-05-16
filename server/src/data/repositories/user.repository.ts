@@ -46,4 +46,9 @@ export class UserRepository extends GenericRepository<User, UserInsert, string> 
 
     return updatedUser;
   }
+
+  async findCvUrl(userId: string) {
+    const [record] = await this.db.select({ cvUrl: user.cvUrl }).from(user).where(eq(user.id, userId)).limit(1);
+    return record?.cvUrl;
+  }
 }
