@@ -51,4 +51,14 @@ export class UserRepository extends GenericRepository<User, UserInsert, string> 
     const [record] = await this.db.select({ cvUrl: user.cvUrl }).from(user).where(eq(user.id, userId)).limit(1);
     return record?.cvUrl;
   }
+
+  async findOnboardingStatus(userId: string) {
+    const [record] = await this.db
+      .select({ onboardingStatus: user.onboardingStatus })
+      .from(user)
+      .where(eq(user.id, userId))
+      .limit(1);
+
+    return record?.onboardingStatus;
+  }
 }

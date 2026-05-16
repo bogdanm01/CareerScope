@@ -38,15 +38,25 @@ export const toCvUrl = (fileName: string): string => {
   return `/uploads/cv/${fileName}`;
 };
 
-export const deleteCvFile = async (cvUrl: string | null | undefined): Promise<void> => {
+export const resolveCvFilePath = (cvUrl: string | null | undefined): string | null => {
   if (!cvUrl?.startsWith('/uploads/cv/')) {
-    return;
+    return null;
   }
 
   const fileName = path.basename(cvUrl);
   const filePath = path.resolve(CV_UPLOAD_DIR, fileName);
 
   if (!filePath.startsWith(`${CV_UPLOAD_DIR}${path.sep}`)) {
+    return null;
+  }
+
+  return filePath;
+};
+
+export const deleteCvFile = async (cvUrl: string | null | undefined): Promise<void> => {
+  const filePath = resolveCvFilePath(cvUrl);
+
+  if (!filePath) {
     return;
   }
 

@@ -9,9 +9,9 @@ import { UserSkill } from '../data/schema/user-skill.schema.ts';
 import { SkillRepository } from '../data/repositories/skill.repository.ts';
 import skill from '../data/schema/skill.schema.ts';
 import { inArray } from 'drizzle-orm';
-import { BadRequestError } from '../lib/app-error.ts';
+import { BadRequestError, NotFoundError } from '../lib/app-error.ts';
 import { ONBOARDING_STATUS } from '../data/util/constants.ts';
-import { deleteCvFile, toCvUrl } from '../middleware/cv-upload.middleware.ts';
+import { deleteCvFile, resolveCvFilePath, toCvUrl } from '../middleware/cv-upload.middleware.ts';
 
 type CandidateCvUploadPlaceholder = {
   fileName: string;
@@ -19,6 +19,15 @@ type CandidateCvUploadPlaceholder = {
   size: number;
   cvUrl: string;
   onboardingStatus: string;
+};
+
+type OnboardingStatusResponse = {
+  onboardingStatus: string;
+};
+
+type CandidateCvDownload = {
+  filePath: string;
+  fileName: string;
 };
 
 @injectable()
@@ -84,7 +93,7 @@ export class MeService {
 
     const cvUrl = toCvUrl(file.filename);
     const previousCvUrl = await this.userRepository.findCvUrl(user.id);
-    const updatedUser = await this.userRepository.updateCandidateCv(user.id, cvUrl, ONBOARDING_STATUS.CV_UPLOADED);
+    const updatedUser = await this.userRepository.updateCandidateCv(user.id, cvUrl, ONBOARDING_STATUS.COMPLETED);
 
     if (previousCvUrl && previousCvUrl !== cvUrl) {
       await deleteCvFile(previousCvUrl);
@@ -98,6 +107,34 @@ export class MeService {
         cvUrl,
         onboardingStatus: updatedUser.onboardingStatus,
       },
+    };
+  }
+
+  async getOnboardingStatus(user: AuthenticatedUser): Promise<SingleResult<OnboardingStatusResponse>> {
+    const onboardingStatus = await this.userRepository.findOnboardingStatus(user.id);
+
+    if (!onboardingStatus) {
+      throw new NotFoundError('User not found.');
+    }
+
+    return {
+      data: {
+        onboardingStatus,
+      },
+    };
+  }
+
+  async getCandidateCv(user: AuthenticatedUser): Promise<CandidateCvDownload> {
+    const cvUrl = await this.userRepository.findCvUrl(user.id);
+    const filePath = resolveCvFilePath(cvUrl);
+
+    if (!filePath) {
+      throw new NotFoundError('CV not found.');
+    }
+
+    return {
+      filePath,
+      fileName: 'candidate-cv.pdf',
     };
   }
 }

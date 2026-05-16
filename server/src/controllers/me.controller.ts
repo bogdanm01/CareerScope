@@ -8,23 +8,23 @@ import { successResponse } from '../lib/api-response.ts';
 export class MeController {
   constructor(@inject(TOKENS.meService) private meService: MeService) {}
 
-  /**
-   *
-   * @param req
-   * @param res
-   */
   async replaceCandidateSkills(req: Request, res: Response) {
     const result = await this.meService.replaceCandidateSkills(req.body, req.user);
     res.status(200).send(successResponse(result.data));
   }
 
-  /**
-   *
-   * @param req
-   * @param res
-   */
   async uploadCandidateCv(req: Request, res: Response) {
     const result = await this.meService.uploadCandidateCv(req.file, req.user);
     res.status(200).send(successResponse(result.data));
+  }
+
+  async getOnboardingStatus(req: Request, res: Response) {
+    const result = await this.meService.getOnboardingStatus(req.user);
+    res.status(200).send(successResponse(result.data));
+  }
+
+  async downloadCandidateCv(req: Request, res: Response) {
+    const result = await this.meService.getCandidateCv(req.user);
+    res.download(result.filePath, result.fileName);
   }
 }
