@@ -5,21 +5,21 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1778956553336,
+      "when": 1778958611280,
       "tag": "0000_initial_migration",
       "breakpoints": true
     },
     {
       "idx": 1,
       "version": "7",
-      "when": 1778956563626,
+      "when": 1778958624498,
       "tag": "0001_seed_skills",
       "breakpoints": true
     },
     {
       "idx": 2,
       "version": "7",
-      "when": 1778956571091,
+      "when": 1778958625063,
       "tag": "0002_seed_companies",
       "breakpoints": true
     }

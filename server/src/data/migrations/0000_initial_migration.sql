@@ -55,6 +55,7 @@ CREATE TABLE "user" (
 	"last_name" text NOT NULL,
 	"email_verified" boolean DEFAULT false NOT NULL,
 	"image" text,
+	"cv_url" text,
 	"company_id" integer,
 	"role" text NOT NULL,
 	"date_of_birth" date NOT NULL,

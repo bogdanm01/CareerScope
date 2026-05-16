@@ -11,6 +11,7 @@ export const user = pgTable('user', {
   lastName: text('last_name').notNull(),
   emailVerified: boolean('email_verified').default(false).notNull(),
   image: text('image'),
+  cvUrl: text('cv_url'),
   companyId: integer('company_id').references(() => company.id),
   role: text('role').notNull(),
   dateOfBirth: date('date_of_birth').notNull(),

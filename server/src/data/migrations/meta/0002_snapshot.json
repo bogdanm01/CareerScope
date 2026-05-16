@@ -1,6 +1,6 @@
 {
-  "id": "92808f5f-cde9-4307-8313-586b7ea28983",
-  "prevId": "80dff416-077e-41f3-9f98-676767b46086",
+  "id": "5adf0f85-4cda-4d29-80ca-ccbab1034a9f",
+  "prevId": "fe182678-adad-4978-ba1d-475af791f4a2",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -449,6 +449,12 @@
         },
         "image": {
           "name": "image",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "cv_url": {
+          "name": "cv_url",
           "type": "text",
           "primaryKey": false,
           "notNull": false
