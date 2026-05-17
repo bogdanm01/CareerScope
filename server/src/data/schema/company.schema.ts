@@ -5,7 +5,7 @@ export const company = pgTable('company', {
   name: text('name').notNull(),
   isApproved: boolean('is_approved').default(false).notNull(),
   approvedAt: timestamp('approved_at', { withTimezone: true }),
-  taxId: text('tax_id').notNull(),
+  taxId: text('tax_id').notNull().unique(),
   shortDescription: text('short_description'),
   description: text('description'),
   foundingYear: integer('founding_year'),
