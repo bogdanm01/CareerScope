@@ -6,7 +6,13 @@ import { DbClient } from '../../config/db-client.ts';
 import { TOKENS } from '../../config/dependency-tokens.ts';
 import { userSkill, UserSkillInsert } from '../schema/user-skill.schema.ts';
 import { eq } from 'drizzle-orm';
-import { OnboardingStatus } from '../util/constants.ts';
+import { OnboardingStatus, UserRole } from '../util/constants.ts';
+
+type RecruiterOnboardingUpdate = {
+  role: UserRole;
+  companyId: number;
+  onboardingStatus: OnboardingStatus;
+};
 
 @injectable()
 export class UserRepository extends GenericRepository<User, UserInsert, string> {
@@ -45,6 +51,34 @@ export class UserRepository extends GenericRepository<User, UserInsert, string> 
       .returning({ cvUrl: user.cvUrl, onboardingStatus: user.onboardingStatus });
 
     return updatedUser;
+  }
+
+  async updateRecruiterOnboarding(userId: string, values: RecruiterOnboardingUpdate) {
+    const [updatedUser] = await this.db
+      .update(user)
+      .set(values)
+      .where(eq(user.id, userId))
+      .returning({
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role,
+        companyId: user.companyId,
+        onboardingStatus: user.onboardingStatus,
+      });
+
+    return updatedUser;
+  }
+
+  async findByEmail(email: string) {
+    const [record] = await this.db
+      .select({ id: user.id })
+      .from(user)
+      .where(eq(user.email, email.toLowerCase()))
+      .limit(1);
+
+    return record ?? null;
   }
 
   async findCvUrl(userId: string) {

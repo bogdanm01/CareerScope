@@ -26,6 +26,7 @@ import { JobApplicationRepository } from '../data/repositories/job-application.r
 import { jobApplication } from '../data/schema/job-application.schema.ts';
 import { and, eq } from 'drizzle-orm';
 import { AuthenticatedUser } from '../data/util/utils.ts';
+import { CompanyRepository } from '../data/repositories/company.repository.ts';
 
 type JobPostingSkillState = {
   skillId: number;
@@ -67,6 +68,7 @@ export class JobPostingService {
   constructor(
     @inject(TOKENS.jobPostingRepository) private jobPostingRepository: JobPostingRepository,
     @inject(TOKENS.jobApplicationRepository) private jobApplicationRepository: JobApplicationRepository,
+    @inject(TOKENS.companyRepository) private companyRepository: CompanyRepository,
   ) {}
 
   async createJobPosting(payload: unknown, user: AuthenticatedUser): Promise<JobPosting> {
@@ -78,6 +80,12 @@ export class JobPostingService {
 
     if (!user?.companyId) {
       throw new ForbiddenError('Recruiter is not assigned to a company.', ERROR_CODE.RECRUITER_COMPANY_MISSING);
+    }
+
+    const companyApproval = await this.companyRepository.findApprovalStatus(user.companyId);
+
+    if (!companyApproval?.isApproved) {
+      throw new ForbiddenError('Recruiter company must be approved before creating job postings.');
     }
 
     const newJobPosting = validationResult.data;
