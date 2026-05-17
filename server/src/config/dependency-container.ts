@@ -16,6 +16,8 @@ import { MeController } from '../controllers/me.controller.ts';
 import { MeService } from '../services/me.service.ts';
 import { UserRepository } from '../data/repositories/user.repository.ts';
 import { SkillRepository } from '../data/repositories/skill.repository.ts';
+import { OnboardingController } from '../controllers/onboarding.controller.ts';
+import { OnboardingService } from '../services/onboarding.service.ts';
 
 export const registerDependencies = async () => {
   const dbClient = getDbClient();
@@ -41,4 +43,7 @@ export const registerDependencies = async () => {
 
   container.register<MeController>(TOKENS.meController, { useClass: MeController });
   container.register<MeService>(TOKENS.meService, { useClass: MeService });
+
+  container.register<OnboardingController>(TOKENS.onboardingController, { useClass: OnboardingController });
+  container.register<OnboardingService>(TOKENS.onboardingService, { useClass: OnboardingService });
 };
