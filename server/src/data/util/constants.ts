@@ -31,6 +31,13 @@ export const ONBOARDING_STATUS = {
   COMPLETED: 'Completed',
 } as const;
 
+export const COMPANY_APPROVAL_STATUS = {
+  PENDING_APPROVAL: 'PendingApproval',
+  APPROVED: 'Approved',
+  REJECTED: 'Rejected',
+} as const;
+
 export type UserRole = (typeof USER_ROLE)[keyof typeof USER_ROLE];
 export type JobApplicationStatus = (typeof JOB_APPLICATION_STATUS)[keyof typeof JOB_APPLICATION_STATUS];
 export type OnboardingStatus = (typeof ONBOARDING_STATUS)[keyof typeof ONBOARDING_STATUS];
+export type CompanyApprovalStatus = (typeof COMPANY_APPROVAL_STATUS)[keyof typeof COMPANY_APPROVAL_STATUS];
