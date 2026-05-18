@@ -1,15 +1,26 @@
 import { inject, injectable } from 'tsyringe';
 import { APIError } from 'better-auth';
-import { RecruiterOnboardingRequest, RecruiterOnboardingRequestSchema } from '../lib/zod/onboarding.zod-schema.ts';
+import {
+  PendingRecruiterOnboardingListRequestSchema,
+  RecruiterOnboardingRequest,
+  RecruiterOnboardingRequestSchema,
+} from '../lib/zod/onboarding.zod-schema.ts';
 import { ZodValidationError } from '../lib/zod-validation-error.ts';
-import { SingleResult } from '../lib/api-response.ts';
-import { CompanyRepository } from '../data/repositories/company.repository.ts';
+import { PaginatedResult, SingleResult } from '../lib/api-response.ts';
+import {
+  ApprovedRecruiterOnboardingRequest,
+  CompanyRepository,
+  PendingRecruiterOnboardingRequest,
+  RejectedRecruiterOnboardingRequest,
+} from '../data/repositories/company.repository.ts';
 import { UserRepository } from '../data/repositories/user.repository.ts';
 import { TOKENS } from '../config/dependency-tokens.ts';
-import { ONBOARDING_STATUS, USER_ROLE } from '../data/util/constants.ts';
+import { COMPANY_APPROVAL_STATUS, ONBOARDING_STATUS, USER_ROLE } from '../data/util/constants.ts';
 import { auth } from '../config/auth.ts';
-import { BadRequestError, ConflictError } from '../lib/app-error.ts';
+import { BadRequestError, ConflictError, NotFoundError } from '../lib/app-error.ts';
 import { Company } from '../data/schema/company.schema.ts';
+import { IntegerIdSchema } from '../lib/zod/integer-id.zod-schema.ts';
+import { RejectRecruiterOnboardingRequestSchema } from '../lib/zod/onboarding.zod-schema.ts';
 
 type RecruiterOnboardingResponse = {
   recruiter: {
@@ -70,6 +81,7 @@ export class OnboardingService {
         logoUrl: request.company.logoUrl,
         websiteUrl: request.company.websiteUrl,
         isApproved: false,
+        approvalStatus: COMPANY_APPROVAL_STATUS.PENDING_APPROVAL,
       });
 
       const signUpResult = await this.signUpRecruiter(request, normalizedEmail);
@@ -106,6 +118,80 @@ export class OnboardingService {
       await this.cleanupFailedRecruiterOnboarding(company?.id, createdUserId);
       throw error;
     }
+  }
+
+  async getPendingRecruiterOnboardingRequests(
+    payload: unknown,
+  ): Promise<PaginatedResult<PendingRecruiterOnboardingRequest>> {
+    const validationResult = PendingRecruiterOnboardingListRequestSchema.safeParse(payload);
+
+    if (!validationResult.success) {
+      throw new ZodValidationError(validationResult.error);
+    }
+
+    const query = validationResult.data;
+    const result = await this.companyRepository.findPendingRecruiterOnboardingRequests({
+      page: query.page,
+      pageSize: query.limit,
+    });
+
+    return {
+      data: result.data,
+      pagination: {
+        currentPage: query.page,
+        pageSize: query.limit,
+        totalPages: Math.ceil(result.totalItems / query.limit),
+        totalItems: result.totalItems,
+      },
+    };
+  }
+
+  async approveRecruiterOnboarding(companyId: unknown): Promise<SingleResult<ApprovedRecruiterOnboardingRequest>> {
+    const validationResult = IntegerIdSchema.safeParse({ id: companyId });
+
+    if (!validationResult.success) {
+      throw new ZodValidationError(validationResult.error);
+    }
+
+    const approvedRequest = await this.companyRepository.approveRecruiterOnboarding(validationResult.data.id);
+
+    if (!approvedRequest) {
+      throw new NotFoundError('No pending recruiter onboarding request found for provided company id.');
+    }
+
+    return {
+      data: approvedRequest,
+    };
+  }
+
+  async rejectRecruiterOnboarding(
+    companyId: unknown,
+    payload: unknown,
+  ): Promise<SingleResult<RejectedRecruiterOnboardingRequest>> {
+    const idValidationResult = IntegerIdSchema.safeParse({ id: companyId });
+
+    if (!idValidationResult.success) {
+      throw new ZodValidationError(idValidationResult.error);
+    }
+
+    const bodyValidationResult = RejectRecruiterOnboardingRequestSchema.safeParse(payload);
+
+    if (!bodyValidationResult.success) {
+      throw new ZodValidationError(bodyValidationResult.error);
+    }
+
+    const rejectedRequest = await this.companyRepository.rejectRecruiterOnboarding(
+      idValidationResult.data.id,
+      bodyValidationResult.data.reason,
+    );
+
+    if (!rejectedRequest) {
+      throw new NotFoundError('No pending recruiter onboarding request found for provided company id.');
+    }
+
+    return {
+      data: rejectedRequest,
+    };
   }
 
   private async signUpRecruiter(request: RecruiterOnboardingRequest, email: string) {

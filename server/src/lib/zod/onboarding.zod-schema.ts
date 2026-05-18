@@ -25,4 +25,15 @@ export const RecruiterOnboardingRequestSchema = z.object({
   }),
 });
 
+export const RejectRecruiterOnboardingRequestSchema = z.object({
+  reason: z.string().trim().min(3, 'Rejection reason must be at least 3 characters long.'),
+});
+
+export const PendingRecruiterOnboardingListRequestSchema = z.object({
+  page: z.coerce.number().int().positive().default(1),
+  limit: z.coerce.number().int().positive().max(100).default(50),
+});
+
 export type RecruiterOnboardingRequest = z.infer<typeof RecruiterOnboardingRequestSchema>;
+export type RejectRecruiterOnboardingRequest = z.infer<typeof RejectRecruiterOnboardingRequestSchema>;
+export type PendingRecruiterOnboardingListRequest = z.infer<typeof PendingRecruiterOnboardingListRequestSchema>;

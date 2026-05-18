@@ -12,4 +12,19 @@ export class OnboardingController {
     const result = await this.onboardingService.registerRecruiter(req.body);
     res.status(201).send(successResponse(result.data));
   }
+
+  async getPendingRecruiterOnboardingRequests(req: Request, res: Response) {
+    const result = await this.onboardingService.getPendingRecruiterOnboardingRequests(req.query);
+    res.status(200).send(successResponse(result.data, undefined, result.pagination));
+  }
+
+  async approveRecruiterOnboarding(req: Request, res: Response) {
+    const result = await this.onboardingService.approveRecruiterOnboarding(req.params.companyId);
+    res.status(200).send(successResponse(result.data));
+  }
+
+  async rejectRecruiterOnboarding(req: Request, res: Response) {
+    const result = await this.onboardingService.rejectRecruiterOnboarding(req.params.companyId, req.body);
+    res.status(200).send(successResponse(result.data));
+  }
 }
