@@ -1,5 +1,4 @@
 import { inject, injectable } from 'tsyringe';
-import { Request } from 'express';
 import {
   JobPostingDetail,
   JobPostingListItem,
@@ -26,8 +25,9 @@ import { toEndOfDayUtc } from '../lib/date.ts';
 import { JobApplicationRepository } from '../data/repositories/job-application.repository.ts';
 import { jobApplication } from '../data/schema/job-application.schema.ts';
 import { and, eq } from 'drizzle-orm';
+import { AuthenticatedUser } from '../data/util/utils.ts';
+import { CompanyRepository } from '../data/repositories/company.repository.ts';
 
-type AuthenticatedUser = Request['user'];
 type JobPostingSkillState = {
   skillId: number;
   yoe?: number;
@@ -68,6 +68,7 @@ export class JobPostingService {
   constructor(
     @inject(TOKENS.jobPostingRepository) private jobPostingRepository: JobPostingRepository,
     @inject(TOKENS.jobApplicationRepository) private jobApplicationRepository: JobApplicationRepository,
+    @inject(TOKENS.companyRepository) private companyRepository: CompanyRepository,
   ) {}
 
   async createJobPosting(payload: unknown, user: AuthenticatedUser): Promise<JobPosting> {
@@ -79,6 +80,12 @@ export class JobPostingService {
 
     if (!user?.companyId) {
       throw new ForbiddenError('Recruiter is not assigned to a company.', ERROR_CODE.RECRUITER_COMPANY_MISSING);
+    }
+
+    const companyApproval = await this.companyRepository.findApprovalStatus(user.companyId);
+
+    if (!companyApproval?.isApproved) {
+      throw new ForbiddenError('Recruiter company must be approved before creating job postings.');
     }
 
     const newJobPosting = validationResult.data;
@@ -481,7 +488,7 @@ export class JobPostingService {
 
     const validId = idValidationResult.data.id;
 
-    const record = await this.jobPostingRepository.findById(validId, {
+    const record = await this.jobPostingRepository.findOne(validId, {
       companyId: jobPosting.companyId,
       isDeleted: jobPosting.isDeleted,
       status: jobPosting.status,

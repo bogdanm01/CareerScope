@@ -4,9 +4,19 @@ CREATE TABLE "application_review" (
 	"company_id" integer,
 	"rating" integer NOT NULL,
 	"comment" text NOT NULL,
+	"is_deleted" boolean DEFAULT false NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now(),
 	"updated_at" timestamp with time zone,
 	CONSTRAINT "rating_range_check" CHECK ("application_review"."rating" BETWEEN 1 AND 5)
+);
+--> statement-breakpoint
+CREATE TABLE "application_status_history" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "application_status_history_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"job_application_id" integer NOT NULL,
+	"status" text NOT NULL,
+	"reason" text,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "status_check" CHECK ("application_status_history"."status" IN ('Submitted', 'UnderReview', 'Rejected', 'Accepted', 'Withdrawn'))
 );
 --> statement-breakpoint
 CREATE TABLE "account" (
@@ -45,11 +55,12 @@ CREATE TABLE "user" (
 	"last_name" text NOT NULL,
 	"email_verified" boolean DEFAULT false NOT NULL,
 	"image" text,
+	"cv_url" text,
 	"company_id" integer,
 	"role" text NOT NULL,
 	"date_of_birth" date NOT NULL,
 	"is_deleted" boolean DEFAULT false NOT NULL,
-	"onboarding_step" integer DEFAULT 1 NOT NULL,
+	"onboarding_status" text DEFAULT 'ProfileCreated' NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
 	CONSTRAINT "user_email_unique" UNIQUE("email")
@@ -76,16 +87,20 @@ CREATE TABLE "company" (
 	"number_of_employees" integer,
 	"address" text NOT NULL,
 	"logo_url" text,
-	"website_url" text
+	"website_url" text,
+	"is_deleted" boolean DEFAULT false NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "job_application" (
 	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "job_application_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
-	"user_id" text,
-	"job_posting_id" integer,
+	"user_id" text NOT NULL,
+	"job_posting_id" integer NOT NULL,
 	"status" text NOT NULL,
+	"is_deleted" boolean DEFAULT false NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now(),
-	"updated_at" timestamp with time zone
+	"updated_at" timestamp with time zone,
+	CONSTRAINT "user_id_job_posting_id_unq" UNIQUE("user_id","job_posting_id"),
+	CONSTRAINT "status_check" CHECK ("job_application"."status" IN ('Submitted', 'UnderReview', 'Rejected', 'Accepted', 'Withdrawn'))
 );
 --> statement-breakpoint
 CREATE TABLE "job_posting_skill" (
@@ -108,10 +123,12 @@ CREATE TABLE "job_posting" (
 	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "job_posting_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"company_id" integer NOT NULL,
 	"title" text,
+	"short_description" text,
 	"description" text,
 	"status" text NOT NULL,
 	"expires_at" timestamp with time zone,
 	"created_by" text NOT NULL,
+	"is_deleted" boolean DEFAULT false NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now(),
 	"updated_at" timestamp with time zone,
 	CONSTRAINT "status_check" CHECK ("job_posting"."status" IN ('Draft', 'PendingApproval', 'Rejected', 'Active', 'Paused', 'Closed', 'Expired'))
@@ -155,11 +172,13 @@ CREATE TABLE "user_skill" (
 	"skill_id" integer NOT NULL,
 	"years_of_experience" integer NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now(),
-	"updated_at" timestamp with time zone
+	"updated_at" timestamp with time zone,
+	CONSTRAINT "user_id_skill_id_unq" UNIQUE("user_id","skill_id")
 );
 --> statement-breakpoint
 ALTER TABLE "application_review" ADD CONSTRAINT "application_review_job_application_id_job_application_id_fk" FOREIGN KEY ("job_application_id") REFERENCES "public"."job_application"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "application_review" ADD CONSTRAINT "application_review_company_id_company_id_fk" FOREIGN KEY ("company_id") REFERENCES "public"."company"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "application_status_history" ADD CONSTRAINT "application_status_history_job_application_id_job_application_id_fk" FOREIGN KEY ("job_application_id") REFERENCES "public"."job_application"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "account" ADD CONSTRAINT "account_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "session" ADD CONSTRAINT "session_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "user" ADD CONSTRAINT "user_company_id_company_id_fk" FOREIGN KEY ("company_id") REFERENCES "public"."company"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -171,11 +190,16 @@ ALTER TABLE "job_posting_status_history" ADD CONSTRAINT "job_posting_status_hist
 ALTER TABLE "job_posting" ADD CONSTRAINT "job_posting_company_id_company_id_fk" FOREIGN KEY ("company_id") REFERENCES "public"."company"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "job_posting" ADD CONSTRAINT "job_posting_created_by_user_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "notification" ADD CONSTRAINT "notification_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "skill" ADD CONSTRAINT "skill_category_id_skill_category_id_fk" FOREIGN KEY ("category_id") REFERENCES "public"."skill_category"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "skill" ADD CONSTRAINT "skill_category_id_skill_category_id_fk" FOREIGN KEY ("category_id") REFERENCES "public"."skill_category"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "user_skill" ADD CONSTRAINT "user_skill_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "user_skill" ADD CONSTRAINT "user_skill_skill_id_skill_id_fk" FOREIGN KEY ("skill_id") REFERENCES "public"."skill"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "account_userId_idx" ON "account" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "session_userId_idx" ON "session" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "verification_identifier_idx" ON "verification" USING btree ("identifier");--> statement-breakpoint
+CREATE INDEX "job_posting_skill_job_posting_id_idx" ON "job_posting_skill" USING btree ("job_posting_id");--> statement-breakpoint
+CREATE INDEX "job_posting_skill_skill_id_idx" ON "job_posting_skill" USING btree ("skill_id");--> statement-breakpoint
+CREATE INDEX "job_posting_status_created_at_idx" ON "job_posting" USING btree ("status","created_at");--> statement-breakpoint
+CREATE INDEX "job_posting_status_expires_at_idx" ON "job_posting" USING btree ("status","expires_at");--> statement-breakpoint
+CREATE INDEX "job_posting_status_company_id_idx" ON "job_posting" USING btree ("status","company_id");--> statement-breakpoint
 CREATE INDEX "skill_search_vector_idx" ON "skill" USING gin ("search_vector");--> statement-breakpoint
 CREATE INDEX "skill_category_id_idx" ON "skill" USING btree ("category_id");

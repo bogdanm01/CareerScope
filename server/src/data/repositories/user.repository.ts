@@ -1,0 +1,98 @@
+import { GenericRepository } from './generic.repository.ts';
+import { user, UserInsert } from '../schema/auth.schema.ts';
+import { User } from 'better-auth';
+import { inject, injectable } from 'tsyringe';
+import { DbClient } from '../../config/db-client.ts';
+import { TOKENS } from '../../config/dependency-tokens.ts';
+import { userSkill, UserSkillInsert } from '../schema/user-skill.schema.ts';
+import { eq } from 'drizzle-orm';
+import { OnboardingStatus, UserRole } from '../util/constants.ts';
+
+type RecruiterOnboardingUpdate = {
+  role: UserRole;
+  companyId: number;
+  onboardingStatus: OnboardingStatus;
+};
+
+@injectable()
+export class UserRepository extends GenericRepository<User, UserInsert, string> {
+  constructor(@inject(TOKENS.db) db: DbClient) {
+    super(db, user);
+  }
+
+  // TODO: Move this to a dedicated user-skill.repository.ts when user skill operations grow.
+  async replaceUserSkills(
+    userId: string,
+    skills: UserSkillInsert[],
+    onboardingStatus?: OnboardingStatus,
+  ) {
+    return await this.db.transaction(async (tx) => {
+      await tx.delete(userSkill).where(eq(userSkill.userId, userId));
+
+      if (skills.length === 0) {
+        return [];
+      }
+
+      const newSkills = await tx.insert(userSkill).values(skills).returning();
+
+      if (onboardingStatus) {
+        await tx.update(user).set({ onboardingStatus }).where(eq(user.id, userId));
+      }
+
+      return newSkills;
+    });
+  }
+
+  async updateCandidateCv(userId: string, cvUrl: string, onboardingStatus: OnboardingStatus) {
+    const [updatedUser] = await this.db
+      .update(user)
+      .set({ cvUrl, onboardingStatus })
+      .where(eq(user.id, userId))
+      .returning({ cvUrl: user.cvUrl, onboardingStatus: user.onboardingStatus });
+
+    return updatedUser;
+  }
+
+  async updateRecruiterOnboarding(userId: string, values: RecruiterOnboardingUpdate) {
+    const [updatedUser] = await this.db
+      .update(user)
+      .set(values)
+      .where(eq(user.id, userId))
+      .returning({
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role,
+        companyId: user.companyId,
+        onboardingStatus: user.onboardingStatus,
+      });
+
+    return updatedUser;
+  }
+
+  async findByEmail(email: string) {
+    const [record] = await this.db
+      .select({ id: user.id })
+      .from(user)
+      .where(eq(user.email, email.toLowerCase()))
+      .limit(1);
+
+    return record ?? null;
+  }
+
+  async findCvUrl(userId: string) {
+    const [record] = await this.db.select({ cvUrl: user.cvUrl }).from(user).where(eq(user.id, userId)).limit(1);
+    return record?.cvUrl;
+  }
+
+  async findOnboardingStatus(userId: string) {
+    const [record] = await this.db
+      .select({ onboardingStatus: user.onboardingStatus })
+      .from(user)
+      .where(eq(user.id, userId))
+      .limit(1);
+
+    return record?.onboardingStatus;
+  }
+}

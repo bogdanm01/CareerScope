@@ -1,6 +1,7 @@
 import { relations } from 'drizzle-orm';
 import { pgTable, text, timestamp, boolean, index, integer, date } from 'drizzle-orm/pg-core';
 import { company } from './company.schema.ts';
+import { ONBOARDING_STATUS } from '../util/constants.ts';
 
 export const user = pgTable('user', {
   id: text('id').primaryKey(),
@@ -10,17 +11,21 @@ export const user = pgTable('user', {
   lastName: text('last_name').notNull(),
   emailVerified: boolean('email_verified').default(false).notNull(),
   image: text('image'),
+  cvUrl: text('cv_url'),
   companyId: integer('company_id').references(() => company.id),
   role: text('role').notNull(),
   dateOfBirth: date('date_of_birth').notNull(),
   isDeleted: boolean('is_deleted').default(false).notNull(),
-  onboardingStep: integer('onboarding_step').default(1).notNull(),
+  onboardingStatus: text('onboarding_status').default(ONBOARDING_STATUS.PROFILE_CREATED).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at')
     .defaultNow()
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
 });
+
+export type User = typeof user.$inferSelect;
+export type UserInsert = typeof user.$inferInsert;
 
 export const session = pgTable(
   'session',

@@ -1,6 +1,6 @@
 {
-  "id": "caca6469-09fd-4bf8-9998-d76ba0ad0699",
-  "prevId": "589a7eb6-afdc-403f-9e3e-ea4681e9b77b",
+  "id": "ba2d3830-98d3-4daf-a04d-36318f1aa2a4",
+  "prevId": "5adf0f85-4cda-4d29-80ca-ccbab1034a9f",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -106,6 +106,80 @@
         "rating_range_check": {
           "name": "rating_range_check",
           "value": "\"application_review\".\"rating\" BETWEEN 1 AND 5"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.application_status_history": {
+      "name": "application_status_history",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "application_status_history_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "job_application_id": {
+          "name": "job_application_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reason": {
+          "name": "reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "application_status_history_job_application_id_job_application_id_fk": {
+          "name": "application_status_history_job_application_id_job_application_id_fk",
+          "tableFrom": "application_status_history",
+          "tableTo": "job_application",
+          "columnsFrom": [
+            "job_application_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "status_check": {
+          "name": "status_check",
+          "value": "\"application_status_history\".\"status\" IN ('Submitted', 'UnderReview', 'Rejected', 'Accepted', 'Withdrawn')"
         }
       },
       "isRLSEnabled": false
@@ -379,6 +453,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "cv_url": {
+          "name": "cv_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "company_id": {
           "name": "company_id",
           "type": "integer",
@@ -404,12 +484,12 @@
           "notNull": true,
           "default": false
         },
-        "onboarding_step": {
-          "name": "onboarding_step",
-          "type": "integer",
+        "onboarding_status": {
+          "name": "onboarding_status",
+          "type": "text",
           "primaryKey": false,
           "notNull": true,
-          "default": 1
+          "default": "'ProfileCreated'"
         },
         "created_at": {
           "name": "created_at",
@@ -622,7 +702,15 @@
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "company_tax_id_unique": {
+          "name": "company_tax_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "tax_id"
+          ]
+        }
+      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -652,13 +740,13 @@
           "name": "user_id",
           "type": "text",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "job_posting_id": {
           "name": "job_posting_id",
           "type": "integer",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "status": {
           "name": "status",
@@ -717,9 +805,23 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "user_id_job_posting_id_unq": {
+          "name": "user_id_job_posting_id_unq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "user_id",
+            "job_posting_id"
+          ]
+        }
+      },
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "status_check": {
+          "name": "status_check",
+          "value": "\"job_application\".\"status\" IN ('Submitted', 'UnderReview', 'Rejected', 'Accepted', 'Withdrawn')"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.job_posting_skill": {
@@ -931,6 +1033,12 @@
         },
         "title": {
           "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "short_description": {
+          "name": "short_description",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -1448,7 +1556,16 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "user_id_skill_id_unq": {
+          "name": "user_id_skill_id_unq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "user_id",
+            "skill_id"
+          ]
+        }
+      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false

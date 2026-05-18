@@ -1,6 +1,6 @@
 {
-  "id": "8eec8bd3-a2c5-4feb-bca5-125a17fba646",
-  "prevId": "caca6469-09fd-4bf8-9998-d76ba0ad0699",
+  "id": "6dae868e-2b0a-401b-b072-0af929422fef",
+  "prevId": "ba2d3830-98d3-4daf-a04d-36318f1aa2a4",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -453,6 +453,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "cv_url": {
+          "name": "cv_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "company_id": {
           "name": "company_id",
           "type": "integer",
@@ -478,12 +484,12 @@
           "notNull": true,
           "default": false
         },
-        "onboarding_step": {
-          "name": "onboarding_step",
-          "type": "integer",
+        "onboarding_status": {
+          "name": "onboarding_status",
+          "type": "text",
           "primaryKey": false,
           "notNull": true,
-          "default": 1
+          "default": "'ProfileCreated'"
         },
         "created_at": {
           "name": "created_at",
@@ -631,6 +637,19 @@
           "notNull": true,
           "default": false
         },
+        "approval_status": {
+          "name": "approval_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'PendingApproval'"
+        },
+        "approval_rejection_reason": {
+          "name": "approval_rejection_reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "approved_at": {
           "name": "approved_at",
           "type": "timestamp with time zone",
@@ -696,7 +715,15 @@
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "company_tax_id_unique": {
+          "name": "company_tax_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "tax_id"
+          ]
+        }
+      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -1019,6 +1046,12 @@
         },
         "title": {
           "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "short_description": {
+          "name": "short_description",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -1536,7 +1569,16 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "user_id_skill_id_unq": {
+          "name": "user_id_skill_id_unq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "user_id",
+            "skill_id"
+          ]
+        }
+      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false

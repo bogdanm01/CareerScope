@@ -1,5 +1,8 @@
 import { AnyColumn, sql } from 'drizzle-orm';
 import { check, timestamp } from 'drizzle-orm/pg-core';
+import { Request } from 'express';
+
+export type AuthenticatedUser = Request['user'];
 
 export const timestamps = {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),

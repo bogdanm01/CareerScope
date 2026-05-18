@@ -23,7 +23,7 @@ export class CompanyService {
 
     const validCompanyId = idValidationResult.data.id;
 
-    const result = await this.companyRepository.findById(
+    const result = await this.companyRepository.findOne(
       validCompanyId,
       {
         id: company.id,
