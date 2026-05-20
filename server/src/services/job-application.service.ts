@@ -162,6 +162,8 @@ export class JobApplicationService {
     };
   }
 
+  async updateJobApplication(_jobApplicationId: unknown, _payload: unknown, _user: AuthenticatedUser) {}
+
   async getMyJobApplications(
     payload: unknown,
     user: AuthenticatedUser,

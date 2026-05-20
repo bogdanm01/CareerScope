@@ -15,5 +15,11 @@ export const getJobApplicationRouter = () => {
     jobApplicationController.getJobApplication.bind(jobApplicationController),
   );
 
+  router.patch(
+    '/:id',
+    authGuard([USER_ROLE.RECRUITER, USER_ROLE.ADMIN]),
+    jobApplicationController.updateJobApplication.bind(jobApplicationController),
+  );
+
   return router;
 };
