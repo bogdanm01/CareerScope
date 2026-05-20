@@ -13,7 +13,8 @@ export class SkillController {
     res.status(200).send(successResponse(result.data));
   }
 
-  async getSkills(_req: Request, _res: Response) {
-    await this.skillService.getSkills();
+  async getSkills(req: Request, res: Response) {
+    const result = await this.skillService.getSkills(req.query);
+    res.status(200).send(successResponse(result.data));
   }
 }
