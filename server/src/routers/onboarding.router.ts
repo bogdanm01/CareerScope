@@ -9,7 +9,6 @@ export const getOnboardingRouter = () => {
   const router = express.Router();
   const onboardingController = container.resolve<OnboardingController>(TOKENS.onboardingController);
 
-  // POST /api/onboarding/recruiter
   router.post('/recruiter', onboardingController.registerRecruiter.bind(onboardingController));
 
   router.get(

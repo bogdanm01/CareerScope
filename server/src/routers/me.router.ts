@@ -18,7 +18,6 @@ export const getMeRouter = () => {
     meController.getOnboardingStatus.bind(meController),
   );
 
-  // GET /api/me/cv
   router.get('/cv', authGuard([USER_ROLE.CANDIDATE]), meController.downloadCandidateCv.bind(meController));
 
   router.get(
@@ -33,10 +32,8 @@ export const getMeRouter = () => {
     jobApplicationController.getMyJobApplication.bind(jobApplicationController),
   );
 
-  // PUT /api/me/skills
   router.put('/skills', authGuard([USER_ROLE.CANDIDATE]), meController.replaceCandidateSkills.bind(meController));
 
-  // POST /api/me/cv
   router.post(
     '/cv',
     authGuard([USER_ROLE.CANDIDATE]),

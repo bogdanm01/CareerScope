@@ -58,8 +58,9 @@ export class JobApplicationController {
     res.status(200).json(successResponse<JobApplicationDetail>(result.data));
   }
 
-  async updateJobApplication(req: Request, _res: Response) {
-    await this.jobApplicationService.updateJobApplication(req.params.id, req.body, req.user);
+  async updateJobApplication(req: Request, res: Response) {
+    const result = await this.jobApplicationService.updateJobApplication(req.params.id, req.body, req.user);
+    res.status(200).json(successResponse<JobApplication>(result.data, 'Job application updated'));
   }
 
   /**

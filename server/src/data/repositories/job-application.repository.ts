@@ -11,6 +11,7 @@ import { userSkill } from '../schema/user-skill.schema.ts';
 import skill from '../schema/skill.schema.ts';
 import { company } from '../schema/company.schema.ts';
 import { jobPostingSkill } from '../schema/job-posting-skill.schema.ts';
+import { JobApplicationStatus } from '../util/constants.ts';
 
 type FindByJobPostingPagination = {
   page?: number;
@@ -25,6 +26,14 @@ type FindByJobPostingResult = {
 type FindJobApplicationDetailScope = {
   companyId?: number;
   userId?: string;
+};
+
+type FindJobApplicationReviewTargetScope = {
+  companyId?: number;
+};
+
+export type JobApplicationReviewTarget = JobApplication & {
+  companyId: number;
 };
 
 export type JobApplicationListItem = JobApplication & {
@@ -102,6 +111,63 @@ export class JobApplicationRepository extends GenericRepository<JobApplication, 
       });
 
       return createdJobApplication;
+    });
+  }
+
+  async findReviewTarget(
+    jobApplicationId: number,
+    scope: FindJobApplicationReviewTargetScope = {},
+  ): Promise<JobApplicationReviewTarget | null> {
+    const filters: SQL[] = [
+      eq(jobApplication.id, jobApplicationId),
+      eq(jobApplication.isDeleted, false),
+      eq(jobPosting.isDeleted, false),
+      eq(company.isDeleted, false),
+    ];
+
+    if (scope.companyId !== undefined) {
+      filters.push(eq(jobPosting.companyId, scope.companyId));
+    }
+
+    const [record] = await this.db
+      .select({
+        id: jobApplication.id,
+        userId: jobApplication.userId,
+        jobPostingId: jobApplication.jobPostingId,
+        status: jobApplication.status,
+        isDeleted: jobApplication.isDeleted,
+        createdAt: jobApplication.createdAt,
+        updatedAt: jobApplication.updatedAt,
+        companyId: jobPosting.companyId,
+      })
+      .from(jobApplication)
+      .innerJoin(jobPosting, eq(jobApplication.jobPostingId, jobPosting.id))
+      .innerJoin(company, eq(jobPosting.companyId, company.id))
+      .where(and(...filters))
+      .limit(1);
+
+    return record ?? null;
+  }
+
+  async updateStatusWithHistory(
+    jobApplicationId: number,
+    status: JobApplicationStatus,
+    reason?: string,
+  ): Promise<JobApplication> {
+    return await this.db.transaction(async (tx) => {
+      const [updatedJobApplication] = await tx
+        .update(jobApplication)
+        .set({ status })
+        .where(eq(jobApplication.id, jobApplicationId))
+        .returning();
+
+      await tx.insert(applicationStatusHistory).values({
+        jobApplicationId,
+        status,
+        reason,
+      });
+
+      return updatedJobApplication;
     });
   }
 
