@@ -4,6 +4,7 @@ import { getJobApplicationRouter } from './job-application.router.ts';
 import { getMeRouter } from './me.router.ts';
 import { getCompanyRouter } from './company.router.ts';
 import { getOnboardingRouter } from './onboarding.router.ts';
+import { getSkillRouter } from './skill.router.ts';
 
 export const getApiRouter = () => {
   const apiRouter = express.Router();
@@ -13,6 +14,7 @@ export const getApiRouter = () => {
   apiRouter.use('/me', getMeRouter());
   apiRouter.use('/companies', getCompanyRouter());
   apiRouter.use('/onboarding', getOnboardingRouter());
+  apiRouter.use('/', getSkillRouter());
 
   return apiRouter;
 };

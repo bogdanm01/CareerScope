@@ -5,6 +5,9 @@ export const TOKENS = {
   userRepository: Symbol('UserRepository'),
   skillRepository: Symbol('SkillRepository'),
 
+  skillController: Symbol('SkillController'),
+  skillService: Symbol('SkillService'),
+
   jobPostingController: Symbol('JobPostingController'),
   jobPostingService: Symbol('JobPostingService'),
   jobPostingRepository: Symbol('JobPostingRepository'),
