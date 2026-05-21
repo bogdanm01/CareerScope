@@ -208,6 +208,8 @@ export class JobApplicationService {
     };
   }
 
+  async createApplicationReview(_jobApplicationId: unknown, _payload: unknown, _user: AuthenticatedUser) {}
+
   private getReviewScopeCompanyId(user: AuthenticatedUser): number | undefined {
     if (user.role === USER_ROLE.ADMIN) {
       return undefined;

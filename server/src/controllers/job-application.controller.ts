@@ -63,6 +63,11 @@ export class JobApplicationController {
     res.status(200).json(successResponse<JobApplication>(result.data, 'Job application updated'));
   }
 
+  async createApplicationReview(req: Request, res: Response) {
+    await this.jobApplicationService.createApplicationReview(req.params.id, req.body, req.user);
+    res.status(204).send();
+  }
+
   /**
    * Returns job applications for the authenticated candidate.
    *
