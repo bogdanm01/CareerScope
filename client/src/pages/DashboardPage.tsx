@@ -21,7 +21,11 @@ export const DashboardPage = ({ loading }: DashboardPageProps) => {
     }
   };
 
-  const displayName = session?.user.name || session?.user.firstName || 'there';
+  const displayName = session?.user.name || [session?.user.firstName, session?.user.lastName].filter(Boolean).join(' ') || 'there';
+  const onboardingStatus =
+    session?.user.onboardingStatus
+      ? session.user.onboardingStatus.replace(/([a-z])([A-Z])/g, '$1 $2')
+      : 'Profile created';
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-6 text-slate-100">
@@ -45,8 +49,8 @@ export const DashboardPage = ({ loading }: DashboardPageProps) => {
               <strong className="block text-sm font-medium text-white">{session?.user.role || 'Candidate'}</strong>
             </div>
             <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
-              <span className="mb-2 block text-sm text-slate-400">Session</span>
-              <strong className="block text-sm font-medium text-white">{loading ? 'Refreshing' : 'Active'}</strong>
+              <span className="mb-2 block text-sm text-slate-400">Onboarding</span>
+              <strong className="block text-sm font-medium text-white">{loading ? 'Refreshing' : onboardingStatus}</strong>
             </div>
           </div>
 

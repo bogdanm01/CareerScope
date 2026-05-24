@@ -7,6 +7,7 @@ import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { HomeRedirect } from './pages/HomeRedirect';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
+import { RecruiterOnboardingPage } from './pages/RecruiterOnboardingPage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
 import { authHydratedAtom, authLoadingAtom, authSessionAtom, hydrateAuthAtom } from './store/auth';
 
@@ -71,6 +72,14 @@ function App() {
           element={
             <PublicOnlyRoute>
               <RegisterPage loading={loading} />
+            </PublicOnlyRoute>
+          }
+        />
+        <Route
+          path="/register/recruiter"
+          element={
+            <PublicOnlyRoute>
+              <RecruiterOnboardingPage loading={loading} />
             </PublicOnlyRoute>
           }
         />

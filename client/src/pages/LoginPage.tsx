@@ -100,7 +100,11 @@ export const LoginPage = ({ loading }: LoginPageProps) => {
       </form>
 
       <div className="mt-5 text-sm text-slate-300">
-        New here? <Link className="text-sky-300 hover:underline" to="/register">Create an account</Link>
+        New here? <Link className="text-sky-300 hover:underline" to="/register">Create a candidate account</Link>
+        {' '}
+        <Link className="text-sky-300 hover:underline" to="/register/recruiter">
+          or start recruiter onboarding
+        </Link>
       </div>
     </AuthShell>
   );

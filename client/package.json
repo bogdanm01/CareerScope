@@ -13,6 +13,7 @@
     "@heroui/react": "^3.0.4",
     "@heroui/styles": "^3.0.4",
     "@tailwindcss/vite": "^4.3.0",
+    "better-auth": "^1.6.11",
     "dayjs": "^1.11.20",
     "jotai": "^2.19.1",
     "react": "^19.2.5",

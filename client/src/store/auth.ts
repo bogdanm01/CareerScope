@@ -1,10 +1,47 @@
 import { atom } from 'jotai';
-import { atomWithStorage, createJSONStorage } from 'jotai/utils';
-import { getSession, requestPasswordReset, resetPassword, signIn, signOut, signUp, type AuthSession } from '../lib/auth-api';
+import { authClient } from '../lib/auth-client';
+import { registerRecruiter, type RecruiterOnboardingPayload, type RecruiterOnboardingResponse } from '../lib/onboarding-api';
+import type { auth as serverAuth } from '../../../server/src/config/auth.ts';
 
-const authStorage = createJSONStorage<string | null>(() => localStorage);
+type AuthSession = typeof serverAuth.$Infer.Session;
+type AuthUser = AuthSession['user'];
+type AuthSessionRecord = AuthSession['session'];
 
-export const authTokenAtom = atomWithStorage<string | null>('career-scope.auth.token', null, authStorage);
+const createFallbackSession = (user: AuthUser, token?: string | null): AuthSession =>
+  ({
+    session: {
+      id: `fallback-${user.id}`,
+      userId: user.id,
+      token: token ?? '',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      expiresAt: new Date(Date.now() + 60 * 60 * 1000),
+    } as AuthSessionRecord,
+    user,
+  } as AuthSession);
+
+const loadSession = async (fallback?: { user?: AuthUser; token?: string | null }) => {
+  const sessionResponse = await authClient.getSession();
+
+  if (sessionResponse.data) {
+    return sessionResponse.data as unknown as AuthSession;
+  }
+
+  if (fallback?.user) {
+    return createFallbackSession(fallback.user, fallback.token);
+  }
+
+  return null;
+};
+
+const readAuthErrorMessage = (error: unknown, fallbackMessage: string) => {
+  if (error instanceof Error && error.message.trim()) {
+    return error.message;
+  }
+
+  return fallbackMessage;
+};
+
 export const authSessionAtom = atom<AuthSession | null>(null);
 export const authHydratedAtom = atom(false);
 export const authLoadingAtom = atom(false);
@@ -14,11 +51,9 @@ export const authStatusAtom = atom((get) => ({
   hydrated: get(authHydratedAtom),
   loading: get(authLoadingAtom),
   session: get(authSessionAtom),
-  token: get(authTokenAtom),
 }));
 
 export const clearAuthAtom = atom(null, (_get, set) => {
-  set(authTokenAtom, null);
   set(authSessionAtom, null);
   set(authErrorAtom, null);
 });
@@ -28,12 +63,10 @@ export const hydrateAuthAtom = atom(null, async (_get, set) => {
   set(authErrorAtom, null);
 
   try {
-    const session = await getSession();
+    const session = await loadSession();
     set(authSessionAtom, session);
-    set(authTokenAtom, session?.session.token ?? null);
   } catch {
     set(authSessionAtom, null);
-    set(authTokenAtom, null);
   } finally {
     set(authHydratedAtom, true);
     set(authLoadingAtom, false);
@@ -47,27 +80,26 @@ export const signInAtom = atom(
     set(authErrorAtom, null);
 
     try {
-      const result = await signIn(payload);
-      set(authTokenAtom, result.token);
+      const result = await authClient.signIn.email({
+        email: payload.email,
+        password: payload.password,
+        rememberMe: payload.rememberMe ?? true,
+      });
 
-      const session = await getSession();
-      if (session) {
-        set(authSessionAtom, session);
-        return session;
+      if (result.error) {
+        throw result.error;
       }
 
-      const fallbackSession: AuthSession = {
-        session: {
-          token: result.token,
-          userId: result.user.id,
-        },
-        user: result.user,
-      };
+      const data = result.data as unknown as { user: AuthUser; token: string };
+      const session = await loadSession({
+        user: data.user,
+        token: data.token,
+      });
 
-      set(authSessionAtom, fallbackSession);
-      return fallbackSession;
+      set(authSessionAtom, session);
+      return session;
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unable to sign in';
+      const message = readAuthErrorMessage(error, 'Unable to sign in');
       set(authErrorAtom, message);
       throw error;
     } finally {
@@ -83,34 +115,65 @@ export const signUpAtom = atom(
     set(authErrorAtom, null);
 
     try {
-      const result = await signUp({
+      const result = await authClient.signUp.email({
         ...payload,
         name: `${payload.firstName} ${payload.lastName}`.trim(),
+      });
+
+      if (result.error) {
+        throw result.error;
+      }
+
+      const data = result.data as unknown as { user: AuthUser; token: string };
+      const session = await loadSession({
+        user: data.user,
+        token: data.token,
+      });
+
+      set(authSessionAtom, session);
+      return session;
+    } catch (error) {
+      const message = readAuthErrorMessage(error, 'Unable to create account');
+      set(authErrorAtom, message);
+      throw error;
+    } finally {
+      set(authLoadingAtom, false);
+    }
+  },
+);
+
+export const registerRecruiterAtom = atom(
+  null,
+  async (_get, set, payload: RecruiterOnboardingPayload) => {
+    set(authLoadingAtom, true);
+    set(authErrorAtom, null);
+
+    try {
+      const onboardingResult = await registerRecruiter(payload);
+
+      const signInResult = await authClient.signIn.email({
+        email: payload.recruiter.email,
+        password: payload.recruiter.password,
         rememberMe: true,
       });
 
-      if (result.token) {
-        set(authTokenAtom, result.token);
+      if (signInResult.error) {
+        throw signInResult.error;
       }
 
-      const session = await getSession();
-      if (session) {
-        set(authSessionAtom, session);
-        return session;
-      }
+      const data = signInResult.data as unknown as { user: AuthUser; token: string };
+      const session = await loadSession({
+        user: data.user,
+        token: data.token,
+      });
 
-      const fallbackSession: AuthSession = {
-        session: {
-          token: result.token ?? undefined,
-          userId: result.user.id,
-        },
-        user: result.user,
+      set(authSessionAtom, session);
+      return {
+        onboarding: onboardingResult as RecruiterOnboardingResponse,
+        session,
       };
-
-      set(authSessionAtom, fallbackSession);
-      return fallbackSession;
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unable to create account';
+      const message = readAuthErrorMessage(error, 'Unable to complete recruiter onboarding');
       set(authErrorAtom, message);
       throw error;
     } finally {
@@ -124,9 +187,18 @@ export const requestResetAtom = atom(null, async (_get, set, payload: { email: s
   set(authErrorAtom, null);
 
   try {
-    return await requestPasswordReset(payload.email, payload.redirectTo);
+    const result = await authClient.requestPasswordReset({
+      email: payload.email,
+      redirectTo: payload.redirectTo,
+    });
+
+    if (result.error) {
+      throw result.error;
+    }
+
+    return result.data;
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unable to request a password reset';
+    const message = readAuthErrorMessage(error, 'Unable to request a password reset');
     set(authErrorAtom, message);
     throw error;
   } finally {
@@ -139,9 +211,15 @@ export const resetPasswordAtom = atom(null, async (_get, set, payload: { token?:
   set(authErrorAtom, null);
 
   try {
-    return await resetPassword(payload);
+    const result = await authClient.resetPassword(payload);
+
+    if (result.error) {
+      throw result.error;
+    }
+
+    return result.data;
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unable to reset password';
+    const message = readAuthErrorMessage(error, 'Unable to reset password');
     set(authErrorAtom, message);
     throw error;
   } finally {
@@ -154,9 +232,16 @@ export const signOutAtom = atom(null, async (_get, set) => {
   set(authErrorAtom, null);
 
   try {
-    await signOut();
+    const result = await authClient.signOut();
+
+    if (result.error) {
+      throw result.error;
+    }
+  } catch (error) {
+    const message = readAuthErrorMessage(error, 'Unable to sign out');
+    set(authErrorAtom, message);
+    throw error;
   } finally {
-    set(authTokenAtom, null);
     set(authSessionAtom, null);
     set(authLoadingAtom, false);
   }

@@ -53,10 +53,10 @@ export const RegisterPage = ({ loading }: RegisterPageProps) => {
   return (
     <AuthShell
       eyebrow="CareerScope"
-      title="Create your account."
-      description="Set up your profile and start with a clean session-backed login."
-      asideTitle="Candidate profile"
-      asideText="Registration collects the fields required by the backend schema: name, date of birth, email and password."
+      title="Create your candidate account."
+      description="Set up your profile with the standard candidate registration flow."
+      asideTitle="Candidate registration"
+      asideText="Candidates use the regular Better Auth sign-up flow with first name, last name, date of birth, email and password."
     >
       <form className="grid gap-4 sm:grid-cols-2" onSubmit={onSubmit}>
         <label className="grid gap-2">
@@ -148,6 +148,13 @@ export const RegisterPage = ({ loading }: RegisterPageProps) => {
 
       <div className="mt-5 text-sm text-slate-300">
         Already have an account? <Link className="text-sky-300 hover:underline" to="/login">Sign in</Link>
+      </div>
+
+      <div className="mt-3 text-sm text-slate-300">
+        Are you a recruiter?{' '}
+        <Link className="text-sky-300 hover:underline" to="/register/recruiter">
+          Complete recruiter onboarding
+        </Link>
       </div>
     </AuthShell>
   );
