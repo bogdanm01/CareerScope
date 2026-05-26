@@ -26,8 +26,8 @@ export const LoginPage = ({ loading }: LoginPageProps) => {
     setAuthError(null);
 
     try {
-      await signIn({ email, password, rememberMe });
-      navigate('/dashboard', { replace: true });
+      const session = await signIn({ email, password, rememberMe });
+      navigate(session?.user.role === 'Admin' ? '/panel/admin' : '/panel', { replace: true });
     } catch (submitError) {
       const message = submitError instanceof Error ? submitError.message : 'Unable to sign in';
       setError(message);

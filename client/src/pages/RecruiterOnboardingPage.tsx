@@ -62,7 +62,7 @@ export const RecruiterOnboardingPage = ({ loading }: RecruiterOnboardingPageProp
     }
 
     try {
-      await registerRecruiter({
+      const session = await registerRecruiter({
         recruiter: {
           firstName,
           lastName,
@@ -83,7 +83,7 @@ export const RecruiterOnboardingPage = ({ loading }: RecruiterOnboardingPageProp
         },
       });
 
-      navigate('/dashboard', { replace: true });
+      navigate(session.session?.user.role === 'Admin' ? '/panel/admin' : '/panel', { replace: true });
     } catch (submitError) {
       const message = submitError instanceof Error ? submitError.message : 'Unable to complete recruiter onboarding';
       setError(message);

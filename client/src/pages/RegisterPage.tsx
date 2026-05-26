@@ -34,14 +34,14 @@ export const RegisterPage = ({ loading }: RegisterPageProps) => {
     }
 
     try {
-      await signUp({
+      const session = await signUp({
         firstName,
         lastName,
         dateOfBirth,
         email,
         password,
       });
-      navigate('/dashboard', { replace: true });
+      navigate(session?.user.role === 'Admin' ? '/panel/admin' : '/panel', { replace: true });
     } catch (submitError) {
       const message = submitError instanceof Error ? submitError.message : 'Unable to create account';
       setError(message);

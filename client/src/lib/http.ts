@@ -47,12 +47,30 @@ const readErrorMessage = async (response: Response) => {
   return text.trim() || response.statusText || 'Request failed';
 };
 
-type FetchJsonOptions = Omit<RequestInit, 'body'> & {
+export type FetchJsonOptions = Omit<RequestInit, 'body'> & {
   body?: Record<string, unknown>;
+  query?: Record<string, string | number | boolean | null | undefined>;
+};
+
+const appendQuery = (url: URL, query?: FetchJsonOptions['query']) => {
+  if (!query) {
+    return url;
+  }
+
+  for (const [key, value] of Object.entries(query)) {
+    if (value === undefined || value === null || value === '') {
+      continue;
+    }
+
+    url.searchParams.set(key, String(value));
+  }
+
+  return url;
 };
 
 export const fetchJson = async <T>(path: string, options: FetchJsonOptions = {}) => {
-  const response = await fetch(buildUrl(path), {
+  const url = appendQuery(new URL(buildUrl(path)), options.query);
+  const response = await fetch(url, {
     ...options,
     credentials: 'include',
     headers: {

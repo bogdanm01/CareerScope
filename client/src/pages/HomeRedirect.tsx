@@ -10,5 +10,7 @@ export const HomeRedirect = () => {
     return <div className="app-loading">Loading...</div>;
   }
 
-  return <Navigate to={session ? '/dashboard' : '/login'} replace />;
+  const target = session?.user.role === 'Admin' ? '/panel/admin' : session ? '/panel' : '/login';
+
+  return <Navigate to={target} replace />;
 };

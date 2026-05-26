@@ -26,4 +26,6 @@ dist-ssr
 # dotenv environment variable files
 .env
 .env.*
+.codex
+.agents
 !.env.example

@@ -1,69 +1,101 @@
-import { useNavigate } from 'react-router-dom';
-import { useAtomValue, useSetAtom } from 'jotai';
-import { authSessionAtom, authLoadingAtom, signOutAtom } from '../store/auth';
+import { Link } from 'react-router-dom';
+import { useAtomValue } from 'jotai';
+import { authSessionAtom } from '../store/auth';
 
 type DashboardPageProps = {
   loading: boolean;
 };
 
+const getNextActions = (role?: string) => {
+  if (role === 'Candidate') {
+    return [
+      { to: '/panel/profile', label: 'Complete your profile', description: 'Add skills and upload a CV.' },
+      { to: '/panel/jobs', label: 'Browse jobs', description: 'Review active openings and apply.' },
+      { to: '/panel/applications', label: 'Review applications', description: 'Check the status of your submissions.' },
+    ];
+  }
+
+  if (role === 'Admin') {
+    return [
+      { to: '/panel/admin/companies', label: 'Approve companies', description: 'Review pending recruiter company registrations.' },
+      { to: '/panel/admin/job-postings', label: 'Approve job postings', description: 'Review postings before they go live.' },
+    ];
+  }
+
+  return [
+    { to: '/panel/job-postings', label: 'Create a posting', description: 'Draft or submit a new role.' },
+    { to: '/panel/job-applications', label: 'Review applicants', description: 'Open job applications by posting.' },
+  ];
+};
+
 export const DashboardPage = ({ loading }: DashboardPageProps) => {
-  const navigate = useNavigate();
   const session = useAtomValue(authSessionAtom);
-  const signOut = useSetAtom(signOutAtom);
-  const setAuthLoading = useSetAtom(authLoadingAtom);
-
-  const handleLogout = async () => {
-    try {
-      await signOut();
-      navigate('/login', { replace: true });
-    } finally {
-      setAuthLoading(false);
-    }
-  };
-
+  const role = session?.user.role;
   const displayName = session?.user.name || [session?.user.firstName, session?.user.lastName].filter(Boolean).join(' ') || 'there';
-  const onboardingStatus =
-    session?.user.onboardingStatus
-      ? session.user.onboardingStatus.replace(/([a-z])([A-Z])/g, '$1 $2')
-      : 'Profile created';
+  const onboardingStatus = session?.user.onboardingStatus
+    ? session.user.onboardingStatus.replace(/([a-z])([A-Z])/g, '$1 $2')
+    : 'Profile created';
+  const nextActions = getNextActions(role);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-6 text-slate-100">
-      <div className="mx-auto grid min-h-[calc(100vh-3rem)] w-full max-w-4xl place-items-center">
-        <div className="w-full rounded-[2rem] border border-white/10 bg-slate-950/75 p-8 shadow-[0_36px_90px_rgba(0,0,0,0.34)] backdrop-blur-2xl sm:p-10">
-          <div className="mb-4 inline-flex rounded-full border border-white/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-sky-100">
-            CareerScope
-          </div>
-          <h1 className="mb-3 text-4xl font-semibold tracking-tight text-white sm:text-5xl">Welcome, {displayName}.</h1>
-          <p className="mb-7 max-w-2xl text-base leading-7 text-slate-300">
-            You are signed in and ready to continue from the dashboard.
-          </p>
-
-          <div className="mb-6 grid gap-4 md:grid-cols-3">
-            <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
-              <span className="mb-2 block text-sm text-slate-400">Email</span>
-              <strong className="block text-sm font-medium text-white">{session?.user.email}</strong>
+    <div className="grid gap-6">
+      <section className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6 shadow-[0_30px_80px_rgba(0,0,0,0.24)] backdrop-blur-xl sm:p-8">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <div className="inline-flex rounded-full border border-white/10 bg-sky-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-sky-100">
+              Dashboard
             </div>
-            <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
-              <span className="mb-2 block text-sm text-slate-400">Role</span>
-              <strong className="block text-sm font-medium text-white">{session?.user.role || 'Candidate'}</strong>
-            </div>
-            <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
-              <span className="mb-2 block text-sm text-slate-400">Onboarding</span>
-              <strong className="block text-sm font-medium text-white">{loading ? 'Refreshing' : onboardingStatus}</strong>
-            </div>
+            <h2 className="mt-4 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+              Welcome back, {displayName}.
+            </h2>
+            <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300 sm:text-base">
+              {role === 'Candidate'
+                ? 'Use this panel to complete your profile, discover jobs, and apply from one place.'
+                : role === 'Admin'
+                  ? 'Use this panel to approve companies and job postings before they go live.'
+                  : 'Use this panel to create job postings, review applicants, and manage your hiring pipeline.'}
+            </p>
           </div>
 
-          <button
-            className="w-full rounded-2xl bg-gradient-to-r from-sky-400 to-cyan-400 px-4 py-3 font-semibold text-slate-950 shadow-lg shadow-sky-500/20 transition hover:-translate-y-0.5 disabled:cursor-progress disabled:opacity-70 disabled:hover:translate-y-0"
-            type="button"
-            onClick={handleLogout}
-            disabled={loading}
-          >
-            Sign out
-          </button>
+          <div className="rounded-3xl border border-white/10 bg-slate-950/60 px-4 py-3">
+            <span className="block text-xs uppercase tracking-[0.22em] text-slate-400">Status</span>
+            <strong className="mt-1 block text-sm font-semibold text-white">{loading ? 'Refreshing' : onboardingStatus}</strong>
+          </div>
         </div>
-      </div>
+
+        <div className="mt-6 grid gap-4 md:grid-cols-3">
+          <div className="rounded-3xl border border-white/10 bg-slate-950/50 p-4">
+            <span className="block text-sm text-slate-400">Email</span>
+            <strong className="mt-2 block break-all text-sm font-medium text-white">{session?.user.email}</strong>
+          </div>
+          <div className="rounded-3xl border border-white/10 bg-slate-950/50 p-4">
+            <span className="block text-sm text-slate-400">Role</span>
+            <strong className="mt-2 block text-sm font-medium text-white">{role || 'Candidate'}</strong>
+          </div>
+          <div className="rounded-3xl border border-white/10 bg-slate-950/50 p-4">
+            <span className="block text-sm text-slate-400">Panel</span>
+            <strong className="mt-2 block text-sm font-medium text-white">
+              {role === 'Candidate' ? 'Candidate workspace' : role === 'Admin' ? 'Admin workspace' : 'Recruiter workspace'}
+            </strong>
+          </div>
+        </div>
+      </section>
+
+      <section className="grid gap-4 lg:grid-cols-2">
+        {nextActions.map((action) => (
+          <Link
+            key={action.to}
+            to={action.to}
+            className="group rounded-[1.75rem] border border-white/10 bg-white/[0.03] p-5 transition hover:-translate-y-0.5 hover:border-sky-400/30 hover:bg-sky-500/10"
+          >
+            <span className="block text-lg font-semibold text-white">{action.label}</span>
+            <span className="mt-2 block text-sm leading-6 text-slate-300">{action.description}</span>
+            <span className="mt-4 inline-flex text-sm font-medium text-sky-200 group-hover:text-white">
+              Open page
+            </span>
+          </Link>
+        ))}
+      </section>
     </div>
   );
 };
