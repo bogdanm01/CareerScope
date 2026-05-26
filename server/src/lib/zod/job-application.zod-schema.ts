@@ -38,6 +38,26 @@ export const JobApplicationUpdateRequestSchema = z
     }
   });
 
+export const ApplicationReviewCreateRequestSchema = z
+  .object({
+    rating: z
+      .number({
+        error: 'Rating is required.',
+      })
+      .int('Rating must be an integer.')
+      .min(1, 'Rating must be at least 1.')
+      .max(5, 'Rating cannot be greater than 5.'),
+    comment: z
+      .string({
+        error: 'Comment is required.',
+      })
+      .trim()
+      .min(3, 'Comment must contain at least 3 characters.')
+      .max(1000, 'Comment cannot exceed 1000 characters.'),
+  })
+  .strict();
+
 export type JobApplicationCreateRequest = z.infer<typeof JobApplicationCreateRequestSchema>;
 export type JobApplicationListRequest = z.infer<typeof JobApplicationListRequestSchema>;
 export type JobApplicationUpdateRequest = z.infer<typeof JobApplicationUpdateRequestSchema>;
+export type ApplicationReviewCreateRequest = z.infer<typeof ApplicationReviewCreateRequestSchema>;

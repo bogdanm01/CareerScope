@@ -4,6 +4,7 @@ import { JobApplicationService } from '../services/job-application.service.ts';
 import { Request, Response } from 'express';
 import { successResponse } from '../lib/api-response.ts';
 import { JobApplication } from '../data/schema/job-application.schema.ts';
+import { ApplicationReview } from '../data/schema/application-review.schema.ts';
 import {
   CandidateJobApplicationListItem,
   JobApplicationDetail,
@@ -64,8 +65,8 @@ export class JobApplicationController {
   }
 
   async createApplicationReview(req: Request, res: Response) {
-    await this.jobApplicationService.createApplicationReview(req.params.id, req.body, req.user);
-    res.status(204).send();
+    const result = await this.jobApplicationService.createApplicationReview(req.params.id, req.body, req.user);
+    res.status(201).json(successResponse<ApplicationReview>(result.data, 'Application review created'));
   }
 
   /**

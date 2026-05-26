@@ -12,6 +12,11 @@ import skill from '../schema/skill.schema.ts';
 import { company } from '../schema/company.schema.ts';
 import { jobPostingSkill } from '../schema/job-posting-skill.schema.ts';
 import { JobApplicationStatus } from '../util/constants.ts';
+import {
+  applicationReview,
+  ApplicationReview,
+  ApplicationReviewInsert,
+} from '../schema/application-review.schema.ts';
 
 type FindByJobPostingPagination = {
   page?: number;
@@ -33,6 +38,11 @@ type FindJobApplicationReviewTargetScope = {
 };
 
 export type JobApplicationReviewTarget = JobApplication & {
+  companyId: number;
+};
+
+export type ApplicationReviewTarget = {
+  jobApplicationId: number;
   companyId: number;
 };
 
@@ -169,6 +179,49 @@ export class JobApplicationRepository extends GenericRepository<JobApplication, 
 
       return updatedJobApplication;
     });
+  }
+
+  async findApplicationReviewTarget(jobApplicationId: number, userId: string): Promise<ApplicationReviewTarget | null> {
+    const [record] = await this.db
+      .select({
+        jobApplicationId: jobApplication.id,
+        companyId: jobPosting.companyId,
+      })
+      .from(jobApplication)
+      .innerJoin(jobPosting, eq(jobApplication.jobPostingId, jobPosting.id))
+      .innerJoin(company, eq(jobPosting.companyId, company.id))
+      .where(
+        and(
+          eq(jobApplication.id, jobApplicationId),
+          eq(jobApplication.userId, userId),
+          eq(jobApplication.isDeleted, false),
+          eq(jobPosting.isDeleted, false),
+          eq(company.isDeleted, false),
+        ),
+      )
+      .limit(1);
+
+    return record ?? null;
+  }
+
+  async findApplicationReview(jobApplicationId: number): Promise<ApplicationReview | null> {
+    const [record] = await this.db
+      .select()
+      .from(applicationReview)
+      .where(and(eq(applicationReview.jobApplicationId, jobApplicationId), eq(applicationReview.isDeleted, false)))
+      .limit(1);
+
+    return record ?? null;
+  }
+
+  async insertApplicationReview(payload: ApplicationReviewInsert): Promise<ApplicationReview> {
+    const [createdReview] = await this.db.insert(applicationReview).values(payload).returning();
+
+    if (!createdReview) {
+      throw new Error('Database insert failed.');
+    }
+
+    return createdReview;
   }
 
   async findByJobPostingId(

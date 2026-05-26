@@ -45,4 +45,9 @@ export class CompanyController {
     const result = await this.companyService.getCompany(req.params.id);
     res.status(200).send(successResponse(result.data));
   }
+
+  async getCompanyReviews(req: Request, res: Response) {
+    const result = await this.companyService.getCompanyReviews(req.params.id, req.query);
+    res.status(200).send(successResponse(result.data, undefined, result.pagination));
+  }
 }
