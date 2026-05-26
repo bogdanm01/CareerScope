@@ -11,6 +11,12 @@ import { userSkill } from '../schema/user-skill.schema.ts';
 import skill from '../schema/skill.schema.ts';
 import { company } from '../schema/company.schema.ts';
 import { jobPostingSkill } from '../schema/job-posting-skill.schema.ts';
+import { JobApplicationStatus } from '../util/constants.ts';
+import {
+  applicationReview,
+  ApplicationReview,
+  ApplicationReviewInsert,
+} from '../schema/application-review.schema.ts';
 
 type FindByJobPostingPagination = {
   page?: number;
@@ -25,6 +31,19 @@ type FindByJobPostingResult = {
 type FindJobApplicationDetailScope = {
   companyId?: number;
   userId?: string;
+};
+
+type FindJobApplicationReviewTargetScope = {
+  companyId?: number;
+};
+
+export type JobApplicationReviewTarget = JobApplication & {
+  companyId: number;
+};
+
+export type ApplicationReviewTarget = {
+  jobApplicationId: number;
+  companyId: number;
 };
 
 export type JobApplicationListItem = JobApplication & {
@@ -103,6 +122,106 @@ export class JobApplicationRepository extends GenericRepository<JobApplication, 
 
       return createdJobApplication;
     });
+  }
+
+  async findReviewTarget(
+    jobApplicationId: number,
+    scope: FindJobApplicationReviewTargetScope = {},
+  ): Promise<JobApplicationReviewTarget | null> {
+    const filters: SQL[] = [
+      eq(jobApplication.id, jobApplicationId),
+      eq(jobApplication.isDeleted, false),
+      eq(jobPosting.isDeleted, false),
+      eq(company.isDeleted, false),
+    ];
+
+    if (scope.companyId !== undefined) {
+      filters.push(eq(jobPosting.companyId, scope.companyId));
+    }
+
+    const [record] = await this.db
+      .select({
+        id: jobApplication.id,
+        userId: jobApplication.userId,
+        jobPostingId: jobApplication.jobPostingId,
+        status: jobApplication.status,
+        isDeleted: jobApplication.isDeleted,
+        createdAt: jobApplication.createdAt,
+        updatedAt: jobApplication.updatedAt,
+        companyId: jobPosting.companyId,
+      })
+      .from(jobApplication)
+      .innerJoin(jobPosting, eq(jobApplication.jobPostingId, jobPosting.id))
+      .innerJoin(company, eq(jobPosting.companyId, company.id))
+      .where(and(...filters))
+      .limit(1);
+
+    return record ?? null;
+  }
+
+  async updateStatusWithHistory(
+    jobApplicationId: number,
+    status: JobApplicationStatus,
+    reason?: string,
+  ): Promise<JobApplication> {
+    return await this.db.transaction(async (tx) => {
+      const [updatedJobApplication] = await tx
+        .update(jobApplication)
+        .set({ status })
+        .where(eq(jobApplication.id, jobApplicationId))
+        .returning();
+
+      await tx.insert(applicationStatusHistory).values({
+        jobApplicationId,
+        status,
+        reason,
+      });
+
+      return updatedJobApplication;
+    });
+  }
+
+  async findApplicationReviewTarget(jobApplicationId: number, userId: string): Promise<ApplicationReviewTarget | null> {
+    const [record] = await this.db
+      .select({
+        jobApplicationId: jobApplication.id,
+        companyId: jobPosting.companyId,
+      })
+      .from(jobApplication)
+      .innerJoin(jobPosting, eq(jobApplication.jobPostingId, jobPosting.id))
+      .innerJoin(company, eq(jobPosting.companyId, company.id))
+      .where(
+        and(
+          eq(jobApplication.id, jobApplicationId),
+          eq(jobApplication.userId, userId),
+          eq(jobApplication.isDeleted, false),
+          eq(jobPosting.isDeleted, false),
+          eq(company.isDeleted, false),
+        ),
+      )
+      .limit(1);
+
+    return record ?? null;
+  }
+
+  async findApplicationReview(jobApplicationId: number): Promise<ApplicationReview | null> {
+    const [record] = await this.db
+      .select()
+      .from(applicationReview)
+      .where(and(eq(applicationReview.jobApplicationId, jobApplicationId), eq(applicationReview.isDeleted, false)))
+      .limit(1);
+
+    return record ?? null;
+  }
+
+  async insertApplicationReview(payload: ApplicationReviewInsert): Promise<ApplicationReview> {
+    const [createdReview] = await this.db.insert(applicationReview).values(payload).returning();
+
+    if (!createdReview) {
+      throw new Error('Database insert failed.');
+    }
+
+    return createdReview;
   }
 
   async findByJobPostingId(

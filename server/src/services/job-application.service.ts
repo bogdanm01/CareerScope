@@ -9,10 +9,13 @@ import {
 import { IntegerIdSchema } from '../lib/zod/integer-id.zod-schema.ts';
 import { ZodValidationError } from '../lib/zod-validation-error.ts';
 import {
+  ApplicationReviewCreateRequestSchema,
   JobApplicationCreateRequestSchema,
   JobApplicationListRequestSchema,
+  JobApplicationUpdateRequest,
+  JobApplicationUpdateRequestSchema,
 } from '../lib/zod/job-application.zod-schema.ts';
-import { ConflictError, ForbiddenError, NotFoundError } from '../lib/app-error.ts';
+import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from '../lib/app-error.ts';
 import { JobPostingRepository } from '../data/repositories/job-posting.repository.ts';
 import { jobPosting } from '../data/schema/job-posting.schema.ts';
 import { and, eq, gte } from 'drizzle-orm';
@@ -21,8 +24,13 @@ import { JobApplication } from '../data/schema/job-application.schema.ts';
 import { ERROR_CODE } from '../lib/error-codes.ts';
 import { PaginatedResult, SingleResult } from '../lib/api-response.ts';
 import { AuthenticatedUser } from '../data/util/utils.ts';
+import { ApplicationReview } from '../data/schema/application-review.schema.ts';
 
 const DUPLICATE_JOB_APPLICATION_CONSTRAINT = 'user_id_job_posting_id_unq';
+const VALID_REVIEW_TRANSITIONS: Partial<Record<string, string[]>> = {
+  [JOB_APPLICATION_STATUS.SUBMITTED]: [JOB_APPLICATION_STATUS.UNDER_REVIEW, JOB_APPLICATION_STATUS.REJECTED],
+  [JOB_APPLICATION_STATUS.UNDER_REVIEW]: [JOB_APPLICATION_STATUS.ACCEPTED, JOB_APPLICATION_STATUS.REJECTED],
+};
 
 @injectable()
 export class JobApplicationService {
@@ -160,6 +168,116 @@ export class JobApplicationService {
     return {
       data: result,
     };
+  }
+
+  async updateJobApplication(
+    jobApplicationId: unknown,
+    payload: unknown,
+    user: AuthenticatedUser,
+  ): Promise<SingleResult<JobApplication>> {
+    const idValidationResult = IntegerIdSchema.safeParse({ id: jobApplicationId });
+
+    if (!idValidationResult.success) {
+      throw new ZodValidationError(idValidationResult.error);
+    }
+
+    const validationResult = JobApplicationUpdateRequestSchema.safeParse(payload);
+
+    if (!validationResult.success) {
+      throw new ZodValidationError(validationResult.error);
+    }
+
+    const validId = idValidationResult.data.id;
+    const updatePayload = validationResult.data;
+    const companyId = this.getReviewScopeCompanyId(user);
+
+    const existingJobApplication = await this.jobApplicationRepository.findReviewTarget(validId, { companyId });
+
+    if (!existingJobApplication) {
+      throw new NotFoundError(`No job application found with provided id.`);
+    }
+
+    this.validateReviewTransition(existingJobApplication.status, updatePayload);
+
+    const updatedJobApplication = await this.jobApplicationRepository.updateStatusWithHistory(
+      validId,
+      updatePayload.status,
+      updatePayload.reason,
+    );
+
+    return {
+      data: updatedJobApplication,
+    };
+  }
+
+  async createApplicationReview(
+    jobApplicationId: unknown,
+    payload: unknown,
+    user: AuthenticatedUser,
+  ): Promise<SingleResult<ApplicationReview>> {
+    const idValidationResult = IntegerIdSchema.safeParse({ id: jobApplicationId });
+
+    if (!idValidationResult.success) {
+      throw new ZodValidationError(idValidationResult.error);
+    }
+
+    const validationResult = ApplicationReviewCreateRequestSchema.safeParse(payload);
+
+    if (!validationResult.success) {
+      throw new ZodValidationError(validationResult.error);
+    }
+
+    const validId = idValidationResult.data.id;
+    const existingJobApplication = await this.jobApplicationRepository.findApplicationReviewTarget(validId, user.id);
+
+    if (!existingJobApplication) {
+      throw new NotFoundError(`No job application found with provided id.`);
+    }
+
+    const existingReview = await this.jobApplicationRepository.findApplicationReview(validId);
+
+    if (existingReview) {
+      throw new ConflictError('You have already reviewed this job application.');
+    }
+
+    const createdReview = await this.jobApplicationRepository.insertApplicationReview({
+      jobApplicationId: existingJobApplication.jobApplicationId,
+      companyId: existingJobApplication.companyId,
+      rating: validationResult.data.rating,
+      comment: validationResult.data.comment,
+    });
+
+    return {
+      data: createdReview,
+    };
+  }
+
+  private getReviewScopeCompanyId(user: AuthenticatedUser): number | undefined {
+    if (user.role === USER_ROLE.ADMIN) {
+      return undefined;
+    }
+
+    if (user.role === USER_ROLE.RECRUITER) {
+      if (!user.companyId) {
+        throw new ForbiddenError('User is not assigned to a company.');
+      }
+
+      return user.companyId;
+    }
+
+    throw new ForbiddenError('User is not authorized to review job applications.');
+  }
+
+  private validateReviewTransition(currentStatus: string, payload: JobApplicationUpdateRequest): void {
+    if (currentStatus === payload.status) {
+      throw new BadRequestError(`Job application is already in ${payload.status} status.`);
+    }
+
+    const allowedNextStatuses = VALID_REVIEW_TRANSITIONS[currentStatus] ?? [];
+
+    if (!allowedNextStatuses.includes(payload.status)) {
+      throw new BadRequestError(`Invalid job application status transition from ${currentStatus} to ${payload.status}.`);
+    }
   }
 
   async getMyJobApplications(

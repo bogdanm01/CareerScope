@@ -9,10 +9,22 @@ export const getJobApplicationRouter = () => {
   const router = express.Router();
   const jobApplicationController = container.resolve<JobApplicationController>(TOKENS.jobApplicationController);
 
+  router.post(
+    '/:id/review',
+    authGuard([USER_ROLE.CANDIDATE]),
+    jobApplicationController.createApplicationReview.bind(jobApplicationController),
+  );
+
   router.get(
     '/:id',
     authGuard([USER_ROLE.RECRUITER, USER_ROLE.ADMIN]),
     jobApplicationController.getJobApplication.bind(jobApplicationController),
+  );
+
+  router.patch(
+    '/:id',
+    authGuard([USER_ROLE.RECRUITER, USER_ROLE.ADMIN]),
+    jobApplicationController.updateJobApplication.bind(jobApplicationController),
   );
 
   return router;

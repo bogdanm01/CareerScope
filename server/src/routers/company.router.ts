@@ -9,6 +9,8 @@ export const getCompanyRouter = () => {
 
   router.get('/:id/job-postings', companyController.getPublicJobPostings.bind(companyController));
 
+  router.get('/:id/reviews', companyController.getCompanyReviews.bind(companyController));
+
   router.get('/:id', companyController.getCompany.bind(companyController));
 
   return router;

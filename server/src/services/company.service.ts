@@ -2,11 +2,13 @@ import { TOKENS } from '../config/dependency-tokens.ts';
 import { inject, injectable } from 'tsyringe';
 import { CompanyRepository } from '../data/repositories/company.repository.ts';
 import { company, Company } from '../data/schema/company.schema.ts';
-import { SingleResult } from '../lib/api-response.ts';
+import { PaginatedResult, SingleResult } from '../lib/api-response.ts';
 import { IntegerIdSchema } from '../lib/zod/integer-id.zod-schema.ts';
 import { ZodValidationError } from '../lib/zod-validation-error.ts';
 import { and, eq } from 'drizzle-orm';
 import { NotFoundError } from '../lib/app-error.ts';
+import { CompanyReviewListItem } from '../data/repositories/company.repository.ts';
+import { CompanyReviewsRequestSchema } from '../lib/zod/company.zod-schema.ts';
 
 export type PublicCompany = Omit<Company, 'taxId' | 'isApproved' | 'approvedAt' | 'isDeleted'>;
 
@@ -45,6 +47,37 @@ export class CompanyService {
 
     return {
       data: result as PublicCompany,
+    };
+  }
+
+  async getCompanyReviews(companyId: unknown, payload: unknown): Promise<PaginatedResult<CompanyReviewListItem>> {
+    const idValidationResult = IntegerIdSchema.safeParse({ id: companyId });
+
+    if (!idValidationResult.success) {
+      throw new ZodValidationError(idValidationResult.error);
+    }
+
+    const validationResult = CompanyReviewsRequestSchema.safeParse(payload);
+
+    if (!validationResult.success) {
+      throw new ZodValidationError(validationResult.error);
+    }
+
+    const validCompanyId = idValidationResult.data.id;
+    const query = validationResult.data;
+    const result = await this.companyRepository.findCompanyReviews(validCompanyId, {
+      page: query.page,
+      pageSize: query.limit,
+    });
+
+    return {
+      data: result.data,
+      pagination: {
+        currentPage: query.page,
+        pageSize: query.limit,
+        totalPages: Math.ceil(result.totalItems / query.limit),
+        totalItems: result.totalItems,
+      },
     };
   }
 }

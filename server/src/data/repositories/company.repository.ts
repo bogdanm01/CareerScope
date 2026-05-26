@@ -4,9 +4,11 @@ import { inject, injectable } from 'tsyringe';
 import { TOKENS } from '../../config/dependency-tokens.ts';
 import { DbClient } from '../../config/db-client.ts';
 import { company } from '../schema/company.schema.ts';
-import { and, count, eq } from 'drizzle-orm';
+import { and, count, desc, eq, sql } from 'drizzle-orm';
 import { user } from '../schema/auth.schema.ts';
 import { COMPANY_APPROVAL_STATUS, ONBOARDING_STATUS, USER_ROLE } from '../util/constants.ts';
+import { applicationReview } from '../schema/application-review.schema.ts';
+import { jobApplication } from '../schema/job-application.schema.ts';
 
 export type PendingRecruiterOnboardingRequest = {
   company: {
@@ -70,6 +72,23 @@ type FindPendingRecruiterOnboardingPagination = {
   pageSize?: number;
 };
 
+type FindCompanyReviewsPagination = {
+  page?: number;
+  pageSize?: number;
+};
+
+export type CompanyReviewListItem = {
+  id: number;
+  rating: number;
+  comment: string;
+  createdAt: Date | null;
+  candidate: {
+    id: string;
+    name: string;
+    image: string | null;
+  };
+};
+
 @injectable()
 export class CompanyRepository extends GenericRepository<Company, CompanyInsert, number> {
   constructor(@inject(TOKENS.db) db: DbClient) {
@@ -89,6 +108,66 @@ export class CompanyRepository extends GenericRepository<Company, CompanyInsert,
       .limit(1);
 
     return record ?? null;
+  }
+
+  async findCompanyReviews(
+    companyId: number,
+    pagination: FindCompanyReviewsPagination = {},
+  ): Promise<{ data: CompanyReviewListItem[]; totalItems: number }> {
+    const page = pagination.page ?? 1;
+    const pageSize = pagination.pageSize ?? 20;
+    const offset = (page - 1) * pageSize;
+    const filters = and(
+      eq(applicationReview.companyId, companyId),
+      eq(applicationReview.isDeleted, false),
+      eq(company.isDeleted, false),
+      eq(company.isApproved, true),
+      eq(user.isDeleted, false),
+    );
+
+    const recordsQuery = this.db
+      .select({
+        id: applicationReview.id,
+        rating: applicationReview.rating,
+        comment: applicationReview.comment,
+        createdAt: applicationReview.createdAt,
+        candidateId: user.id,
+        candidateName: sql<string>`concat(${user.firstName}, ' ', ${user.lastName})`,
+        candidateImage: user.image,
+      })
+      .from(applicationReview)
+      .innerJoin(company, eq(applicationReview.companyId, company.id))
+      .innerJoin(jobApplication, eq(applicationReview.jobApplicationId, jobApplication.id))
+      .innerJoin(user, eq(jobApplication.userId, user.id))
+      .where(filters)
+      .orderBy(desc(applicationReview.createdAt))
+      .limit(pageSize)
+      .offset(offset);
+
+    const countQuery = this.db
+      .select({ totalItems: count() })
+      .from(applicationReview)
+      .innerJoin(company, eq(applicationReview.companyId, company.id))
+      .innerJoin(jobApplication, eq(applicationReview.jobApplicationId, jobApplication.id))
+      .innerJoin(user, eq(jobApplication.userId, user.id))
+      .where(filters);
+
+    const [records, [countResult]] = await Promise.all([recordsQuery, countQuery]);
+
+    return {
+      data: records.map((record) => ({
+        id: record.id,
+        rating: record.rating,
+        comment: record.comment,
+        createdAt: record.createdAt,
+        candidate: {
+          id: record.candidateId,
+          name: record.candidateName,
+          image: record.candidateImage,
+        },
+      })),
+      totalItems: countResult?.totalItems ?? 0,
+    };
   }
 
   async findPendingRecruiterOnboardingRequests(
