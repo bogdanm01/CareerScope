@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Button } from '@heroui/react';
 import { approveJobPosting, getPendingJobPostings } from '../lib/admin-api';
 import { type JobPostingListItem } from '../lib/job-postings-api';
 import { useSetAtom } from 'jotai';
@@ -81,120 +82,115 @@ export const AdminJobPostingsPage = () => {
         loading={actioningId !== null}
       />
 
-      <section className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6 backdrop-blur-xl sm:p-8">
+      <section className="rounded-[2rem] border border-divider bg-content1 p-6 sm:p-8">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <div className="inline-flex rounded-full border border-white/10 bg-sky-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-sky-100">
+            <div className="inline-flex rounded-full border border-divider bg-content2 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-foreground-600">
               Admin
             </div>
-            <h2 className="mt-4 text-3xl font-semibold tracking-tight text-white">Approve job postings</h2>
-            <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300">
+            <h2 className="mt-4 text-3xl font-semibold tracking-tight text-foreground">Approve job postings</h2>
+            <p className="mt-3 max-w-2xl text-sm leading-7 text-foreground-500">
               Review pending postings from recruiters and approve the ones ready to go live.
             </p>
           </div>
 
-          <button
-            className="rounded-2xl bg-gradient-to-r from-sky-400 to-cyan-400 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:-translate-y-0.5 disabled:cursor-progress disabled:opacity-70 disabled:hover:translate-y-0"
-            type="button"
-            onClick={() => void loadPostings()}
-            disabled={loading}
-          >
+          <Button type="button" variant="secondary" onPress={() => void loadPostings()} isDisabled={loading}>
             Refresh
-          </button>
+          </Button>
         </div>
 
         {message && (
-          <div className="mt-5 rounded-2xl border border-emerald-400/20 bg-emerald-500/10 px-4 py-3 text-sm leading-6 text-emerald-100">
+          <div className="mt-5 rounded-2xl border border-success/20 bg-success/10 px-4 py-3 text-sm leading-6 text-success-700">
             {message}
           </div>
         )}
 
         {error && (
-          <div className="mt-5 rounded-2xl border border-rose-400/20 bg-rose-500/10 px-4 py-3 text-sm leading-6 text-rose-100">
+          <div className="mt-5 rounded-2xl border border-danger/20 bg-danger/10 px-4 py-3 text-sm leading-6 text-danger-700">
             {error}
           </div>
         )}
       </section>
 
-      <section className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6 backdrop-blur-xl sm:p-8">
+      <section className="rounded-[2rem] border border-divider bg-content1 p-6 sm:p-8">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h3 className="text-xl font-semibold text-white">Pending postings</h3>
-          <div className="flex items-center gap-2 text-sm text-slate-300">
-            <button
-              className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 font-medium text-white transition hover:border-sky-400/40 hover:bg-sky-500/10 disabled:cursor-not-allowed disabled:opacity-50"
+          <h3 className="text-xl font-semibold text-foreground">Pending postings</h3>
+          <div className="flex items-center gap-2 text-sm text-foreground-500">
+            <Button
               type="button"
-              onClick={() => void loadPostings(Math.max(1, currentPage - 1))}
-              disabled={loading || currentPage <= 1}
+              variant="outline"
+              size="sm"
+              onPress={() => void loadPostings(Math.max(1, currentPage - 1))}
+              isDisabled={loading || currentPage <= 1}
             >
               Prev
-            </button>
+            </Button>
             <span>
               Page {currentPage} of {totalPages}
             </span>
-            <button
-              className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 font-medium text-white transition hover:border-sky-400/40 hover:bg-sky-500/10 disabled:cursor-not-allowed disabled:opacity-50"
+            <Button
               type="button"
-              onClick={() => void loadPostings(Math.min(totalPages, currentPage + 1))}
-              disabled={loading || currentPage >= totalPages}
+              variant="outline"
+              size="sm"
+              onPress={() => void loadPostings(Math.min(totalPages, currentPage + 1))}
+              isDisabled={loading || currentPage >= totalPages}
             >
               Next
-            </button>
+            </Button>
           </div>
         </div>
 
         {loading ? (
-          <div className="mt-5 rounded-3xl border border-white/10 bg-slate-950/40 p-6 text-sm text-slate-300">
+          <div className="mt-5 rounded-3xl border border-divider bg-content2 p-6 text-sm text-foreground-500">
             Loading pending postings...
           </div>
         ) : postings.length === 0 ? (
-          <div className="mt-5 rounded-3xl border border-dashed border-white/10 bg-slate-950/40 p-6 text-sm text-slate-300">
+          <div className="mt-5 rounded-3xl border border-dashed border-divider bg-content2 p-6 text-sm text-foreground-500">
             No pending job postings.
           </div>
         ) : (
           <div className="mt-5 grid gap-4">
             {postings.map((posting) => (
-              <article key={posting.id} className="rounded-3xl border border-white/10 bg-slate-950/50 p-5">
+              <article key={posting.id} className="rounded-3xl border border-divider bg-content2 p-5">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <h4 className="text-lg font-semibold text-white">{posting.title || 'Untitled role'}</h4>
-                    <p className="mt-1 text-sm text-slate-300">{posting.shortDescription || 'No short description provided.'}</p>
+                    <h4 className="text-lg font-semibold text-foreground">{posting.title || 'Untitled role'}</h4>
+                    <p className="mt-1 text-sm text-foreground-500">{posting.shortDescription || 'No short description provided.'}</p>
                   </div>
-                  <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-slate-200">
-                    {posting.status}
-                  </span>
+                  <span className="rounded-full border border-divider bg-content1 px-3 py-1 text-xs font-medium text-foreground">{posting.status}</span>
                 </div>
 
-                <div className="mt-4 grid gap-3 text-sm text-slate-300 sm:grid-cols-3">
+                <div className="mt-4 grid gap-3 text-sm text-foreground-500 sm:grid-cols-3">
                   <div>
-                    <span className="block text-slate-500">Company</span>
-                    <span className="text-white">{posting.company?.name || 'Unknown'}</span>
+                    <span className="block text-foreground-500">Company</span>
+                    <span className="text-foreground">{posting.company?.name || 'Unknown'}</span>
                   </div>
                   <div>
-                    <span className="block text-slate-500">Expires</span>
-                    <span className="text-white">{posting.expiresAt ? new Date(posting.expiresAt).toLocaleDateString() : 'No expiry'}</span>
+                    <span className="block text-foreground-500">Expires</span>
+                    <span className="text-foreground">{posting.expiresAt ? new Date(posting.expiresAt).toLocaleDateString() : 'No expiry'}</span>
                   </div>
                   <div>
-                    <span className="block text-slate-500">Created</span>
-                    <span className="text-white">{new Date(posting.createdAt).toLocaleDateString()}</span>
+                    <span className="block text-foreground-500">Created</span>
+                    <span className="text-foreground">{new Date(posting.createdAt).toLocaleDateString()}</span>
                   </div>
                 </div>
 
                 <div className="mt-4 flex flex-wrap gap-3">
                   <Link
-                    className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:border-sky-400/40 hover:bg-sky-500/10"
+                    className="rounded-2xl border border-divider bg-content1 px-4 py-2 text-sm font-medium text-foreground transition hover:bg-content2"
                     to={`/panel/admin/job-postings/${posting.id}`}
                     state={{ posting }}
                   >
                     Open detail
                   </Link>
-                  <button
-                    className="rounded-2xl bg-gradient-to-r from-sky-400 to-cyan-400 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:-translate-y-0.5 disabled:cursor-progress disabled:opacity-70 disabled:hover:translate-y-0"
+                  <Button
                     type="button"
-                    disabled={actioningId === posting.id}
-                    onClick={() => requestPostingApproval(posting.id)}
+                    variant="primary"
+                    isDisabled={actioningId === posting.id}
+                    onPress={() => requestPostingApproval(posting.id)}
                   >
                     {actioningId === posting.id ? 'Approving...' : 'Approve posting'}
-                  </button>
+                  </Button>
                 </div>
               </article>
             ))}

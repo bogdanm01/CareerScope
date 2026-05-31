@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
+import { Button, Input } from '@heroui/react';
 import { getOnboardingStatus, replaceCandidateSkills, uploadCandidateCv } from '../lib/me-api';
 import { useSetAtom } from 'jotai';
 import { authErrorAtom, authLoadingAtom } from '../store/auth';
@@ -109,37 +110,37 @@ export const CandidateProfilePage = () => {
 
   return (
     <div className="grid gap-6">
-      <section className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6 backdrop-blur-xl sm:p-8">
+      <section className="rounded-[2rem] border border-divider bg-content1 p-6 sm:p-8">
         <div className="mb-6">
-          <div className="inline-flex rounded-full border border-white/10 bg-sky-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-sky-100">
+          <div className="inline-flex rounded-full border border-divider bg-content2 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-foreground-600">
             Candidate
           </div>
-          <h2 className="mt-4 text-3xl font-semibold tracking-tight text-white">Profile details</h2>
-          <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300">
+          <h2 className="mt-4 text-3xl font-semibold tracking-tight text-foreground">Profile details</h2>
+          <p className="mt-3 max-w-2xl text-sm leading-7 text-foreground-500">
             Add your skills and upload a CV to complete your candidate profile.
           </p>
         </div>
 
           <div className="grid gap-4 sm:grid-cols-3">
-            <div className="rounded-3xl border border-white/10 bg-slate-950/50 p-4">
-              <span className="block text-sm text-slate-400">Onboarding</span>
-              <strong className="mt-2 block text-sm font-medium text-white">{onboardingStatus}</strong>
+            <div className="rounded-3xl border border-divider bg-content2 p-4">
+              <span className="block text-sm text-foreground-500">Onboarding</span>
+              <strong className="mt-2 block text-sm font-medium text-foreground">{onboardingStatus}</strong>
             </div>
-          <div className="rounded-3xl border border-white/10 bg-slate-950/50 p-4">
-            <span className="block text-sm text-slate-400">Selected skills</span>
-            <strong className="mt-2 block text-sm font-medium text-white">{selectedSkills.length}</strong>
+          <div className="rounded-3xl border border-divider bg-content2 p-4">
+            <span className="block text-sm text-foreground-500">Selected skills</span>
+            <strong className="mt-2 block text-sm font-medium text-foreground">{selectedSkills.length}</strong>
           </div>
-            <div className="rounded-3xl border border-white/10 bg-slate-950/50 p-4">
-              <span className="block text-sm text-slate-400">Skills catalog</span>
-            <strong className="mt-2 block text-sm font-medium text-white">{skillCatalogCount}</strong>
+            <div className="rounded-3xl border border-divider bg-content2 p-4">
+              <span className="block text-sm text-foreground-500">Skills catalog</span>
+            <strong className="mt-2 block text-sm font-medium text-foreground">{skillCatalogCount}</strong>
             </div>
           </div>
       </section>
 
       <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-        <form className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6 backdrop-blur-xl sm:p-8" onSubmit={handleSkillsSubmit}>
-          <h3 className="text-xl font-semibold text-white">Add skills</h3>
-          <p className="mt-2 text-sm leading-6 text-slate-300">
+        <form className="rounded-[2rem] border border-divider bg-content1 p-6 sm:p-8" onSubmit={handleSkillsSubmit}>
+          <h3 className="text-xl font-semibold text-foreground">Add skills</h3>
+          <p className="mt-2 text-sm leading-6 text-foreground-500">
             Search the catalog, add each skill with years of experience, then submit the list to the backend.
           </p>
 
@@ -155,8 +156,7 @@ export const CandidateProfilePage = () => {
             />
 
             <div className="grid gap-3 sm:grid-cols-[120px_auto]">
-              <input
-                className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-slate-100 outline-none transition focus:border-sky-400/70 focus:ring-4 focus:ring-sky-500/15"
+              <Input
                 type="number"
                 min="0"
                 max="60"
@@ -165,23 +165,23 @@ export const CandidateProfilePage = () => {
                 onChange={(event) => setSelectedYears(event.target.value)}
               />
 
-              <button
-                className="rounded-2xl bg-gradient-to-r from-sky-400 to-cyan-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:-translate-y-0.5"
+              <Button
                 type="button"
-                onClick={addSkill}
+                variant="secondary"
+                onPress={addSkill}
               >
                 Add
-              </button>
+              </Button>
             </div>
 
             <div className="grid gap-3">
               {selectedSkills.length === 0 ? (
-                <div className="rounded-3xl border border-dashed border-white/10 bg-slate-950/40 p-4 text-sm text-slate-300">
+                <div className="rounded-3xl border border-dashed border-divider bg-content2 p-4 text-sm text-foreground-500">
                   No skills queued yet.
                 </div>
               ) : (
                 selectedSkills.map((skill) => (
-                  <div key={skill.id} className="rounded-3xl border border-white/10 bg-slate-950/50 p-4 text-sm text-slate-200">
+                  <div key={skill.id} className="rounded-3xl border border-divider bg-content2 p-4 text-sm text-foreground">
                     {skill.name} · {skill.yearsOfExperience} years
                   </div>
                 ))
@@ -189,45 +189,44 @@ export const CandidateProfilePage = () => {
             </div>
 
             {skillMessage && (
-              <div className="rounded-2xl border border-sky-400/20 bg-sky-500/10 px-4 py-3 text-sm leading-6 text-sky-100">
+              <div className="rounded-2xl border border-primary/20 bg-primary/10 px-4 py-3 text-sm leading-6 text-primary-700">
                 {skillMessage}
               </div>
             )}
 
-            <button
-              className="rounded-2xl bg-gradient-to-r from-sky-400 to-cyan-400 px-4 py-3 font-semibold text-slate-950 shadow-lg shadow-sky-500/20 transition hover:-translate-y-0.5 disabled:cursor-progress disabled:opacity-70 disabled:hover:translate-y-0"
+            <Button
               type="submit"
-              disabled={selectedSkills.length === 0}
+              variant="primary"
+              isDisabled={selectedSkills.length === 0}
             >
               Save skills
-            </button>
+            </Button>
           </div>
         </form>
 
-        <section className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6 backdrop-blur-xl sm:p-8">
-          <h3 className="text-xl font-semibold text-white">Upload CV</h3>
-          <p className="mt-2 text-sm leading-6 text-slate-300">
+        <section className="rounded-[2rem] border border-divider bg-content1 p-6 sm:p-8">
+          <h3 className="text-xl font-semibold text-foreground">Upload CV</h3>
+          <p className="mt-2 text-sm leading-6 text-foreground-500">
             Upload a single PDF file. The backend stores it as the candidate CV.
           </p>
 
           <div className="mt-5 grid gap-4">
-            <input
-              className="block w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm text-slate-100 file:mr-4 file:rounded-xl file:border-0 file:bg-sky-400 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-slate-950"
+            <Input
               type="file"
               accept="application/pdf"
               onChange={(event) => setCvFile(event.target.files?.[0] ?? null)}
             />
 
-            <button
-              className="rounded-2xl bg-gradient-to-r from-sky-400 to-cyan-400 px-4 py-3 font-semibold text-slate-950 shadow-lg shadow-sky-500/20 transition hover:-translate-y-0.5 disabled:cursor-progress disabled:opacity-70 disabled:hover:translate-y-0"
+            <Button
               type="button"
-              onClick={() => void handleCvUpload()}
+              variant="primary"
+              onPress={() => void handleCvUpload()}
             >
               Upload CV
-            </button>
+            </Button>
 
             {cvMessage && (
-              <div className="rounded-2xl border border-sky-400/20 bg-sky-500/10 px-4 py-3 text-sm leading-6 text-sky-100">
+              <div className="rounded-2xl border border-primary/20 bg-primary/10 px-4 py-3 text-sm leading-6 text-primary-700">
                 {cvMessage}
               </div>
             )}

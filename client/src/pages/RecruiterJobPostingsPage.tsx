@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link } from 'react-router-dom';
+import { Button, Input, TextArea } from '@heroui/react';
 import { createJobPosting, getRecruiterJobPostings, type JobPostingCreatePayload, type JobPostingListItem } from '../lib/job-postings-api';
 import { useSetAtom } from 'jotai';
 import { authErrorAtom, authLoadingAtom } from '../store/auth';
@@ -89,120 +90,103 @@ export const RecruiterJobPostingsPage = ({ loading }: RecruiterJobPostingsPagePr
 
   return (
     <div className="grid gap-6">
-      <section className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6 backdrop-blur-xl sm:p-8">
+      <section className="rounded-[2rem] border border-divider bg-content1 p-6 sm:p-8">
         <div className="mb-6">
-          <div className="inline-flex rounded-full border border-white/10 bg-sky-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-sky-100">
+          <div className="inline-flex rounded-full border border-divider bg-content2 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-foreground-600">
             Recruiter
           </div>
-          <h2 className="mt-4 text-3xl font-semibold tracking-tight text-white">Add a job posting</h2>
-          <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300">
+          <h2 className="mt-4 text-3xl font-semibold tracking-tight text-foreground">Add a job posting</h2>
+          <p className="mt-3 max-w-2xl text-sm leading-7 text-foreground-500">
             Draft a posting here. If you submit it as pending approval, the backend requires a fuller description, expiry date, and at least one skill.
           </p>
         </div>
 
         <form className="grid gap-4 sm:grid-cols-2" onSubmit={onSubmit}>
           <label className="grid gap-2 sm:col-span-2">
-            <span className="text-sm text-slate-300">Title</span>
-            <input
-              className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-slate-100 outline-none transition focus:border-sky-400/70 focus:ring-4 focus:ring-sky-500/15"
-              value={form.title}
-              onChange={(event) => updateField('title', event.target.value)}
-              required
-            />
+            <span className="text-sm text-foreground-600">Title</span>
+            <Input value={form.title} onChange={(event) => updateField('title', event.target.value)} required />
           </label>
 
           <label className="grid gap-2 sm:col-span-2">
-            <span className="text-sm text-slate-300">Short description</span>
-            <input
-              className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-slate-100 outline-none transition focus:border-sky-400/70 focus:ring-4 focus:ring-sky-500/15"
-              value={form.shortDescription ?? ''}
-              onChange={(event) => updateField('shortDescription', event.target.value)}
-              maxLength={80}
-            />
+            <span className="text-sm text-foreground-600">Short description</span>
+            <Input value={form.shortDescription ?? ''} onChange={(event) => updateField('shortDescription', event.target.value)} maxLength={80} />
           </label>
 
           <label className="grid gap-2 sm:col-span-2">
-            <span className="text-sm text-slate-300">Description</span>
-            <textarea
-              className="min-h-[140px] w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-slate-100 outline-none transition focus:border-sky-400/70 focus:ring-4 focus:ring-sky-500/15"
-              value={form.description ?? ''}
-              onChange={(event) => updateField('description', event.target.value)}
-            />
+            <span className="text-sm text-foreground-600">Description</span>
+            <TextArea value={form.description ?? ''} onChange={(event) => updateField('description', event.target.value)} />
           </label>
 
           <label className="grid gap-2">
-            <span className="text-sm text-slate-300">Expires at</span>
-            <input
-              className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-slate-100 outline-none transition focus:border-sky-400/70 focus:ring-4 focus:ring-sky-500/15"
-              type="date"
-              value={form.expiresAt ?? ''}
-              onChange={(event) => updateField('expiresAt', event.target.value)}
-            />
+            <span className="text-sm text-foreground-600">Expires at</span>
+            <Input type="date" value={form.expiresAt ?? ''} onChange={(event) => updateField('expiresAt', event.target.value)} />
           </label>
 
-          <div className="sm:col-span-2 rounded-3xl border border-white/10 bg-slate-950/40 px-4 py-3 text-sm leading-6 text-slate-300">
+          <div className="sm:col-span-2 rounded-3xl border border-divider bg-content2 px-4 py-3 text-sm leading-6 text-foreground-500">
             New postings start as <span className="text-white">Draft</span> unless you choose to publish them for approval.
           </div>
 
           {(error || loading) && (
-            <div className="rounded-2xl border border-sky-400/20 bg-sky-500/10 px-4 py-3 text-sm leading-6 text-sky-100 sm:col-span-2">
+            <div className="rounded-2xl border border-primary/20 bg-primary/10 px-4 py-3 text-sm leading-6 text-primary-700 sm:col-span-2">
               {error || 'Saving posting...'}
             </div>
           )}
 
-          <button
-            className="rounded-2xl bg-gradient-to-r from-sky-400 to-cyan-400 px-4 py-3 font-semibold text-slate-950 shadow-lg shadow-sky-500/20 transition hover:-translate-y-0.5 disabled:cursor-progress disabled:opacity-70 disabled:hover:translate-y-0 sm:col-span-2"
+          <Button
             type="submit"
-            disabled={loading}
+            variant="primary"
+            isDisabled={loading}
+            className="sm:col-span-2"
           >
             Save draft
-          </button>
-          <button
-            className="rounded-2xl border border-cyan-400/20 bg-cyan-500/10 px-4 py-3 font-semibold text-cyan-100 transition hover:border-cyan-400/40 hover:bg-cyan-500/20 disabled:cursor-progress disabled:opacity-70 sm:col-span-2"
+          </Button>
+          <Button
             type="button"
-            disabled={loading}
-            onClick={() => void publishPosting()}
+            variant="secondary"
+            isDisabled={loading}
+            onPress={() => void publishPosting()}
+            className="sm:col-span-2"
           >
             Publish for approval
-          </button>
+          </Button>
         </form>
       </section>
 
-      <section className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6 backdrop-blur-xl sm:p-8">
-        <h3 className="text-xl font-semibold text-white">Your postings</h3>
+      <section className="rounded-[2rem] border border-divider bg-content1 p-6 sm:p-8">
+        <h3 className="text-xl font-semibold text-foreground">Your postings</h3>
         <div className="mt-5 grid gap-4">
           {postings.length === 0 ? (
-            <div className="rounded-3xl border border-dashed border-white/10 bg-slate-950/40 p-6 text-sm text-slate-300">
+            <div className="rounded-3xl border border-dashed border-divider bg-content2 p-6 text-sm text-foreground-500">
               No job postings yet.
             </div>
           ) : (
             postings.map((posting) => (
-              <article key={posting.id} className="rounded-3xl border border-white/10 bg-slate-950/50 p-5">
+              <article key={posting.id} className="rounded-3xl border border-divider bg-content2 p-5">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <h4 className="text-lg font-semibold text-white">{posting.title || 'Untitled role'}</h4>
-                    <p className="mt-1 text-sm text-slate-300">{posting.shortDescription || 'No description yet.'}</p>
+                    <h4 className="text-lg font-semibold text-foreground">{posting.title || 'Untitled role'}</h4>
+                    <p className="mt-1 text-sm text-foreground-500">{posting.shortDescription || 'No description yet.'}</p>
                   </div>
-                  <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-slate-200">
+                  <span className="rounded-full border border-divider bg-content1 px-3 py-1 text-xs font-medium text-foreground">
                     {posting.status}
                   </span>
                 </div>
-                <div className="mt-4 grid gap-3 text-sm text-slate-300 sm:grid-cols-3">
+                <div className="mt-4 grid gap-3 text-sm text-foreground-500 sm:grid-cols-3">
                   <div>
-                    <span className="block text-slate-500">Company</span>
-                    <span className="text-white">{posting.company?.name || 'Unknown'}</span>
+                    <span className="block text-foreground-500">Company</span>
+                    <span className="text-foreground">{posting.company?.name || 'Unknown'}</span>
                   </div>
                   <div>
-                    <span className="block text-slate-500">Expires</span>
-                    <span className="text-white">{posting.expiresAt ? new Date(posting.expiresAt).toLocaleDateString() : 'No expiry'}</span>
+                    <span className="block text-foreground-500">Expires</span>
+                    <span className="text-foreground">{posting.expiresAt ? new Date(posting.expiresAt).toLocaleDateString() : 'No expiry'}</span>
                   </div>
                   <div>
-                    <span className="block text-slate-500">Created</span>
-                    <span className="text-white">{new Date(posting.createdAt).toLocaleDateString()}</span>
+                    <span className="block text-foreground-500">Created</span>
+                    <span className="text-foreground">{new Date(posting.createdAt).toLocaleDateString()}</span>
                   </div>
                   <div className="sm:col-span-3">
                     <Link
-                      className="inline-flex rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:border-sky-400/40 hover:bg-sky-500/10"
+                      className="inline-flex rounded-2xl border border-divider bg-content1 px-4 py-2 text-sm font-medium text-foreground transition hover:bg-content2"
                       to={`/panel/job-postings/${posting.id}`}
                     >
                       Open detail

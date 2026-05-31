@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSetAtom } from 'jotai';
+import { Button, Input } from '@heroui/react';
 import { AuthShell } from '../components/AuthShell';
 import { authErrorAtom, authLoadingAtom, signUpAtom } from '../store/auth';
 
@@ -60,55 +61,28 @@ export const RegisterPage = ({ loading }: RegisterPageProps) => {
     >
       <form className="grid gap-4 sm:grid-cols-2" onSubmit={onSubmit}>
         <label className="grid gap-2">
-          <span className="text-sm text-slate-300">First name</span>
-          <input
-            className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-slate-100 outline-none transition focus:border-sky-400/70 focus:ring-4 focus:ring-sky-500/15"
-            value={firstName}
-            onChange={(event) => setFirstName(event.target.value)}
-            autoComplete="given-name"
-            required
-          />
+          <span className="text-sm text-foreground-600">First name</span>
+          <Input value={firstName} onChange={(event) => setFirstName(event.target.value)} autoComplete="given-name" required />
         </label>
 
         <label className="grid gap-2">
-          <span className="text-sm text-slate-300">Last name</span>
-          <input
-            className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-slate-100 outline-none transition focus:border-sky-400/70 focus:ring-4 focus:ring-sky-500/15"
-            value={lastName}
-            onChange={(event) => setLastName(event.target.value)}
-            autoComplete="family-name"
-            required
-          />
+          <span className="text-sm text-foreground-600">Last name</span>
+          <Input value={lastName} onChange={(event) => setLastName(event.target.value)} autoComplete="family-name" required />
         </label>
 
         <label className="grid gap-2 sm:col-span-2">
-          <span className="text-sm text-slate-300">Date of birth</span>
-          <input
-            className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-slate-100 outline-none transition focus:border-sky-400/70 focus:ring-4 focus:ring-sky-500/15"
-            type="date"
-            value={dateOfBirth}
-            onChange={(event) => setDateOfBirth(event.target.value)}
-            autoComplete="bday"
-            required
-          />
+          <span className="text-sm text-foreground-600">Date of birth</span>
+          <Input type="date" value={dateOfBirth} onChange={(event) => setDateOfBirth(event.target.value)} autoComplete="bday" required />
         </label>
 
         <label className="grid gap-2 sm:col-span-2">
-          <span className="text-sm text-slate-300">Email</span>
-          <input
-            className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-slate-100 outline-none transition focus:border-sky-400/70 focus:ring-4 focus:ring-sky-500/15"
-            type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            autoComplete="email"
-            required
-          />
+          <span className="text-sm text-foreground-600">Email</span>
+          <Input type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" required />
         </label>
 
         <label className="grid gap-2 sm:col-span-2">
-          <span className="text-sm text-slate-300">Password</span>
-          <input
-            className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-slate-100 outline-none transition focus:border-sky-400/70 focus:ring-4 focus:ring-sky-500/15"
+          <span className="text-sm text-foreground-600">Password</span>
+          <Input
             type="password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
@@ -119,9 +93,8 @@ export const RegisterPage = ({ loading }: RegisterPageProps) => {
         </label>
 
         <label className="grid gap-2 sm:col-span-2">
-          <span className="text-sm text-slate-300">Confirm password</span>
-          <input
-            className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-slate-100 outline-none transition focus:border-sky-400/70 focus:ring-4 focus:ring-sky-500/15"
+          <span className="text-sm text-foreground-600">Confirm password</span>
+          <Input
             type="password"
             value={confirmPassword}
             onChange={(event) => setConfirmPassword(event.target.value)}
@@ -132,27 +105,28 @@ export const RegisterPage = ({ loading }: RegisterPageProps) => {
         </label>
 
         {(error || loading) && (
-          <div className="rounded-2xl border border-sky-400/20 bg-sky-500/10 px-4 py-3 text-sm leading-6 text-sky-100 sm:col-span-2">
+          <div className="rounded-2xl border border-primary/20 bg-primary/10 px-4 py-3 text-sm leading-6 text-primary-700 sm:col-span-2">
             {error || 'Creating your account...'}
           </div>
         )}
 
-        <button
-          className="rounded-2xl bg-gradient-to-r from-sky-400 to-cyan-400 px-4 py-3 font-semibold text-slate-950 shadow-lg shadow-sky-500/20 transition hover:-translate-y-0.5 disabled:cursor-progress disabled:opacity-70 disabled:hover:translate-y-0 sm:col-span-2"
+        <Button
           type="submit"
-          disabled={loading}
+          variant="primary"
+          isDisabled={loading}
+          className="sm:col-span-2"
         >
           Create account
-        </button>
+        </Button>
       </form>
 
-      <div className="mt-5 text-sm text-slate-300">
-        Already have an account? <Link className="text-sky-300 hover:underline" to="/login">Sign in</Link>
+      <div className="mt-5 text-sm text-foreground-600">
+        Already have an account? <Link className="text-primary hover:underline" to="/login">Sign in</Link>
       </div>
 
-      <div className="mt-3 text-sm text-slate-300">
+      <div className="mt-3 text-sm text-foreground-600">
         Are you a recruiter?{' '}
-        <Link className="text-sky-300 hover:underline" to="/register/recruiter">
+        <Link className="text-primary hover:underline" to="/register/recruiter">
           Complete recruiter onboarding
         </Link>
       </div>

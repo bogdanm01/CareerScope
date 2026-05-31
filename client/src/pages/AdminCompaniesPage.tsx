@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Button } from '@heroui/react';
 import {
   approveRecruiterOnboarding,
   getPendingRecruiterOnboardingRequests,
@@ -84,130 +85,127 @@ export const AdminCompaniesPage = () => {
         loading={actioningId !== null}
       />
 
-      <section className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6 backdrop-blur-xl sm:p-8">
+      <section className="rounded-[2rem] border border-divider bg-content1 p-6 sm:p-8">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <div className="inline-flex rounded-full border border-white/10 bg-sky-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-sky-100">
+            <div className="inline-flex rounded-full border border-divider bg-content2 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-foreground-600">
               Admin
             </div>
-            <h2 className="mt-4 text-3xl font-semibold tracking-tight text-white">Approve companies</h2>
-            <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300">
+            <h2 className="mt-4 text-3xl font-semibold tracking-tight text-foreground">Approve companies</h2>
+            <p className="mt-3 max-w-2xl text-sm leading-7 text-foreground-500">
               Review pending recruiter companies and approve the ones ready to join the platform.
             </p>
           </div>
 
-          <button
-            className="rounded-2xl bg-gradient-to-r from-sky-400 to-cyan-400 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:-translate-y-0.5 disabled:cursor-progress disabled:opacity-70 disabled:hover:translate-y-0"
-            type="button"
-            onClick={() => void loadRequests()}
-            disabled={loading}
-          >
+          <Button type="button" variant="secondary" onPress={() => void loadRequests()} isDisabled={loading}>
             Refresh
-          </button>
+          </Button>
         </div>
 
         {message && (
-          <div className="mt-5 rounded-2xl border border-emerald-400/20 bg-emerald-500/10 px-4 py-3 text-sm leading-6 text-emerald-100">
+          <div className="mt-5 rounded-2xl border border-success/20 bg-success/10 px-4 py-3 text-sm leading-6 text-success-700">
             {message}
           </div>
         )}
 
         {error && (
-          <div className="mt-5 rounded-2xl border border-rose-400/20 bg-rose-500/10 px-4 py-3 text-sm leading-6 text-rose-100">
+          <div className="mt-5 rounded-2xl border border-danger/20 bg-danger/10 px-4 py-3 text-sm leading-6 text-danger-700">
             {error}
           </div>
         )}
       </section>
 
-      <section className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6 backdrop-blur-xl sm:p-8">
+      <section className="rounded-[2rem] border border-divider bg-content1 p-6 sm:p-8">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h3 className="text-xl font-semibold text-white">Pending companies</h3>
-          <div className="flex items-center gap-2 text-sm text-slate-300">
-            <button
-              className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 font-medium text-white transition hover:border-sky-400/40 hover:bg-sky-500/10 disabled:cursor-not-allowed disabled:opacity-50"
+          <h3 className="text-xl font-semibold text-foreground">Pending companies</h3>
+          <div className="flex items-center gap-2 text-sm text-foreground-500">
+            <Button
               type="button"
-              onClick={() => void loadRequests(Math.max(1, currentPage - 1))}
-              disabled={loading || currentPage <= 1}
+              variant="outline"
+              size="sm"
+              onPress={() => void loadRequests(Math.max(1, currentPage - 1))}
+              isDisabled={loading || currentPage <= 1}
             >
               Prev
-            </button>
+            </Button>
             <span>
               Page {currentPage} of {totalPages}
             </span>
-            <button
-              className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 font-medium text-white transition hover:border-sky-400/40 hover:bg-sky-500/10 disabled:cursor-not-allowed disabled:opacity-50"
+            <Button
               type="button"
-              onClick={() => void loadRequests(Math.min(totalPages, currentPage + 1))}
-              disabled={loading || currentPage >= totalPages}
+              variant="outline"
+              size="sm"
+              onPress={() => void loadRequests(Math.min(totalPages, currentPage + 1))}
+              isDisabled={loading || currentPage >= totalPages}
             >
               Next
-            </button>
+            </Button>
           </div>
         </div>
 
         {loading ? (
-          <div className="mt-5 rounded-3xl border border-white/10 bg-slate-950/40 p-6 text-sm text-slate-300">
+          <div className="mt-5 rounded-3xl border border-divider bg-content2 p-6 text-sm text-foreground-500">
             Loading company approvals...
           </div>
         ) : requests.length === 0 ? (
-          <div className="mt-5 rounded-3xl border border-dashed border-white/10 bg-slate-950/40 p-6 text-sm text-slate-300">
+          <div className="mt-5 rounded-3xl border border-dashed border-divider bg-content2 p-6 text-sm text-foreground-500">
             No pending company approvals.
           </div>
         ) : (
           <div className="mt-5 grid gap-4">
             {requests.map((request) => (
-              <article key={request.company.id} className="rounded-3xl border border-white/10 bg-slate-950/50 p-5">
+              <article key={request.company.id} className="rounded-3xl border border-divider bg-content2 p-5">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <h4 className="text-lg font-semibold text-white">{request.company.name}</h4>
-                    <p className="mt-1 text-sm text-slate-300">
+                    <h4 className="text-lg font-semibold text-foreground">{request.company.name}</h4>
+                    <p className="mt-1 text-sm text-foreground-500">
                       {request.recruiter.firstName} {request.recruiter.lastName} · {request.recruiter.email}
                     </p>
                   </div>
-                  <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-slate-200">
+                  <span className="rounded-full border border-divider bg-content1 px-3 py-1 text-xs font-medium text-foreground">
                     {request.company.approvalStatus}
                   </span>
                 </div>
 
-                <div className="mt-4 grid gap-3 text-sm text-slate-300 sm:grid-cols-2">
+                <div className="mt-4 grid gap-3 text-sm text-foreground-500 sm:grid-cols-2">
                   <div>
-                    <span className="block text-slate-500">Tax ID</span>
-                    <span className="text-white">{request.company.taxId}</span>
+                    <span className="block text-foreground-500">Tax ID</span>
+                    <span className="text-foreground">{request.company.taxId}</span>
                   </div>
                   <div>
-                    <span className="block text-slate-500">Employees</span>
-                    <span className="text-white">{request.company.numberOfEmployees ?? 'Not provided'}</span>
+                    <span className="block text-foreground-500">Employees</span>
+                    <span className="text-foreground">{request.company.numberOfEmployees ?? 'Not provided'}</span>
                   </div>
                   <div>
-                    <span className="block text-slate-500">Website</span>
-                    <span className="text-white">{request.company.websiteUrl || 'Not provided'}</span>
+                    <span className="block text-foreground-500">Website</span>
+                    <span className="text-foreground">{request.company.websiteUrl || 'Not provided'}</span>
                   </div>
                   <div>
-                    <span className="block text-slate-500">Address</span>
-                    <span className="text-white">{request.company.address}</span>
+                    <span className="block text-foreground-500">Address</span>
+                    <span className="text-foreground">{request.company.address}</span>
                   </div>
                   <div className="sm:col-span-2">
-                    <span className="block text-slate-500">Description</span>
-                    <span className="text-white">{request.company.shortDescription || 'No short description provided.'}</span>
+                    <span className="block text-foreground-500">Description</span>
+                    <span className="text-foreground">{request.company.shortDescription || 'No short description provided.'}</span>
                   </div>
                 </div>
 
                 <div className="mt-5 flex flex-wrap gap-3">
                   <Link
-                    className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:border-sky-400/40 hover:bg-sky-500/10"
+                    className="rounded-2xl border border-divider bg-content1 px-4 py-2 text-sm font-medium text-foreground transition hover:bg-content2"
                     to={`/panel/admin/companies/${request.company.id}`}
                     state={{ request }}
                   >
                     Open detail
                   </Link>
-                  <button
-                    className="rounded-2xl bg-gradient-to-r from-sky-400 to-cyan-400 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:-translate-y-0.5 disabled:cursor-progress disabled:opacity-70 disabled:hover:translate-y-0"
+                  <Button
                     type="button"
-                    disabled={actioningId === request.company.id}
-                    onClick={() => requestCompanyApproval(request.company.id)}
+                    variant="primary"
+                    isDisabled={actioningId === request.company.id}
+                    onPress={() => requestCompanyApproval(request.company.id)}
                   >
                     {actioningId === request.company.id ? 'Approving...' : 'Approve company'}
-                  </button>
+                  </Button>
                 </div>
               </article>
             ))}

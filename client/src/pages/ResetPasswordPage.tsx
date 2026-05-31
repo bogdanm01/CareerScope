@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { useSetAtom } from 'jotai';
+import { Button, Input } from '@heroui/react';
 import { AuthShell } from '../components/AuthShell';
 import { authErrorAtom, authLoadingAtom, resetPasswordAtom } from '../store/auth';
 
@@ -67,9 +68,8 @@ export const ResetPasswordPage = ({ loading }: ResetPasswordPageProps) => {
     >
       <form className="grid gap-4" onSubmit={onSubmit}>
         <label className="grid gap-2">
-          <span className="text-sm text-slate-300">New password</span>
-          <input
-            className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-slate-100 outline-none transition focus:border-sky-400/70 focus:ring-4 focus:ring-sky-500/15"
+          <span className="text-sm text-foreground-600">New password</span>
+          <Input
             type="password"
             value={newPassword}
             onChange={(event) => setNewPassword(event.target.value)}
@@ -80,9 +80,8 @@ export const ResetPasswordPage = ({ loading }: ResetPasswordPageProps) => {
         </label>
 
         <label className="grid gap-2">
-          <span className="text-sm text-slate-300">Confirm password</span>
-          <input
-            className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-slate-100 outline-none transition focus:border-sky-400/70 focus:ring-4 focus:ring-sky-500/15"
+          <span className="text-sm text-foreground-600">Confirm password</span>
+          <Input
             type="password"
             value={confirmPassword}
             onChange={(event) => setConfirmPassword(event.target.value)}
@@ -93,28 +92,28 @@ export const ResetPasswordPage = ({ loading }: ResetPasswordPageProps) => {
         </label>
 
         {message && !loading && (
-          <div className="rounded-2xl border border-sky-400/20 bg-sky-500/10 px-4 py-3 text-sm leading-6 text-sky-100">
+          <div className="rounded-2xl border border-primary/20 bg-primary/10 px-4 py-3 text-sm leading-6 text-primary-700">
             {message}
           </div>
         )}
         {!hasToken && (
-          <div className="rounded-2xl border border-sky-400/20 bg-sky-500/10 px-4 py-3 text-sm leading-6 text-sky-100">
-            No reset token found. <Link className="text-sky-300 hover:underline" to="/forgot-password">Request a new link</Link>.
+          <div className="rounded-2xl border border-primary/20 bg-primary/10 px-4 py-3 text-sm leading-6 text-primary-700">
+            No reset token found. <Link className="text-primary hover:underline" to="/forgot-password">Request a new link</Link>.
           </div>
         )}
-        {loading && <div className="rounded-2xl border border-sky-400/20 bg-sky-500/10 px-4 py-3 text-sm leading-6 text-sky-100">Updating password...</div>}
+        {loading && <div className="rounded-2xl border border-primary/20 bg-primary/10 px-4 py-3 text-sm leading-6 text-primary-700">Updating password...</div>}
 
-        <button
-          className="rounded-2xl bg-gradient-to-r from-sky-400 to-cyan-400 px-4 py-3 font-semibold text-slate-950 shadow-lg shadow-sky-500/20 transition hover:-translate-y-0.5 disabled:cursor-progress disabled:opacity-70 disabled:hover:translate-y-0"
+        <Button
           type="submit"
-          disabled={loading || !hasToken}
+          variant="primary"
+          isDisabled={loading || !hasToken}
         >
           Update password
-        </button>
+        </Button>
       </form>
 
-      <div className="mt-5 text-sm text-slate-300">
-        Back to <Link className="text-sky-300 hover:underline" to="/login">sign in</Link>
+      <div className="mt-5 text-sm text-foreground-600">
+        Back to <Link className="text-primary hover:underline" to="/login">sign in</Link>
       </div>
     </AuthShell>
   );

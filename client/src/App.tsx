@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { PanelShell } from './components/PanelShell';
+import { AppThemeProvider } from './components/ThemeContext';
 import { CandidateJobsPage } from './pages/CandidateJobsPage';
 import { CandidateApplicationDetailPage } from './pages/CandidateApplicationDetailPage';
 import { CandidateApplicationsPage } from './pages/CandidateApplicationsPage';
@@ -81,9 +82,10 @@ function App() {
   const loading = useAtomValue(authLoadingAtom);
 
   return (
-    <BrowserRouter>
-      <AppBootstrap />
-      <Routes>
+    <AppThemeProvider>
+      <BrowserRouter>
+        <AppBootstrap />
+        <Routes>
         <Route path="/" element={<HomeRedirect />} />
         <Route
           path="/login"
@@ -251,8 +253,9 @@ function App() {
           }
         />
         <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </BrowserRouter>
+        </Routes>
+      </BrowserRouter>
+    </AppThemeProvider>
   );
 }
 

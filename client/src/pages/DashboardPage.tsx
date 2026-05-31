@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useAtomValue } from 'jotai';
+import { Card, Chip } from '@heroui/react';
 import { authSessionAtom } from '../store/auth';
 
 type DashboardPageProps = {
@@ -39,16 +40,16 @@ export const DashboardPage = ({ loading }: DashboardPageProps) => {
 
   return (
     <div className="grid gap-6">
-      <section className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6 shadow-[0_30px_80px_rgba(0,0,0,0.24)] backdrop-blur-xl sm:p-8">
+      <section className="rounded-2xl border border-divider bg-content1 p-6 sm:p-8">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <div className="inline-flex rounded-full border border-white/10 bg-sky-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-sky-100">
+            <Chip size="sm" variant="secondary">
               Dashboard
-            </div>
-            <h2 className="mt-4 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+            </Chip>
+            <h2 className="mt-4 text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
               Welcome back, {displayName}.
             </h2>
-            <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300 sm:text-base">
+            <p className="mt-3 max-w-2xl text-sm leading-7 text-default-500 sm:text-base">
               {role === 'Candidate'
                 ? 'Use this panel to complete your profile, discover jobs, and apply from one place.'
                 : role === 'Admin'
@@ -57,27 +58,35 @@ export const DashboardPage = ({ loading }: DashboardPageProps) => {
             </p>
           </div>
 
-          <div className="rounded-3xl border border-white/10 bg-slate-950/60 px-4 py-3">
-            <span className="block text-xs uppercase tracking-[0.22em] text-slate-400">Status</span>
-            <strong className="mt-1 block text-sm font-semibold text-white">{loading ? 'Refreshing' : onboardingStatus}</strong>
-          </div>
+          <Card>
+            <Card.Content className="px-4 py-3">
+              <span className="block text-xs uppercase tracking-[0.22em] text-default-400">Status</span>
+              <strong className="mt-1 block text-sm font-semibold text-foreground">{loading ? 'Refreshing' : onboardingStatus}</strong>
+            </Card.Content>
+          </Card>
         </div>
 
         <div className="mt-6 grid gap-4 md:grid-cols-3">
-          <div className="rounded-3xl border border-white/10 bg-slate-950/50 p-4">
-            <span className="block text-sm text-slate-400">Email</span>
-            <strong className="mt-2 block break-all text-sm font-medium text-white">{session?.user.email}</strong>
-          </div>
-          <div className="rounded-3xl border border-white/10 bg-slate-950/50 p-4">
-            <span className="block text-sm text-slate-400">Role</span>
-            <strong className="mt-2 block text-sm font-medium text-white">{role || 'Candidate'}</strong>
-          </div>
-          <div className="rounded-3xl border border-white/10 bg-slate-950/50 p-4">
-            <span className="block text-sm text-slate-400">Panel</span>
-            <strong className="mt-2 block text-sm font-medium text-white">
-              {role === 'Candidate' ? 'Candidate workspace' : role === 'Admin' ? 'Admin workspace' : 'Recruiter workspace'}
-            </strong>
-          </div>
+          <Card>
+            <Card.Content className="p-4">
+              <span className="block text-sm text-default-400">Email</span>
+              <strong className="mt-2 block break-all text-sm font-medium text-foreground">{session?.user.email}</strong>
+            </Card.Content>
+          </Card>
+          <Card>
+            <Card.Content className="p-4">
+              <span className="block text-sm text-default-400">Role</span>
+              <strong className="mt-2 block text-sm font-medium text-foreground">{role || 'Candidate'}</strong>
+            </Card.Content>
+          </Card>
+          <Card className="border border-default-200 bg-content2">
+            <Card.Content className="p-4">
+              <span className="block text-sm text-default-400">Panel</span>
+              <strong className="mt-2 block text-sm font-medium text-foreground">
+                {role === 'Candidate' ? 'Candidate workspace' : role === 'Admin' ? 'Admin workspace' : 'Recruiter workspace'}
+              </strong>
+            </Card.Content>
+          </Card>
         </div>
       </section>
 
@@ -86,11 +95,11 @@ export const DashboardPage = ({ loading }: DashboardPageProps) => {
           <Link
             key={action.to}
             to={action.to}
-            className="group rounded-[1.75rem] border border-white/10 bg-white/[0.03] p-5 transition hover:-translate-y-0.5 hover:border-sky-400/30 hover:bg-sky-500/10"
+            className="group rounded-2xl border border-divider bg-content1 p-5 transition hover:-translate-y-0.5 hover:border-primary/30 hover:bg-content2"
           >
-            <span className="block text-lg font-semibold text-white">{action.label}</span>
-            <span className="mt-2 block text-sm leading-6 text-slate-300">{action.description}</span>
-            <span className="mt-4 inline-flex text-sm font-medium text-sky-200 group-hover:text-white">
+            <span className="block text-lg font-semibold text-foreground">{action.label}</span>
+            <span className="mt-2 block text-sm leading-6 text-default-500">{action.description}</span>
+            <span className="mt-4 inline-flex text-sm font-medium text-primary group-hover:text-foreground">
               Open page
             </span>
           </Link>

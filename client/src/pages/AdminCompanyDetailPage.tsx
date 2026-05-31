@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import { useSetAtom } from 'jotai';
+import { Button, TextArea } from '@heroui/react';
 import {
   approveRecruiterOnboarding,
   getPendingRecruiterOnboardingRequests,
@@ -165,7 +166,7 @@ export const AdminCompanyDetailPage = () => {
 
   if (loading) {
     return (
-      <section className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6 text-sm text-slate-300 backdrop-blur-xl sm:p-8">
+      <section className="rounded-[2rem] border border-divider bg-content1 p-6 text-sm text-foreground-500 sm:p-8">
         Loading company approval...
       </section>
     );
@@ -173,21 +174,17 @@ export const AdminCompanyDetailPage = () => {
 
   if (!request) {
     return (
-      <section className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6 backdrop-blur-xl sm:p-8">
-        <div className="rounded-3xl border border-rose-400/20 bg-rose-500/10 p-4 text-sm leading-6 text-rose-100">
+      <section className="rounded-[2rem] border border-divider bg-content1 p-6 sm:p-8">
+        <div className="rounded-3xl border border-danger/20 bg-danger/10 p-4 text-sm leading-6 text-danger-700">
           {error || 'Company approval not found.'}
         </div>
         <div className="mt-4 flex flex-wrap gap-3">
-          <Link className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white" to="/panel/admin/companies">
+          <Link className="rounded-2xl border border-divider bg-content1 px-4 py-2 text-sm font-medium text-foreground" to="/panel/admin/companies">
             Back to companies
           </Link>
-          <button
-            className="rounded-2xl bg-gradient-to-r from-sky-400 to-cyan-400 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:-translate-y-0.5"
-            type="button"
-            onClick={() => void loadRequest()}
-          >
+          <Button type="button" variant="primary" onPress={() => void loadRequest()}>
             Retry
-          </button>
+          </Button>
         </div>
       </section>
     );
@@ -210,92 +207,92 @@ export const AdminCompanyDetailPage = () => {
         loading={actioning}
       />
 
-      <section className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6 backdrop-blur-xl sm:p-8">
+      <section className="rounded-[2rem] border border-divider bg-content1 p-6 sm:p-8">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <div className="inline-flex rounded-full border border-white/10 bg-sky-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-sky-100">
+            <div className="inline-flex rounded-full border border-divider bg-content2 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-foreground-600">
               Admin
             </div>
-            <h2 className="mt-4 text-3xl font-semibold tracking-tight text-white">{request.company.name}</h2>
-            <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300">
+            <h2 className="mt-4 text-3xl font-semibold tracking-tight text-foreground">{request.company.name}</h2>
+            <p className="mt-3 max-w-2xl text-sm leading-7 text-foreground-500">
               Review the company and recruiter details before approving or rejecting the onboarding request.
             </p>
           </div>
 
           <div className="flex flex-wrap gap-3">
             <Link
-              className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:border-sky-400/40 hover:bg-sky-500/10"
+              className="rounded-2xl border border-divider bg-content1 px-4 py-2 text-sm font-medium text-foreground transition hover:bg-content2"
               to="/panel/admin/companies"
             >
               Back to companies
             </Link>
-            <button
-              className="rounded-2xl bg-gradient-to-r from-sky-400 to-cyan-400 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:-translate-y-0.5 disabled:cursor-progress disabled:opacity-70"
+            <Button
+              variant="primary"
               type="button"
-              onClick={() => setPendingAction({ type: 'approve' })}
-              disabled={actioning}
+              onPress={() => setPendingAction({ type: 'approve' })}
+              isDisabled={actioning}
             >
               Approve company
-            </button>
+            </Button>
           </div>
         </div>
 
         <div className="mt-6 grid gap-4 md:grid-cols-3">
-          <div className="rounded-3xl border border-white/10 bg-slate-950/50 p-4">
-            <span className="block text-sm text-slate-400">Recruiter</span>
-            <strong className="mt-2 block text-sm font-medium text-white">
+          <div className="rounded-3xl border border-divider bg-content2 p-4">
+            <span className="block text-sm text-foreground-500">Recruiter</span>
+            <strong className="mt-2 block text-sm font-medium text-foreground">
               {request.recruiter.firstName} {request.recruiter.lastName}
             </strong>
           </div>
-          <div className="rounded-3xl border border-white/10 bg-slate-950/50 p-4">
-            <span className="block text-sm text-slate-400">Email</span>
-            <strong className="mt-2 block text-sm font-medium text-white">{request.recruiter.email}</strong>
+          <div className="rounded-3xl border border-divider bg-content2 p-4">
+            <span className="block text-sm text-foreground-500">Email</span>
+            <strong className="mt-2 block text-sm font-medium text-foreground">{request.recruiter.email}</strong>
           </div>
-          <div className="rounded-3xl border border-white/10 bg-slate-950/50 p-4">
-            <span className="block text-sm text-slate-400">Status</span>
-            <strong className="mt-2 block text-sm font-medium text-white">{request.company.approvalStatus}</strong>
+          <div className="rounded-3xl border border-divider bg-content2 p-4">
+            <span className="block text-sm text-foreground-500">Status</span>
+            <strong className="mt-2 block text-sm font-medium text-foreground">{request.company.approvalStatus}</strong>
           </div>
         </div>
       </section>
 
       <section className="grid gap-6 lg:grid-cols-[1fr_0.9fr]">
-        <section className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6 backdrop-blur-xl sm:p-8">
-          <h3 className="text-xl font-semibold text-white">Company details</h3>
-          <div className="mt-5 grid gap-3 text-sm text-slate-300">
+        <section className="rounded-[2rem] border border-divider bg-content1 p-6 sm:p-8">
+          <h3 className="text-xl font-semibold text-foreground">Company details</h3>
+          <div className="mt-5 grid gap-3 text-sm text-foreground-500">
             <div>
-              <span className="block text-slate-500">Tax ID</span>
-              <span className="text-white">{request.company.taxId}</span>
+              <span className="block text-foreground-500">Tax ID</span>
+              <span className="text-foreground">{request.company.taxId}</span>
             </div>
             <div>
-              <span className="block text-slate-500">Founded year</span>
-              <span className="text-white">{request.company.foundingYear ?? 'Not provided'}</span>
+              <span className="block text-foreground-500">Founded year</span>
+              <span className="text-foreground">{request.company.foundingYear ?? 'Not provided'}</span>
             </div>
             <div>
-              <span className="block text-slate-500">Employees</span>
-              <span className="text-white">{request.company.numberOfEmployees ?? 'Not provided'}</span>
+              <span className="block text-foreground-500">Employees</span>
+              <span className="text-foreground">{request.company.numberOfEmployees ?? 'Not provided'}</span>
             </div>
             <div>
-              <span className="block text-slate-500">Website</span>
-              <span className="text-white">{request.company.websiteUrl || 'Not provided'}</span>
+              <span className="block text-foreground-500">Website</span>
+              <span className="text-foreground">{request.company.websiteUrl || 'Not provided'}</span>
             </div>
             <div>
-              <span className="block text-slate-500">Address</span>
-              <span className="text-white">{request.company.address}</span>
+              <span className="block text-foreground-500">Address</span>
+              <span className="text-foreground">{request.company.address}</span>
             </div>
             <div>
-              <span className="block text-slate-500">Short description</span>
-              <span className="text-white">{request.company.shortDescription || 'Not provided'}</span>
+              <span className="block text-foreground-500">Short description</span>
+              <span className="text-foreground">{request.company.shortDescription || 'Not provided'}</span>
             </div>
             <div>
-              <span className="block text-slate-500">Description</span>
-              <span className="text-white">{request.company.description || 'Not provided'}</span>
+              <span className="block text-foreground-500">Description</span>
+              <span className="text-foreground">{request.company.description || 'Not provided'}</span>
             </div>
           </div>
         </section>
 
-        <section className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6 backdrop-blur-xl sm:p-8">
-          <h3 className="text-xl font-semibold text-white">Reject request</h3>
-          <p className="mt-2 text-sm leading-6 text-slate-300">
+        <section className="rounded-[2rem] border border-divider bg-content1 p-6 sm:p-8">
+          <h3 className="text-xl font-semibold text-foreground">Reject request</h3>
+          <p className="mt-2 text-sm leading-6 text-foreground-500">
             Use rejection when the company details are incomplete or do not meet approval rules.
           </p>
 
@@ -310,42 +307,36 @@ export const AdminCompanyDetailPage = () => {
             }}
           >
             <label className="grid gap-2">
-              <span className="text-sm text-slate-300">Reason</span>
-              <textarea
-                className="min-h-[140px] w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-slate-100 outline-none transition focus:border-sky-400/70 focus:ring-4 focus:ring-sky-500/15"
-                value={reason}
-                onChange={(event) => setReason(event.target.value)}
-                required
-                minLength={3}
-              />
+              <span className="text-sm text-foreground-600">Reason</span>
+              <TextArea value={reason} onChange={(event) => setReason(event.target.value)} required minLength={3} />
             </label>
 
-            <button
-              className="rounded-2xl border border-rose-400/20 bg-rose-500/10 px-4 py-3 font-semibold text-rose-100 transition hover:border-rose-400/40 hover:bg-rose-500/20 disabled:cursor-progress disabled:opacity-70"
+            <Button
+              variant="danger"
               type="submit"
-              disabled={actioning}
+              isDisabled={actioning}
             >
               Reject company
-            </button>
+            </Button>
           </form>
         </section>
       </section>
 
-      <section className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6 backdrop-blur-xl sm:p-8">
-        <h3 className="text-xl font-semibold text-white">Decision history</h3>
+      <section className="rounded-[2rem] border border-divider bg-content1 p-6 sm:p-8">
+        <h3 className="text-xl font-semibold text-foreground">Decision history</h3>
         <div className="mt-5 grid gap-3">
           {decisionHistory.length === 0 ? (
-            <div className="rounded-3xl border border-dashed border-white/10 bg-slate-950/40 p-4 text-sm text-slate-300">
+            <div className="rounded-3xl border border-dashed border-divider bg-content2 p-4 text-sm text-foreground-500">
               No decisions recorded yet.
             </div>
           ) : (
             decisionHistory.map((entry, index) => (
-              <div key={`${entry.action}-${entry.at}-${index}`} className="rounded-3xl border border-white/10 bg-slate-950/50 p-4 text-sm text-slate-200">
+              <div key={`${entry.action}-${entry.at}-${index}`} className="rounded-3xl border border-divider bg-content2 p-4 text-sm text-foreground">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <strong>{entry.action}</strong>
-                  <span className="text-slate-400">{new Date(entry.at).toLocaleString()}</span>
+                  <span className="text-foreground-500">{new Date(entry.at).toLocaleString()}</span>
                 </div>
-                {entry.reason && <p className="mt-2 leading-6 text-slate-300">{entry.reason}</p>}
+                {entry.reason && <p className="mt-2 leading-6 text-foreground-500">{entry.reason}</p>}
               </div>
             ))
           )}
@@ -353,20 +344,20 @@ export const AdminCompanyDetailPage = () => {
       </section>
 
       {request.company.approvalStatus === 'Rejected' && request.company.approvalRejectionReason && (
-        <section className="rounded-[2rem] border border-rose-400/20 bg-rose-500/10 p-6 text-sm leading-6 text-rose-100 backdrop-blur-xl sm:p-8">
+        <section className="rounded-[2rem] border border-danger/20 bg-danger/10 p-6 text-sm leading-6 text-danger-700 sm:p-8">
           <strong className="block">Latest rejection reason</strong>
           <p className="mt-2">{request.company.approvalRejectionReason}</p>
         </section>
       )}
 
       {message && (
-        <section className="rounded-[2rem] border border-emerald-400/20 bg-emerald-500/10 p-6 text-sm leading-6 text-emerald-100 backdrop-blur-xl sm:p-8">
+        <section className="rounded-[2rem] border border-success/20 bg-success/10 p-6 text-sm leading-6 text-success-700 sm:p-8">
           {message}
         </section>
       )}
 
       {error && (
-        <section className="rounded-[2rem] border border-rose-400/20 bg-rose-500/10 p-6 text-sm leading-6 text-rose-100 backdrop-blur-xl sm:p-8">
+        <section className="rounded-[2rem] border border-danger/20 bg-danger/10 p-6 text-sm leading-6 text-danger-700 sm:p-8">
           {error}
         </section>
       )}

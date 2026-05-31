@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { Button, Chip } from '@heroui/react';
 import { getMyJobApplication, type JobApplicationDetail } from '../lib/job-applications-api';
 
 export const CandidateApplicationDetailPage = () => {
@@ -37,7 +38,7 @@ export const CandidateApplicationDetailPage = () => {
 
   if (loading) {
     return (
-      <section className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6 text-sm text-slate-300 backdrop-blur-xl sm:p-8">
+      <section className="rounded-[2rem] border border-divider bg-content1 p-6 text-sm text-foreground-500 sm:p-8">
         Loading application...
       </section>
     );
@@ -45,17 +46,13 @@ export const CandidateApplicationDetailPage = () => {
 
   if (error && !detail) {
     return (
-      <section className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6 backdrop-blur-xl sm:p-8">
-        <div className="rounded-3xl border border-rose-400/20 bg-rose-500/10 p-4 text-sm leading-6 text-rose-100">{error}</div>
+      <section className="rounded-[2rem] border border-divider bg-content1 p-6 sm:p-8">
+        <div className="rounded-3xl border border-danger/20 bg-danger/10 p-4 text-sm leading-6 text-danger-700">{error}</div>
         <div className="mt-4 flex flex-wrap gap-3">
-          <button
-            className="rounded-2xl bg-gradient-to-r from-sky-400 to-cyan-400 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:-translate-y-0.5"
-            type="button"
-            onClick={() => void loadDetail()}
-          >
+          <Button type="button" variant="primary" onPress={() => void loadDetail()}>
             Retry
-          </button>
-          <Link className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white" to="/panel/applications">
+          </Button>
+          <Link className="rounded-2xl border border-divider bg-content1 px-4 py-2 text-sm font-medium text-foreground" to="/panel/applications">
             Back to applications
           </Link>
         </div>
@@ -65,20 +62,20 @@ export const CandidateApplicationDetailPage = () => {
 
   return (
     <div className="grid gap-6">
-      <section className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6 backdrop-blur-xl sm:p-8">
+      <section className="rounded-[2rem] border border-divider bg-content1 p-6 sm:p-8">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <div className="inline-flex rounded-full border border-white/10 bg-sky-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-sky-100">
+            <div className="inline-flex rounded-full border border-divider bg-content2 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-foreground-600">
               Candidate
             </div>
-            <h2 className="mt-4 text-3xl font-semibold tracking-tight text-white">Application detail</h2>
-            <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300">
+            <h2 className="mt-4 text-3xl font-semibold tracking-tight text-foreground">Application detail</h2>
+            <p className="mt-3 max-w-2xl text-sm leading-7 text-foreground-500">
               Review the application, the target posting, and the profile data attached to your submission.
             </p>
           </div>
 
           <Link
-            className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:border-sky-400/40 hover:bg-sky-500/10"
+            className="rounded-2xl border border-divider bg-content1 px-4 py-2 text-sm font-medium text-foreground transition hover:bg-content2"
             to="/panel/applications"
           >
             Back to applications
@@ -86,19 +83,19 @@ export const CandidateApplicationDetailPage = () => {
         </div>
 
         <div className="mt-6 grid gap-4 md:grid-cols-3">
-          <div className="rounded-3xl border border-white/10 bg-slate-950/50 p-4">
-            <span className="block text-sm text-slate-400">Status</span>
-            <strong className="mt-2 block text-sm font-medium text-white">{detail?.status || 'Unknown'}</strong>
+          <div className="rounded-3xl border border-divider bg-content2 p-4">
+            <span className="block text-sm text-foreground-500">Status</span>
+            <strong className="mt-2 block text-sm font-medium text-foreground">{detail?.status || 'Unknown'}</strong>
           </div>
-          <div className="rounded-3xl border border-white/10 bg-slate-950/50 p-4">
-            <span className="block text-sm text-slate-400">Applied</span>
-            <strong className="mt-2 block text-sm font-medium text-white">
+          <div className="rounded-3xl border border-divider bg-content2 p-4">
+            <span className="block text-sm text-foreground-500">Applied</span>
+            <strong className="mt-2 block text-sm font-medium text-foreground">
               {detail?.createdAt ? new Date(detail.createdAt).toLocaleString() : 'Unknown'}
             </strong>
           </div>
-          <div className="rounded-3xl border border-white/10 bg-slate-950/50 p-4">
-            <span className="block text-sm text-slate-400">Updated</span>
-            <strong className="mt-2 block text-sm font-medium text-white">
+          <div className="rounded-3xl border border-divider bg-content2 p-4">
+            <span className="block text-sm text-foreground-500">Updated</span>
+            <strong className="mt-2 block text-sm font-medium text-foreground">
               {detail?.updatedAt ? new Date(detail.updatedAt).toLocaleString() : 'Unknown'}
             </strong>
           </div>
@@ -107,45 +104,45 @@ export const CandidateApplicationDetailPage = () => {
 
       <section className="grid gap-6 lg:grid-cols-[1fr_0.9fr]">
         <div className="grid gap-6">
-          <section className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6 backdrop-blur-xl sm:p-8">
-            <h3 className="text-xl font-semibold text-white">Posting</h3>
-            <div className="mt-5 grid gap-3 text-sm text-slate-300">
+          <section className="rounded-[2rem] border border-divider bg-content1 p-6 sm:p-8">
+            <h3 className="text-xl font-semibold text-foreground">Posting</h3>
+            <div className="mt-5 grid gap-3 text-sm text-foreground-500">
               <div>
-                <span className="block text-slate-500">Title</span>
-                <span className="text-white">{detail?.jobPosting.title || 'Untitled role'}</span>
+                <span className="block text-foreground-500">Title</span>
+                <span className="text-foreground">{detail?.jobPosting.title || 'Untitled role'}</span>
               </div>
               <div>
-                <span className="block text-slate-500">Company</span>
-                <span className="text-white">{detail?.jobPosting.company.name || 'Unknown company'}</span>
+                <span className="block text-foreground-500">Company</span>
+                <span className="text-foreground">{detail?.jobPosting.company.name || 'Unknown company'}</span>
               </div>
               <div>
-                <span className="block text-slate-500">Posting status</span>
-                <span className="text-white">{detail?.jobPosting.status || 'Unknown'}</span>
+                <span className="block text-foreground-500">Posting status</span>
+                <span className="text-foreground">{detail?.jobPosting.status || 'Unknown'}</span>
               </div>
             </div>
           </section>
 
-          <section className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6 backdrop-blur-xl sm:p-8">
-            <h3 className="text-xl font-semibold text-white">Your profile snapshot</h3>
-            <div className="mt-5 grid gap-3 text-sm text-slate-300">
+          <section className="rounded-[2rem] border border-divider bg-content1 p-6 sm:p-8">
+            <h3 className="text-xl font-semibold text-foreground">Your profile snapshot</h3>
+            <div className="mt-5 grid gap-3 text-sm text-foreground-500">
               <div>
-                <span className="block text-slate-500">Name</span>
-                <span className="text-white">{detail?.user.name}</span>
+                <span className="block text-foreground-500">Name</span>
+                <span className="text-foreground">{detail?.user.name}</span>
               </div>
               <div>
-                <span className="block text-slate-500">Email</span>
-                <span className="text-white">{detail?.user.email}</span>
+                <span className="block text-foreground-500">Email</span>
+                <span className="text-foreground">{detail?.user.email}</span>
               </div>
               <div>
-                <span className="block text-slate-500">Skills</span>
+                <span className="block text-foreground-500">Skills</span>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {(detail?.user.skills || []).length === 0 ? (
-                    <span className="text-white">No skills listed.</span>
+                    <span className="text-foreground">No skills listed.</span>
                   ) : (
                     detail?.user.skills?.map((skill) => (
-                      <span key={skill.id} className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-200">
+                      <Chip key={skill.id} size="sm" variant="secondary">
                         {skill.name} · {skill.yearsOfExperience}y
-                      </span>
+                      </Chip>
                     ))
                   )}
                 </div>
@@ -155,19 +152,19 @@ export const CandidateApplicationDetailPage = () => {
         </div>
 
         <div className="grid gap-6">
-          <section className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6 backdrop-blur-xl sm:p-8">
-            <h3 className="text-xl font-semibold text-white">Required skills</h3>
+          <section className="rounded-[2rem] border border-divider bg-content1 p-6 sm:p-8">
+            <h3 className="text-xl font-semibold text-foreground">Required skills</h3>
             <div className="mt-5 grid gap-3">
               {(detail?.jobPosting.skills || []).length === 0 ? (
-                <div className="rounded-3xl border border-dashed border-white/10 bg-slate-950/40 p-4 text-sm text-slate-300">
+                <div className="rounded-3xl border border-dashed border-divider bg-content2 p-4 text-sm text-foreground-500">
                   No skill requirements listed.
                 </div>
               ) : (
                 detail?.jobPosting.skills?.map((skill) => (
-                  <div key={skill.id} className="rounded-3xl border border-white/10 bg-slate-950/50 p-4 text-sm text-slate-200">
+                  <div key={skill.id} className="rounded-3xl border border-divider bg-content2 p-4 text-sm text-foreground">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <strong>{skill.name}</strong>
-                      <span className="text-slate-400">
+                      <span className="text-foreground-500">
                         {skill.requiredYearsOfExperience === null ? 'Any experience' : `${skill.requiredYearsOfExperience}y required`}
                       </span>
                     </div>
@@ -178,10 +175,10 @@ export const CandidateApplicationDetailPage = () => {
           </section>
 
           {error && detail && (
-            <section className="rounded-[2rem] border border-rose-400/20 bg-rose-500/10 p-6 text-sm leading-6 text-rose-100 backdrop-blur-xl sm:p-8">
-              {error}
-            </section>
-          )}
+        <section className="rounded-[2rem] border border-danger/20 bg-danger/10 p-6 text-sm leading-6 text-danger-700 sm:p-8">
+          {error}
+        </section>
+      )}
         </div>
       </section>
     </div>
