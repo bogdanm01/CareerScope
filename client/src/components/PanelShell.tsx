@@ -21,7 +21,7 @@ const navIconPath = {
 } as const;
 
 const NavGlyph = ({ name }: { name: PanelNavItem['icon'] }) => (
-  <svg aria-hidden="true" viewBox="0 0 24 24" className="h-[17px] w-[17px] shrink-0 fill-none stroke-current stroke-[1.75]">
+  <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4.25 w-4.25 shrink-0 fill-none stroke-current stroke-[1.75]">
     <path d={navIconPath[name]} strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
@@ -122,7 +122,7 @@ export const PanelShell = () => {
             backdropFilter: 'none',
           }}
           className={[
-            'fixed inset-y-0 left-0 z-40 w-[292px] border-r border-divider px-5 py-6 transition-transform duration-200 lg:static lg:z-auto lg:min-h-screen lg:translate-x-0 lg:border-b-0',
+            'fixed inset-y-0 left-0 z-40 w-73 border-r border-divider px-5 py-6 transition-transform duration-200 lg:static lg:z-auto lg:min-h-screen lg:translate-x-0 lg:border-b-0',
             sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
           ].join(' ')}
         >

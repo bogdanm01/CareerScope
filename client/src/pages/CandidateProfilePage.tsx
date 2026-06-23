@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Button, Input } from '@heroui/react';
-import { getOnboardingStatus, replaceCandidateSkills, uploadCandidateCv } from '../lib/me-api';
+import { getMe, getOnboardingStatus, replaceCandidateSkills, uploadCandidateCv } from '../lib/me-api';
 import { useSetAtom } from 'jotai';
 import { authErrorAtom, authLoadingAtom } from '../store/auth';
 import { SkillAutocomplete } from '../components/SkillAutocomplete';
@@ -26,6 +26,23 @@ export const CandidateProfilePage = () => {
   const [cvMessage, setCvMessage] = useState<string | null>(null);
   const [skillResetKey, setSkillResetKey] = useState(0);
 
+  const loadCandidateProfile = async () => {
+    try {
+      const response = await getMe();
+      setOnboardingStatus(response.data.onboardingStatus);
+      setSelectedSkills(
+        response.data.skills.map((skill) => ({
+          id: skill.id,
+          name: skill.name,
+          yearsOfExperience: skill.yearsOfExperience,
+        })),
+      );
+    } catch {
+      setOnboardingStatus('Profile created');
+      setSelectedSkills([]);
+    }
+  };
+
   const loadOnboardingStatus = async () => {
     try {
       const response = await getOnboardingStatus();
@@ -36,7 +53,11 @@ export const CandidateProfilePage = () => {
   };
 
   useEffect(() => {
-    void loadOnboardingStatus();
+    const timer = window.setTimeout(() => {
+      void loadCandidateProfile();
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, []);
 
   const addSkill = () => {
@@ -79,7 +100,7 @@ export const CandidateProfilePage = () => {
         })),
       });
       setSkillMessage('Skills updated successfully.');
-      await loadOnboardingStatus();
+      await loadCandidateProfile();
     } catch (error) {
       setSkillMessage(error instanceof Error ? error.message : 'Unable to update skills');
     } finally {
