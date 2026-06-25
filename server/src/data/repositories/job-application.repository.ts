@@ -95,6 +95,7 @@ export type JobApplicationDetail = {
   jobPosting: {
     id: number;
     title: string | null;
+    description: string | null;
     status: string;
     company: {
       id: number;
@@ -370,6 +371,7 @@ export class JobApplicationRepository extends GenericRepository<JobApplication, 
         userImage: user.image,
         jobPostingId: jobPosting.id,
         jobPostingTitle: jobPosting.title,
+        jobPostingDescription: jobPosting.description,
         jobPostingStatus: jobPosting.status,
         companyId: company.id,
         companyName: company.name,
@@ -406,6 +408,7 @@ export class JobApplicationRepository extends GenericRepository<JobApplication, 
       jobPosting: {
         id: record.jobPostingId,
         title: record.jobPostingTitle,
+        description: record.jobPostingDescription,
         status: record.jobPostingStatus,
         company: {
           id: record.companyId,

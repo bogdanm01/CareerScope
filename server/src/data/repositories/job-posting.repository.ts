@@ -48,6 +48,9 @@ export type JobPostingDetail = Omit<JobPosting, 'isDeleted'> & {
     id: number;
     name: string;
     logo: string | null;
+    websiteUrl: string | null;
+    shortDescription: string | null;
+    address: string;
   };
   skills?: {
     id: number;
@@ -66,6 +69,9 @@ type JobPostingCompanySelection = {
   id: number;
   name: string;
   logo: string | null;
+  websiteUrl: string | null;
+  shortDescription: string | null;
+  address: string;
 };
 
 type JobPostingSkillSelection = {
