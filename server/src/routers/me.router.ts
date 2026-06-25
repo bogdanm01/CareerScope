@@ -13,6 +13,12 @@ export const getMeRouter = () => {
   const meController = container.resolve<MeController>(TOKENS.meController);
 
   router.get(
+    '/',
+    authGuard([USER_ROLE.CANDIDATE, USER_ROLE.RECRUITER, USER_ROLE.ADMIN]),
+    meController.getMe.bind(meController),
+  );
+
+  router.get(
     '/onboarding-status',
     authGuard([USER_ROLE.CANDIDATE, USER_ROLE.RECRUITER, USER_ROLE.ADMIN]),
     meController.getOnboardingStatus.bind(meController),

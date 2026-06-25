@@ -2,7 +2,7 @@ import { inject, injectable } from 'tsyringe';
 import { AuthenticatedUser } from '../data/util/utils.ts';
 import { AddCandidateSkillsRequestSchema } from '../lib/zod/user.zod-schema.ts';
 import { ZodValidationError } from '../lib/zod-validation-error.ts';
-import { UserRepository } from '../data/repositories/user.repository.ts';
+import { MeUserDetails, UserRepository } from '../data/repositories/user.repository.ts';
 import { TOKENS } from '../config/dependency-tokens.ts';
 import { SingleResult } from '../lib/api-response.ts';
 import { UserSkill } from '../data/schema/user-skill.schema.ts';
@@ -36,6 +36,18 @@ export class MeService {
     @inject(TOKENS.userRepository) private readonly userRepository: UserRepository,
     @inject(TOKENS.skillRepository) private readonly skillRepository: SkillRepository,
   ) {}
+
+  async getMe(user: AuthenticatedUser): Promise<SingleResult<MeUserDetails>> {
+    const record = await this.userRepository.findMeById(user.id);
+
+    if (!record) {
+      throw new NotFoundError('User not found.');
+    }
+
+    return {
+      data: record,
+    };
+  }
 
   async replaceCandidateSkills(payload: unknown, user: AuthenticatedUser): Promise<SingleResult<UserSkill[]>> {
     const validationResult = AddCandidateSkillsRequestSchema.safeParse(payload);
