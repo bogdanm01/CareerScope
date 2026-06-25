@@ -1,4 +1,4 @@
-import { boolean, check, date, integer, pgTable, text } from 'drizzle-orm/pg-core';
+import { boolean, check, integer, pgTable, text } from 'drizzle-orm/pg-core';
 import { jobApplication } from './job-application.schema.ts';
 import { timestamps } from '../util/utils.ts';
 import { sql } from 'drizzle-orm';

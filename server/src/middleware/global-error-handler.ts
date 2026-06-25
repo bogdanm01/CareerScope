@@ -5,7 +5,7 @@ import { ZodValidationError } from '../lib/zod-validation-error.ts';
 import { ApiErrorResponse } from '../lib/api-response.ts';
 import { AppError } from '../lib/app-error.ts';
 
-export const globalErrorHandler: ErrorRequestHandler = (err, req, res, next) => {
+export const globalErrorHandler: ErrorRequestHandler = (err, req, res) => {
   const statusCode = err instanceof ZodValidationError ? 400 : err instanceof AppError ? err.statusCode : 500;
   const logPayload = {
     err,
