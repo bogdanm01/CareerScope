@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
+import path from 'path';
 import env from './config/env.ts';
 import logger from './config/logger.ts';
 
@@ -15,7 +16,11 @@ import { globalErrorHandler } from './middleware/global-error-handler.ts';
 import { registerExpireJobPostingsJob } from './jobs/expire-job-postings.job.ts';
 
 const configureMiddleware = (app: express.Application): void => {
-  app.use(helmet());
+  app.use(
+    helmet({
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+    }),
+  );
   app.use(cookieParser());
   app.use(
     cors({
@@ -27,6 +32,7 @@ const configureMiddleware = (app: express.Application): void => {
   app.all('/api/auth/*splat', toNodeHandler(auth));
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
+  app.use('/uploads/profile', express.static(path.resolve(process.cwd(), 'uploads', 'profile')));
   app.use('/api', getApiRouter());
   app.use(globalErrorHandler);
 };
