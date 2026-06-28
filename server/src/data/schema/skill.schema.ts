@@ -1,4 +1,4 @@
-import { customType, index, integer, pgTable, text } from 'drizzle-orm/pg-core';
+import { boolean, customType, index, integer, pgTable, text } from 'drizzle-orm/pg-core';
 import { timestamps } from '../util/utils.ts';
 import { skillCategory } from './skill-category.schema.ts';
 import { sql } from 'drizzle-orm';
@@ -16,6 +16,7 @@ const skill = pgTable(
     name: text('name').notNull(),
     description: text('description').notNull(),
     slug: text('slug').notNull().unique(),
+    requiresYearsOfExperience: boolean('requires_years_of_experience').notNull().default(true),
     categoryId: integer('category_id')
       .notNull()
       .references(() => skillCategory.id, { onDelete: 'cascade' }),
