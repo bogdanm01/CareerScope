@@ -1,5 +1,10 @@
 import z from 'zod';
 
+export const UpdateProfileRequestSchema = z.object({
+  firstName: z.string().trim().min(1, 'First name is required.').max(80, 'First name cannot be longer than 80 characters.'),
+  lastName: z.string().trim().min(1, 'Last name is required.').max(80, 'Last name cannot be longer than 80 characters.'),
+});
+
 export const AddCandidateSkillsRequestSchema = z
   .object({
     skills: z
@@ -10,10 +15,12 @@ export const AddCandidateSkillsRequestSchema = z
             .int('Skill id must be an integer.')
             .positive('Skill id must be a positive integer.'),
           yearsOfExperience: z
-            .number({ error: 'Years of experience is required.' })
+            .number({ error: 'Years of experience must be a number.' })
             .int('Years of experience must be an integer.')
             .min(0, 'Years of experience cannot be negative.')
-            .max(60, 'Years of experience cannot be greater than 60.'),
+            .max(60, 'Years of experience cannot be greater than 60.')
+            .nullable()
+            .optional(),
         }),
       )
       .min(1, 'At least one skill is required.')
