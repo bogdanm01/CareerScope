@@ -13,7 +13,7 @@ export const userSkill = pgTable(
     skillId: integer('skill_id')
       .references(() => skill.id)
       .notNull(),
-    yearsOfExperience: integer('years_of_experience').notNull(),
+    yearsOfExperience: integer('years_of_experience'),
     ...timestamps,
   },
   (table) => [unique('user_id_skill_id_unq').on(table.userId, table.skillId)],
