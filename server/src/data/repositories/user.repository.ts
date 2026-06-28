@@ -16,6 +16,12 @@ type RecruiterOnboardingUpdate = {
   onboardingStatus: OnboardingStatus;
 };
 
+type ProfileUpdate = {
+  firstName: string;
+  lastName: string;
+  name: string;
+};
+
 export type MeUserDetails = {
   id: string;
   name: string;
@@ -38,7 +44,8 @@ export type MeUserDetails = {
     name: string;
     slug: string;
     description: string;
-    yearsOfExperience: number;
+    requiresYearsOfExperience: boolean;
+    yearsOfExperience: number | null;
   }[];
 };
 
@@ -75,6 +82,43 @@ export class UserRepository extends GenericRepository<User, UserInsert, string> 
       .returning({ cvUrl: user.cvUrl, onboardingStatus: user.onboardingStatus });
 
     return updatedUser;
+  }
+
+  async updateProfile(userId: string, values: ProfileUpdate) {
+    const [updatedUser] = await this.db
+      .update(user)
+      .set(values)
+      .where(eq(user.id, userId))
+      .returning({
+        id: user.id,
+        name: user.name,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        image: user.image,
+      });
+
+    return updatedUser;
+  }
+
+  async updateProfileImage(userId: string, imageUrl: string) {
+    const [updatedUser] = await this.db
+      .update(user)
+      .set({ image: imageUrl })
+      .where(eq(user.id, userId))
+      .returning({
+        id: user.id,
+        name: user.name,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        image: user.image,
+      });
+
+    return updatedUser;
+  }
+
+  async findImageUrl(userId: string) {
+    const [record] = await this.db.select({ image: user.image }).from(user).where(eq(user.id, userId)).limit(1);
+    return record?.image;
   }
 
   async updateRecruiterOnboarding(userId: string, values: RecruiterOnboardingUpdate) {
@@ -137,6 +181,7 @@ export class UserRepository extends GenericRepository<User, UserInsert, string> 
         skillName: skill.name,
         skillSlug: skill.slug,
         skillDescription: skill.description,
+        skillRequiresYearsOfExperience: skill.requiresYearsOfExperience,
         yearsOfExperience: userSkill.yearsOfExperience,
       })
       .from(user)
@@ -166,7 +211,7 @@ export class UserRepository extends GenericRepository<User, UserInsert, string> 
         !record.skillName ||
         !record.skillSlug ||
         !record.skillDescription ||
-        record.yearsOfExperience === null
+        record.skillRequiresYearsOfExperience === null
       ) {
         return [];
       }
@@ -177,6 +222,7 @@ export class UserRepository extends GenericRepository<User, UserInsert, string> 
           name: record.skillName,
           slug: record.skillSlug,
           description: record.skillDescription,
+          requiresYearsOfExperience: record.skillRequiresYearsOfExperience,
           yearsOfExperience: record.yearsOfExperience,
         },
       ];

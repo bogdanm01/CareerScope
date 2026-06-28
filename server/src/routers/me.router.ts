@@ -6,6 +6,7 @@ import { USER_ROLE } from '../data/util/constants.ts';
 import { JobApplicationController } from '../controllers/job-application.controller.ts';
 import { MeController } from '../controllers/me.controller.ts';
 import { cvUploadMiddleware } from '../middleware/cv-upload.middleware.ts';
+import { profileImageUploadMiddleware } from '../middleware/profile-image-upload.middleware.ts';
 
 export const getMeRouter = () => {
   const router = express.Router();
@@ -25,6 +26,19 @@ export const getMeRouter = () => {
   );
 
   router.get('/cv', authGuard([USER_ROLE.CANDIDATE]), meController.downloadCandidateCv.bind(meController));
+
+  router.patch(
+    '/profile',
+    authGuard([USER_ROLE.CANDIDATE, USER_ROLE.RECRUITER, USER_ROLE.ADMIN]),
+    meController.updateProfile.bind(meController),
+  );
+
+  router.post(
+    '/profile-picture',
+    authGuard([USER_ROLE.CANDIDATE, USER_ROLE.RECRUITER, USER_ROLE.ADMIN]),
+    profileImageUploadMiddleware,
+    meController.uploadProfilePicture.bind(meController),
+  );
 
   router.get(
     '/applications',

@@ -23,6 +23,16 @@ export class MeController {
     res.status(200).send(successResponse(result.data));
   }
 
+  async updateProfile(req: Request, res: Response) {
+    const result = await this.meService.updateProfile(req.body, req.user);
+    res.status(200).send(successResponse(result.data));
+  }
+
+  async uploadProfilePicture(req: Request, res: Response) {
+    const result = await this.meService.uploadProfilePicture(req.file, req.user);
+    res.status(200).send(successResponse(result.data));
+  }
+
   /**
    * Replaces skills for the authenticated candidate.
    *

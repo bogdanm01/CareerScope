@@ -1,17 +1,16 @@
 import { inject, injectable } from 'tsyringe';
 import { AuthenticatedUser } from '../data/util/utils.ts';
-import { AddCandidateSkillsRequestSchema } from '../lib/zod/user.zod-schema.ts';
+import { AddCandidateSkillsRequestSchema, UpdateProfileRequestSchema } from '../lib/zod/user.zod-schema.ts';
 import { ZodValidationError } from '../lib/zod-validation-error.ts';
 import { MeUserDetails, UserRepository } from '../data/repositories/user.repository.ts';
 import { TOKENS } from '../config/dependency-tokens.ts';
 import { SingleResult } from '../lib/api-response.ts';
 import { UserSkill } from '../data/schema/user-skill.schema.ts';
 import { SkillRepository } from '../data/repositories/skill.repository.ts';
-import skill from '../data/schema/skill.schema.ts';
-import { inArray } from 'drizzle-orm';
 import { BadRequestError, NotFoundError } from '../lib/app-error.ts';
 import { ONBOARDING_STATUS } from '../data/util/constants.ts';
 import { deleteCvFile, resolveCvFilePath, toCvUrl } from '../middleware/cv-upload.middleware.ts';
+import { deleteProfileImageFile, toProfileImageUrl } from '../middleware/profile-image-upload.middleware.ts';
 
 type CandidateCvUploadPlaceholder = {
   fileName: string;
@@ -28,6 +27,14 @@ type OnboardingStatusResponse = {
 type CandidateCvDownload = {
   filePath: string;
   fileName: string;
+};
+
+type ProfileUpdateResponse = {
+  id: string;
+  name: string;
+  firstName: string;
+  lastName: string;
+  image: string | null;
 };
 
 @injectable()
@@ -49,6 +56,55 @@ export class MeService {
     };
   }
 
+  async updateProfile(payload: unknown, user: AuthenticatedUser): Promise<SingleResult<ProfileUpdateResponse>> {
+    const validationResult = UpdateProfileRequestSchema.safeParse(payload);
+
+    if (!validationResult.success) {
+      throw new ZodValidationError(validationResult.error);
+    }
+
+    const firstName = validationResult.data.firstName;
+    const lastName = validationResult.data.lastName;
+    const updatedUser = await this.userRepository.updateProfile(user.id, {
+      firstName,
+      lastName,
+      name: `${firstName} ${lastName}`.trim(),
+    });
+
+    if (!updatedUser) {
+      throw new NotFoundError('User not found.');
+    }
+
+    return {
+      data: updatedUser,
+    };
+  }
+
+  async uploadProfilePicture(
+    file: Express.Multer.File | undefined,
+    user: AuthenticatedUser,
+  ): Promise<SingleResult<ProfileUpdateResponse>> {
+    if (!file) {
+      throw new BadRequestError('Profile picture is required.');
+    }
+
+    const imageUrl = toProfileImageUrl(file.filename);
+    const previousImageUrl = await this.userRepository.findImageUrl(user.id);
+    const updatedUser = await this.userRepository.updateProfileImage(user.id, imageUrl);
+
+    if (!updatedUser) {
+      throw new NotFoundError('User not found.');
+    }
+
+    if (previousImageUrl && previousImageUrl !== imageUrl) {
+      await deleteProfileImageFile(previousImageUrl);
+    }
+
+    return {
+      data: updatedUser,
+    };
+  }
+
   async replaceCandidateSkills(payload: unknown, user: AuthenticatedUser): Promise<SingleResult<UserSkill[]>> {
     const validationResult = AddCandidateSkillsRequestSchema.safeParse(payload);
 
@@ -57,27 +113,28 @@ export class MeService {
     }
 
     const skills = validationResult.data.skills;
+    const skillIds = skills.map((s) => s.id);
+    const skillRequirements = await this.skillRepository.findSkillRequirements(skillIds);
 
-    const existingSkillIds: number[] = (
-      await this.skillRepository.find(
-        { id: skill.id },
-        inArray(
-          skill.id,
-          skills.map((s) => s.id),
-        ),
-      )
-    ).data.map((skill) => skill.id);
-
-    const missingSkillIds = skills.filter((skill) => !existingSkillIds.includes(skill.id)).map((skill) => skill.id);
+    const skillRequirementById = new Map(skillRequirements.map((skill) => [skill.id, skill]));
+    const missingSkillIds = skills.filter((skill) => !skillRequirementById.has(skill.id)).map((skill) => skill.id);
 
     if (missingSkillIds.length > 0) {
       throw new BadRequestError(`Invalid skill ids: ${missingSkillIds.join(', ')}`);
     }
 
+    const missingYoeSkillIds = skills
+      .filter((item) => skillRequirementById.get(item.id)?.requiresYearsOfExperience && item.yearsOfExperience == null)
+      .map((item) => item.id);
+
+    if (missingYoeSkillIds.length > 0) {
+      throw new BadRequestError(`Years of experience is required for skill ids: ${missingYoeSkillIds.join(', ')}`);
+    }
+
     const mappedSkills = validationResult.data.skills.map((skill) => ({
       skillId: skill.id,
       userId: user.id,
-      yearsOfExperience: skill.yearsOfExperience,
+      yearsOfExperience: skillRequirementById.get(skill.id)?.requiresYearsOfExperience ? skill.yearsOfExperience : null,
     }));
 
     const newSkills = await this.userRepository.replaceUserSkills(
