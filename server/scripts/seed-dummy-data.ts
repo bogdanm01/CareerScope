@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { inArray } from 'drizzle-orm';
+import { and, eq, inArray, isNull } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 import { user } from '../src/data/schema/auth.schema.ts';
@@ -379,6 +379,7 @@ const candidateSkills = [
   { userKey: 'candidateTeodora', skillSlug: 'sql', yearsOfExperience: 3 },
   { userKey: 'candidateTeodora', skillSlug: 'data-visualization', yearsOfExperience: 2 },
   { userKey: 'candidateTeodora', skillSlug: 'business-intelligence', yearsOfExperience: 2 },
+  { userKey: 'candidateTeodora', skillSlug: 'communication', yearsOfExperience: null },
 ] as const;
 
 const jobs = [
@@ -1029,6 +1030,14 @@ const seedUsers = async () => {
       })
       .where(inArray(user.id, [requireMapValue(userByKey, item.key, 'seed user key')]));
   }
+
+  await db
+    .update(user)
+    .set({
+      onboardingStatus: ONBOARDING_STATUS.SKILLS_ADDED,
+      updatedAt: now(),
+    })
+    .where(and(eq(user.role, USER_ROLE.CANDIDATE), isNull(user.cvUrl)));
 
   return userByKey;
 };
