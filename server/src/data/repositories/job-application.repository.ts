@@ -71,7 +71,8 @@ export type CandidateJobApplicationListItem = JobApplication & {
 type CandidateSkillDetail = {
   id: number;
   name: string;
-  yearsOfExperience: number;
+  requiresYearsOfExperience: boolean;
+  yearsOfExperience: number | null;
 };
 
 type JobPostingSkillDetail = {
@@ -425,6 +426,7 @@ export class JobApplicationRepository extends GenericRepository<JobApplication, 
       .select({
         id: skill.id,
         name: skill.name,
+        requiresYearsOfExperience: skill.requiresYearsOfExperience,
         yearsOfExperience: userSkill.yearsOfExperience,
       })
       .from(userSkill)

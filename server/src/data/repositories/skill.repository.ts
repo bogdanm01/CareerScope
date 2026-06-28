@@ -4,7 +4,7 @@ import { inject, injectable } from 'tsyringe';
 import { TOKENS } from '../../config/dependency-tokens.ts';
 import { DbClient } from '../../config/db-client.ts';
 import { skillCategory } from '../schema/skill-category.schema.ts';
-import { and, asc, eq, ilike, or, SQL } from 'drizzle-orm';
+import { and, asc, eq, ilike, inArray, or, SQL } from 'drizzle-orm';
 import { SkillListRequest } from '../../lib/zod/skill.zod-schema.ts';
 
 export type SkillCategoryListItem = {
@@ -19,11 +19,17 @@ export type SkillListItem = {
   name: string;
   slug: string;
   description: string;
+  requiresYearsOfExperience: boolean;
   category: {
     id: number;
     name: string;
     slug: string;
   };
+};
+
+export type SkillRequirement = {
+  id: number;
+  requiresYearsOfExperience: boolean;
 };
 
 @injectable()
@@ -62,6 +68,7 @@ export class SkillRepository extends GenericRepository<Skill, SkillInsert, numbe
         name: skill.name,
         slug: skill.slug,
         description: skill.description,
+        requiresYearsOfExperience: skill.requiresYearsOfExperience,
         category: {
           id: skillCategory.id,
           name: skillCategory.name,
@@ -77,5 +84,19 @@ export class SkillRepository extends GenericRepository<Skill, SkillInsert, numbe
     }
 
     return query.orderBy(asc(skill.name));
+  }
+
+  async findSkillRequirements(skillIds: number[]): Promise<SkillRequirement[]> {
+    if (skillIds.length === 0) {
+      return [];
+    }
+
+    return this.db
+      .select({
+        id: skill.id,
+        requiresYearsOfExperience: skill.requiresYearsOfExperience,
+      })
+      .from(skill)
+      .where(inArray(skill.id, skillIds));
   }
 }

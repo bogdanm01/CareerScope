@@ -36,6 +36,13 @@
       "when": 1779138547177,
       "tag": "0004_add_company_approval_fields",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1782525600000,
+      "tag": "0005_add_skill_yoe_requirement",
+      "breakpoints": true
     }
   ]
 }
