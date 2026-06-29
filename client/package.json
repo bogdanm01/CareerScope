@@ -10,16 +10,20 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@heroui/react": "^3.0.4",
-    "@heroui/styles": "^3.0.4",
+    "@heroui/react": "^3.2.1",
+    "@heroui/styles": "^3.2.1",
+    "@internationalized/date": "^3.12.2",
     "@tailwindcss/vite": "^4.3.0",
     "better-auth": "^1.6.11",
     "dayjs": "^1.11.20",
     "jotai": "^2.19.1",
+    "lucide-react": "^1.21.0",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
+    "react-markdown": "^10.1.0",
     "react-router-dom": "^7.14.2",
     "recharts": "^3.8.1",
+    "remark-gfm": "^4.0.1",
     "tailwindcss": "^4.3.0"
   },
   "devDependencies": {

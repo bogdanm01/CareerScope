@@ -1,7 +1,24 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Button, Chip } from '@heroui/react';
+import { Button, Chip, Table } from '@heroui/react';
 import { getMyJobApplications, type CandidateJobApplicationListItem } from '../lib/job-applications-api';
+
+const getStatusColor = (status: string): 'accent' | 'danger' | 'default' | 'success' | 'warning' => {
+  switch (status) {
+    case 'Accepted':
+      return 'success';
+    case 'Rejected':
+      return 'danger';
+    case 'UnderReview':
+      return 'warning';
+    case 'Submitted':
+      return 'accent';
+    default:
+      return 'default';
+  }
+};
+
+const getStatusLabel = (status: string) => (status === 'UnderReview' ? 'Under Review' : status);
 
 export const CandidateApplicationsPage = () => {
   const [applications, setApplications] = useState<CandidateJobApplicationListItem[]>([]);
@@ -28,14 +45,11 @@ export const CandidateApplicationsPage = () => {
   }, []);
 
   return (
-    <div className="grid gap-6">
-      <section className="rounded-[2rem] border border-divider bg-content1 p-6 sm:p-8">
+    <div className="grid gap-8">
+      <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <div className="inline-flex rounded-full border border-divider bg-content2 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-foreground-600">
-              Candidate
-            </div>
-            <h2 className="mt-4 text-3xl font-semibold tracking-tight text-foreground">My applications</h2>
+            <h2 className="text-4xl leading-[1.15] text-foreground">My applications</h2>
             <p className="mt-3 max-w-2xl text-sm leading-7 text-foreground-500">
               Track every submission and open the full application record when you need more detail.
             </p>
@@ -52,58 +66,84 @@ export const CandidateApplicationsPage = () => {
         </div>
 
         {error && (
-          <div className="mt-5 rounded-2xl border border-danger/20 bg-danger/10 px-4 py-3 text-sm leading-6 text-danger-700">
+          <div className="mt-5 rounded-lg border border-danger/20 bg-danger/10 px-4 py-3 text-sm leading-6 text-danger-700">
             {error}
           </div>
         )}
       </section>
 
-      <section className="rounded-[2rem] border border-divider bg-content1 p-6 sm:p-8">
-        <h3 className="text-xl font-semibold text-foreground">Application history</h3>
+      <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
+        <h3 className="text-2xl text-foreground">Application history</h3>
 
         {loading ? (
-          <div className="mt-5 rounded-3xl border border-divider bg-content2 p-6 text-sm text-foreground-500">
+          <div className="mt-5 rounded-xl border border-divider bg-content2 p-6 text-sm text-foreground-500">
             Loading applications...
           </div>
         ) : applications.length === 0 ? (
-          <div className="mt-5 rounded-3xl border border-dashed border-divider bg-content2 p-6 text-sm text-foreground-500">
+          <div className="mt-5 rounded-xl border border-dashed border-divider bg-content2 p-6 text-sm text-foreground-500">
             No applications found yet.
           </div>
         ) : (
-          <div className="mt-5 grid gap-4">
-            {applications.map((application) => (
-              <article key={application.id} className="rounded-3xl border border-divider bg-content2 p-5">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <h4 className="text-lg font-semibold text-foreground">{application.jobPosting.title || 'Untitled role'}</h4>
-                    <p className="mt-1 text-sm text-foreground-500">{application.jobPosting.company.name}</p>
-                  </div>
-                  <Chip size="sm" variant="secondary">{application.status}</Chip>
-                </div>
-
-                <div className="mt-4 grid gap-3 text-sm text-foreground-500 sm:grid-cols-3">
-                  <div>
-                    <span className="block text-foreground-500">Applied</span>
-                    <span className="text-foreground">{new Date(application.createdAt).toLocaleString()}</span>
-                  </div>
-                  <div>
-                    <span className="block text-foreground-500">Expires</span>
-                    <span className="text-foreground">
-                      {application.jobPosting.expiresAt ? new Date(application.jobPosting.expiresAt).toLocaleDateString() : 'No expiry'}
-                    </span>
-                  </div>
-                  <div className="flex items-end">
-                    <Link
-                      className="rounded-2xl border border-divider bg-content1 px-4 py-2 text-sm font-medium text-foreground transition hover:bg-content2"
-                      to={`/panel/applications/${application.id}`}
-                    >
-                      View detail
-                    </Link>
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
+          <Table className="mt-5" variant="secondary">
+            <Table.ScrollContainer>
+              <Table.Content aria-label="Application history">
+                <Table.Header>
+                  <Table.Column isRowHeader>Role</Table.Column>
+                  <Table.Column>Company</Table.Column>
+                  <Table.Column>Status</Table.Column>
+                  <Table.Column>Applied</Table.Column>
+                  <Table.Column>Expires</Table.Column>
+                  <Table.Column>Action</Table.Column>
+                </Table.Header>
+                <Table.Body>
+                  {applications.map((application) => (
+                    <Table.Row key={application.id} id={application.id}>
+                      <Table.Cell>
+                        <span className="font-medium text-foreground">
+                          {application.jobPosting.title || 'Untitled role'}
+                        </span>
+                      </Table.Cell>
+                      <Table.Cell>
+                        <span className="text-foreground-500">{application.jobPosting.company.name}</span>
+                      </Table.Cell>
+                      <Table.Cell>
+                        <Chip
+                          className="rounded-md"
+                          color={getStatusColor(application.status)}
+                          size="sm"
+                          variant="soft"
+                        >
+                          {getStatusLabel(application.status)}
+                        </Chip>
+                      </Table.Cell>
+                      <Table.Cell>
+                        <span className="whitespace-nowrap text-foreground-500">
+                          {new Date(application.createdAt).toLocaleDateString()}
+                        </span>
+                      </Table.Cell>
+                      <Table.Cell>
+                        <span className="whitespace-nowrap text-foreground-500">
+                          {application.jobPosting.expiresAt
+                            ? new Date(application.jobPosting.expiresAt).toLocaleDateString()
+                            : 'No expiry'}
+                        </span>
+                      </Table.Cell>
+                      <Table.Cell>
+                        <div className="flex justify-start">
+                          <Link
+                            className="whitespace-nowrap rounded-lg border border-divider bg-content1 px-3 py-2 text-sm font-medium text-foreground"
+                            to={`/panel/applications/${application.id}`}
+                          >
+                            View details
+                          </Link>
+                        </div>
+                      </Table.Cell>
+                    </Table.Row>
+                  ))}
+                </Table.Body>
+              </Table.Content>
+            </Table.ScrollContainer>
+          </Table>
         )}
       </section>
     </div>

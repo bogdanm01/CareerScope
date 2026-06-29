@@ -69,7 +69,7 @@ export const AdminJobPostingDetailPage = () => {
 
   if (loading) {
     return (
-      <section className="rounded-[2rem] border border-divider bg-content1 p-6 text-sm text-foreground-500 sm:p-8">
+      <section className="rounded-xl border border-divider bg-content1 p-6 text-sm text-foreground-500 sm:p-8">
         Loading job posting...
       </section>
     );
@@ -77,10 +77,10 @@ export const AdminJobPostingDetailPage = () => {
 
   if (!detail) {
     return (
-      <section className="rounded-[2rem] border border-divider bg-content1 p-6 sm:p-8">
+      <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
         <div className="rounded-3xl border border-danger/20 bg-danger/10 p-4 text-sm leading-6 text-danger-700">{error || 'Job posting not found.'}</div>
         <div className="mt-4 flex flex-wrap gap-3">
-          <Link className="rounded-2xl border border-divider bg-content1 px-4 py-2 text-sm font-medium text-foreground" to="/panel/admin/job-postings">
+          <Link className="rounded-lg border border-divider bg-content1 px-4 py-2 text-sm font-medium text-foreground" to="/panel/admin/job-postings">
             Back to postings
           </Link>
           <Button
@@ -96,7 +96,7 @@ export const AdminJobPostingDetailPage = () => {
   }
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-8">
       <ConfirmDialog
         open={pendingAction !== null}
         title={pendingAction?.type === 'reject' ? 'Reject job posting?' : 'Approve job posting?'}
@@ -162,20 +162,20 @@ export const AdminJobPostingDetailPage = () => {
         }}
       />
 
-      <section className="rounded-[2rem] border border-divider bg-content1 p-6 sm:p-8">
+      <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <div className="inline-flex rounded-full border border-divider bg-content2 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-foreground-600">
+            <div className="inline-flex rounded-md bg-[#fcab79] px-3 py-1 text-xs font-medium uppercase tracking-[0.16em] text-[#181d26]">
               Admin
             </div>
-            <h2 className="mt-4 text-3xl font-semibold tracking-tight text-foreground">{detail.title || 'Untitled role'}</h2>
+            <h2 className="mt-4 text-4xl leading-[1.15] text-foreground">{detail.title || 'Untitled role'}</h2>
             <p className="mt-3 max-w-2xl text-sm leading-7 text-foreground-500">
               Review the posting and approve or reject it before it goes live.
             </p>
           </div>
 
           <div className="flex flex-wrap gap-3">
-            <Link className="rounded-2xl border border-divider bg-content1 px-4 py-2 text-sm font-medium text-foreground transition hover:bg-content2" to="/panel/admin/job-postings">
+            <Link className="rounded-lg border border-divider bg-content1 px-4 py-2 text-sm font-medium text-foreground" to="/panel/admin/job-postings">
               Back to postings
             </Link>
             <Button
@@ -190,15 +190,15 @@ export const AdminJobPostingDetailPage = () => {
         </div>
 
         <div className="mt-6 grid gap-4 md:grid-cols-3">
-          <div className="rounded-3xl border border-divider bg-content1 p-4">
+          <div className="rounded-lg border border-divider bg-content1 p-4">
             <span className="block text-sm text-foreground-500">Company</span>
             <strong className="mt-2 block text-sm font-medium text-foreground">{detail.company?.name || 'Unknown company'}</strong>
           </div>
-          <div className="rounded-3xl border border-divider bg-content1 p-4">
+          <div className="rounded-lg border border-divider bg-content1 p-4">
             <span className="block text-sm text-foreground-500">Status</span>
             <strong className="mt-2 block text-sm font-medium text-foreground">{detail.status}</strong>
           </div>
-          <div className="rounded-3xl border border-divider bg-content1 p-4">
+          <div className="rounded-lg border border-divider bg-content1 p-4">
             <span className="block text-sm text-foreground-500">Expires</span>
             <strong className="mt-2 block text-sm font-medium text-foreground">
               {detail.expiresAt ? new Date(detail.expiresAt).toLocaleDateString() : 'No expiry'}
@@ -208,8 +208,8 @@ export const AdminJobPostingDetailPage = () => {
       </section>
 
       <section className="grid gap-6 lg:grid-cols-[1fr_0.9fr]">
-        <section className="rounded-[2rem] border border-divider bg-content1 p-6 sm:p-8">
-          <h3 className="text-xl font-semibold text-foreground">Posting details</h3>
+        <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
+          <h3 className="text-2xl text-foreground">Posting details</h3>
           <div className="mt-5 grid gap-3 text-sm text-foreground-500">
             <div>
               <span className="block text-foreground-500">Short description</span>
@@ -226,7 +226,7 @@ export const AdminJobPostingDetailPage = () => {
                   <span className="text-foreground">No skill requirements listed.</span>
                 ) : (
                   detail.skills?.map((skill) => (
-                    <span key={skill.id} className="rounded-full border border-divider bg-content1 px-3 py-1 text-xs text-foreground">
+                    <span key={skill.id} className="rounded-md border border-divider bg-content1 px-3 py-1 text-xs text-foreground">
                       {skill.name} · {skill.yoe ?? 'Any'}y
                     </span>
                   ))
@@ -236,8 +236,8 @@ export const AdminJobPostingDetailPage = () => {
           </div>
         </section>
 
-      <section className="rounded-[2rem] border border-divider bg-content1 p-6 sm:p-8">
-          <h3 className="text-xl font-semibold text-foreground">Reject posting</h3>
+      <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
+          <h3 className="text-2xl text-foreground">Reject posting</h3>
           <p className="mt-2 text-sm leading-6 text-foreground-500">
             Use rejection when the posting is incomplete or not ready to go live.
           </p>
@@ -259,15 +259,15 @@ export const AdminJobPostingDetailPage = () => {
         </section>
       </section>
 
-      <section className="rounded-[2rem] border border-divider bg-content1 p-6 sm:p-8">
-        <h3 className="text-xl font-semibold text-foreground">Status history</h3>
+      <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
+        <h3 className="text-2xl text-foreground">Status history</h3>
         <div className="mt-5 grid gap-3">
           {[...(decisionHistory || []), ...(detail.statusHistory || []).map((entry) => ({
             status: entry.status,
             reason: entry.reason || undefined,
             createdAt: new Date(entry.createdAt).toISOString(),
           }))].length === 0 ? (
-            <div className="rounded-3xl border border-dashed border-divider bg-content2 p-4 text-sm text-foreground-500">
+            <div className="rounded-xl border border-dashed border-divider bg-content2 p-4 text-sm text-foreground-500">
               No status history available.
             </div>
           ) : (
@@ -276,7 +276,7 @@ export const AdminJobPostingDetailPage = () => {
               reason: entry.reason || undefined,
               createdAt: new Date(entry.createdAt).toISOString(),
             }))].map((entry, index) => (
-              <div key={`${entry.status}-${entry.createdAt}-${index}`} className="rounded-3xl border border-divider bg-content1 p-4 text-sm text-foreground">
+              <div key={`${entry.status}-${entry.createdAt}-${index}`} className="rounded-lg border border-divider bg-content1 p-4 text-sm text-foreground">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <strong>{entry.status}</strong>
                   <span className="text-foreground-500">{new Date(entry.createdAt).toLocaleString()}</span>
@@ -288,16 +288,16 @@ export const AdminJobPostingDetailPage = () => {
         </div>
       </section>
 
-      <section className="rounded-[2rem] border border-divider bg-content1 p-6 sm:p-8">
-        <h3 className="text-xl font-semibold text-foreground">Decision history</h3>
+      <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
+        <h3 className="text-2xl text-foreground">Decision history</h3>
         <div className="mt-5 grid gap-3">
           {decisionHistory.length === 0 ? (
-            <div className="rounded-3xl border border-dashed border-divider bg-content2 p-4 text-sm text-foreground-500">
+            <div className="rounded-xl border border-dashed border-divider bg-content2 p-4 text-sm text-foreground-500">
               No decisions recorded yet.
             </div>
           ) : (
             decisionHistory.map((entry, index) => (
-              <div key={`${entry.status}-${entry.createdAt}-${index}`} className="rounded-3xl border border-divider bg-content1 p-4 text-sm text-foreground">
+              <div key={`${entry.status}-${entry.createdAt}-${index}`} className="rounded-lg border border-divider bg-content1 p-4 text-sm text-foreground">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <strong>{entry.status}</strong>
                   <span className="text-foreground-500">{new Date(entry.createdAt).toLocaleString()}</span>
@@ -310,13 +310,13 @@ export const AdminJobPostingDetailPage = () => {
       </section>
 
       {message && (
-        <section className="rounded-[2rem] border border-success/20 bg-success/10 p-6 text-sm leading-6 text-success-700 sm:p-8">
+        <section className="rounded-3xl border border-success/20 bg-success/10 p-6 text-sm leading-6 text-success-700 sm:p-8">
           {message}
         </section>
       )}
 
       {error && (
-        <section className="rounded-[2rem] border border-danger/20 bg-danger/10 p-6 text-sm leading-6 text-danger-700 sm:p-8">
+        <section className="rounded-3xl border border-danger/20 bg-danger/10 p-6 text-sm leading-6 text-danger-700 sm:p-8">
           {error}
         </section>
       )}

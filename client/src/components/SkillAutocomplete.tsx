@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Key } from '@heroui/react';
 import { ComboBox, Input, Label, ListBox } from '@heroui/react';
-import { getSkills, type Skill } from '../lib/skills-api';
+import { getSkillCategories, getSkills, type Skill, type SkillCategory } from '../lib/skills-api';
 
 type SkillAutocompleteProps = {
   label: string;
@@ -25,7 +25,33 @@ export const SkillAutocomplete = ({
   const requestIdRef = useRef(0);
   const [query, setQuery] = useState('');
   const [options, setOptions] = useState<Skill[]>([]);
+  const [categories, setCategories] = useState<SkillCategory[]>([]);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
+  const activeCategory = categories.find((category) => category.id === selectedCategoryId);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadCategories = async () => {
+      try {
+        const response = await getSkillCategories();
+        if (!cancelled) {
+          setCategories(response.data);
+        }
+      } catch {
+        if (!cancelled) {
+          setCategories([]);
+        }
+      }
+    };
+
+    void loadCategories();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     setQuery('');
@@ -40,7 +66,12 @@ export const SkillAutocomplete = ({
     setLoading(true);
     const timer = window.setTimeout(async () => {
       try {
-        const response = await getSkills(query.trim() ? { search: query.trim() } : undefined);
+        const trimmedQuery = query.trim();
+        const requestQuery = {
+          categoryId: selectedCategoryId,
+          search: trimmedQuery.length >= 2 ? trimmedQuery : undefined,
+        };
+        const response = await getSkills(requestQuery);
         if (cancelled || currentRequestId !== requestIdRef.current) {
           return;
         }
@@ -64,7 +95,7 @@ export const SkillAutocomplete = ({
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [excludeIds, onResultsChange, query]);
+  }, [excludeIds, onResultsChange, query, selectedCategoryId]);
 
   const handleSelect = (key: Key | null) => {
     if (key === null) {
@@ -82,7 +113,7 @@ export const SkillAutocomplete = ({
 
   return (
     <ComboBox
-      className="grid gap-2"
+      className="grid gap-3"
       selectedKey={selectedSkill ? String(selectedSkill.id) : null}
       inputValue={query}
       onInputChange={(value) => {
@@ -93,10 +124,54 @@ export const SkillAutocomplete = ({
       allowsEmptyCollection
       fullWidth
     >
-      <Label className="text-sm text-foreground-600">{label}</Label>
+      <Label className="text-sm font-medium text-foreground-700">{label}</Label>
+
+      <div className="grid gap-3 rounded-xl border border-divider bg-content2 p-3">
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-xs font-medium uppercase tracking-[0.14em] text-foreground-500">Category</span>
+          <span className="text-xs text-foreground-500">{activeCategory?.name ?? 'All skills'}</span>
+        </div>
+        <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+          <button
+            type="button"
+            className={[
+              'shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors',
+              selectedCategoryId === null
+                ? 'border-[#181d26] bg-[#181d26] text-white'
+                : 'border-divider bg-content1 text-foreground-600 hover:border-foreground/30',
+            ].join(' ')}
+            onClick={() => {
+              setSelectedCategoryId(null);
+              setQuery('');
+              onSelect(null);
+            }}
+          >
+            All
+          </button>
+          {categories.map((category) => (
+            <button
+              key={category.id}
+              type="button"
+              className={[
+                'shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors',
+                selectedCategoryId === category.id
+                  ? 'border-[#181d26] bg-[#181d26] text-white'
+                  : 'border-divider bg-content1 text-foreground-600 hover:border-foreground/30',
+              ].join(' ')}
+              onClick={() => {
+                setSelectedCategoryId(category.id);
+                setQuery('');
+                onSelect(null);
+              }}
+            >
+              {category.name}
+            </button>
+          ))}
+        </div>
+      </div>
 
       <ComboBox.InputGroup className="flex items-center gap-2">
-        <Input placeholder={placeholder} autoComplete="off" />
+        <Input placeholder={activeCategory ? `Search ${activeCategory.name.toLowerCase()} skills` : placeholder} autoComplete="off" />
         <ComboBox.Trigger />
       </ComboBox.InputGroup>
 
@@ -109,9 +184,12 @@ export const SkillAutocomplete = ({
           ) : (
             options.map((skill) => (
               <ListBox.Item key={skill.id} id={String(skill.id)} textValue={skill.name}>
-                <div className="grid gap-0.5 px-4 py-3 text-left text-sm">
-                  <span className="block font-medium text-foreground">{skill.name}</span>
-                  <span className="block text-xs text-foreground-500">{skill.category.name}</span>
+                <div className="grid gap-1 px-4 py-3 text-left text-sm">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="block font-medium text-foreground">{skill.name}</span>
+                    <span className="shrink-0 rounded-full bg-content2 px-2 py-1 text-[11px] text-foreground-500">{skill.category.name}</span>
+                  </div>
+                  {skill.description && <span className="line-clamp-2 block text-xs leading-5 text-foreground-500">{skill.description}</span>}
                 </div>
               </ListBox.Item>
             ))

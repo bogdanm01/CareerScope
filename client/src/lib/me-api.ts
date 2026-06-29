@@ -1,4 +1,4 @@
-import { apiGet, apiPut, apiUpload } from './panel-api';
+import { apiGet, apiPatch, apiPut, apiUpload } from './panel-api';
 
 export type CandidateOnboardingStatusResponse = {
   onboardingStatus: string;
@@ -9,7 +9,8 @@ export type MeUserSkill = {
   name: string;
   slug: string;
   description: string;
-  yearsOfExperience: number;
+  requiresYearsOfExperience: boolean;
+  yearsOfExperience: number | null;
 };
 
 export type MeUserResponse = {
@@ -35,7 +36,7 @@ export type MeUserResponse = {
 export type CandidateSkillPayload = {
   skills: {
     id: number;
-    yearsOfExperience: number;
+    yearsOfExperience?: number | null;
   }[];
 };
 
@@ -47,15 +48,38 @@ export type CandidateCvUploadResponse = {
   onboardingStatus: string;
 };
 
+export type ProfileUpdatePayload = {
+  firstName: string;
+  lastName: string;
+};
+
+export type ProfileUpdateResponse = {
+  id: string;
+  name: string;
+  firstName: string;
+  lastName: string;
+  image: string | null;
+};
+
 export const getMe = async () => apiGet<MeUserResponse>('/api/me');
 
 export const getOnboardingStatus = async () => apiGet<CandidateOnboardingStatusResponse>('/api/me/onboarding-status');
 
 export const replaceCandidateSkills = async (payload: CandidateSkillPayload) => apiPut('/api/me/skills', payload);
 
+export const updateMyProfile = async (payload: ProfileUpdatePayload) =>
+  apiPatch<ProfileUpdateResponse>('/api/me/profile', payload);
+
 export const uploadCandidateCv = async (file: File) => {
   const formData = new FormData();
   formData.append('cv', file);
 
   return apiUpload<CandidateCvUploadResponse>('/api/me/cv', formData);
+};
+
+export const uploadProfilePicture = async (file: File) => {
+  const formData = new FormData();
+  formData.append('image', file);
+
+  return apiUpload<ProfileUpdateResponse>('/api/me/profile-picture', formData);
 };

@@ -51,12 +51,14 @@ export type JobApplicationDetail = {
     skills: {
       id: number;
       name: string;
-      yearsOfExperience: number;
+      requiresYearsOfExperience: boolean;
+      yearsOfExperience: number | null;
     }[];
   };
   jobPosting: {
     id: number;
     title: string | null;
+    description: string | null;
     status: string;
     company: {
       id: number;

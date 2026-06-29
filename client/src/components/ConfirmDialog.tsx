@@ -40,8 +40,8 @@ export const ConfirmDialog = ({
     <Modal state={state}>
       <Modal.Backdrop className="fixed inset-0 z-50 bg-black/40" />
       <Modal.Container className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6">
-        <Modal.Dialog className="w-full max-w-lg rounded-3xl border border-divider bg-content1 p-6 shadow-medium outline-none">
-          <Modal.Header className="text-xl font-semibold text-foreground">{title}</Modal.Header>
+        <Modal.Dialog className="w-full max-w-lg rounded-xl border border-divider bg-content1 p-6 outline-none">
+          <Modal.Header className="text-2xl text-foreground">{title}</Modal.Header>
           <Modal.Body className="mt-3 text-sm leading-6 text-foreground-500">{description}</Modal.Body>
           <Modal.Footer className="mt-6 flex flex-wrap justify-end gap-3">
             <Button

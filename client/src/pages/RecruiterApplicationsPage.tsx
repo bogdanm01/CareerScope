@@ -70,13 +70,13 @@ export const RecruiterApplicationsPage = () => {
   }, [selectedPostingId]);
 
   return (
-    <div className="grid gap-6">
-      <section className="rounded-[2rem] border border-divider bg-content1 p-6 sm:p-8">
+    <div className="grid gap-8">
+      <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
         <div className="mb-6">
-          <div className="inline-flex rounded-full border border-divider bg-content2 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-foreground-600">
+          <div className="inline-flex rounded-md bg-[#a8d8c4] px-3 py-1 text-xs font-medium uppercase tracking-[0.16em] text-[#181d26]">
             Recruiter
           </div>
-          <h2 className="mt-4 text-3xl font-semibold tracking-tight text-foreground">Review job applications</h2>
+          <h2 className="mt-4 text-4xl leading-[1.15] text-foreground">Review job applications</h2>
           <p className="mt-3 max-w-2xl text-sm leading-7 text-foreground-500">
             Choose one of your postings to load its applications and review applicants.
           </p>
@@ -109,7 +109,7 @@ export const RecruiterApplicationsPage = () => {
         </label>
 
         {selectedPosting && (
-          <div className="mt-5 rounded-3xl border border-divider bg-content1 p-4 text-sm text-foreground-500">
+          <div className="mt-5 rounded-lg border border-divider bg-content1 p-4 text-sm text-foreground-500">
             <span className="block text-foreground-500">Selected posting</span>
             <strong className="block text-foreground">{selectedPosting.title || 'Untitled role'}</strong>
             <span>{selectedPosting.company?.name || 'Unknown company'}</span>
@@ -117,27 +117,27 @@ export const RecruiterApplicationsPage = () => {
         )}
       </section>
 
-      <section className="rounded-[2rem] border border-divider bg-content1 p-6 sm:p-8">
-        <h3 className="text-xl font-semibold text-foreground">Applications</h3>
+      <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
+        <h3 className="text-2xl text-foreground">Applications</h3>
 
         {loading ? (
-          <div className="mt-5 rounded-3xl border border-divider bg-content2 p-6 text-sm text-foreground-500">
+          <div className="mt-5 rounded-xl border border-divider bg-content2 p-6 text-sm text-foreground-500">
             Loading applications...
           </div>
         ) : applications.length === 0 ? (
-          <div className="mt-5 rounded-3xl border border-dashed border-divider bg-content2 p-6 text-sm text-foreground-500">
+          <div className="mt-5 rounded-xl border border-dashed border-divider bg-content2 p-6 text-sm text-foreground-500">
             {selectedPostingId ? 'No applications found for this posting.' : 'Select a posting to view applications.'}
           </div>
         ) : (
           <div className="mt-5 grid gap-4">
             {applications.map((application) => (
-              <article key={application.id} className="rounded-3xl border border-divider bg-content1 p-5">
+              <article key={application.id} className="rounded-xl border border-divider bg-content1 p-5">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <h4 className="text-lg font-semibold text-foreground">{application.user.fullName}</h4>
+                    <h4 className="text-lg font-medium text-foreground">{application.user.fullName}</h4>
                     <p className="mt-1 text-sm text-foreground-500">{application.user.email}</p>
                   </div>
-                  <span className="rounded-full border border-divider bg-content2 px-3 py-1 text-xs font-medium text-foreground">
+                  <span className="rounded-md border border-divider bg-content2 px-3 py-1 text-xs font-medium text-foreground">
                     {application.status}
                   </span>
                 </div>
@@ -153,7 +153,7 @@ export const RecruiterApplicationsPage = () => {
                   </div>
                   <div className="sm:col-span-2">
                     <Link
-                      className="inline-flex rounded-2xl border border-divider bg-content1 px-4 py-2 text-sm font-medium text-foreground transition hover:bg-content2"
+                      className="inline-flex rounded-lg border border-divider bg-content1 px-4 py-2 text-sm font-medium text-foreground"
                       to={`/panel/job-applications/${application.id}`}
                     >
                       Open detail

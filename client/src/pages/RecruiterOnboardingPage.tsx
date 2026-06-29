@@ -101,7 +101,7 @@ export const RecruiterOnboardingPage = ({ loading }: RecruiterOnboardingPageProp
       asideTitle="Company onboarding"
       asideText="Recruiters submit company information together with their account. The backend creates the user and queues the company for approval."
     >
-      <form className="grid gap-6" onSubmit={onSubmit}>
+      <form className="grid gap-8" onSubmit={onSubmit}>
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="grid gap-2">
             <span className="text-sm text-foreground-600">First name</span>
@@ -148,9 +148,9 @@ export const RecruiterOnboardingPage = ({ loading }: RecruiterOnboardingPageProp
           </label>
         </div>
 
-        <div className="grid gap-4 rounded-[1.75rem] border border-divider bg-content1 p-5">
+        <div className="grid gap-4 rounded-xl border border-divider bg-content1 p-5">
           <div>
-            <h3 className="text-lg font-semibold text-foreground">Company details</h3>
+            <h3 className="text-lg font-medium text-foreground">Company details</h3>
             <p className="mt-1 text-sm leading-6 text-foreground-500">
               These details will be attached to your company onboarding request.
             </p>
@@ -234,7 +234,7 @@ export const RecruiterOnboardingPage = ({ loading }: RecruiterOnboardingPageProp
         </div>
 
         {(error || loading) && (
-          <div className="rounded-2xl border border-primary/20 bg-primary/10 px-4 py-3 text-sm leading-6 text-primary-700">
+          <div className="rounded-lg border border-primary/20 bg-primary/10 px-4 py-3 text-sm leading-6 text-primary-700">
             {error || 'Submitting your recruiter onboarding request...'}
           </div>
         )}

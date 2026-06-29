@@ -89,13 +89,13 @@ export const RecruiterJobPostingsPage = ({ loading }: RecruiterJobPostingsPagePr
   };
 
   return (
-    <div className="grid gap-6">
-      <section className="rounded-[2rem] border border-divider bg-content1 p-6 sm:p-8">
+    <div className="grid gap-8">
+      <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
         <div className="mb-6">
-          <div className="inline-flex rounded-full border border-divider bg-content2 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-foreground-600">
+          <div className="inline-flex rounded-md bg-[#a8d8c4] px-3 py-1 text-xs font-medium uppercase tracking-[0.16em] text-[#181d26]">
             Recruiter
           </div>
-          <h2 className="mt-4 text-3xl font-semibold tracking-tight text-foreground">Add a job posting</h2>
+          <h2 className="mt-4 text-4xl leading-[1.15] text-foreground">Add a job posting</h2>
           <p className="mt-3 max-w-2xl text-sm leading-7 text-foreground-500">
             Draft a posting here. If you submit it as pending approval, the backend requires a fuller description, expiry date, and at least one skill.
           </p>
@@ -122,12 +122,12 @@ export const RecruiterJobPostingsPage = ({ loading }: RecruiterJobPostingsPagePr
             <Input type="date" value={form.expiresAt ?? ''} onChange={(event) => updateField('expiresAt', event.target.value)} />
           </label>
 
-          <div className="sm:col-span-2 rounded-3xl border border-divider bg-content2 px-4 py-3 text-sm leading-6 text-foreground-500">
-            New postings start as <span className="text-white">Draft</span> unless you choose to publish them for approval.
+          <div className="sm:col-span-2 rounded-lg border border-divider bg-content2 px-4 py-3 text-sm leading-6 text-foreground-500">
+            New postings start as <span className="font-medium text-foreground">Draft</span> unless you choose to publish them for approval.
           </div>
 
           {(error || loading) && (
-            <div className="rounded-2xl border border-primary/20 bg-primary/10 px-4 py-3 text-sm leading-6 text-primary-700 sm:col-span-2">
+            <div className="rounded-lg border border-primary/20 bg-primary/10 px-4 py-3 text-sm leading-6 text-primary-700 sm:col-span-2">
               {error || 'Saving posting...'}
             </div>
           )}
@@ -152,22 +152,22 @@ export const RecruiterJobPostingsPage = ({ loading }: RecruiterJobPostingsPagePr
         </form>
       </section>
 
-      <section className="rounded-[2rem] border border-divider bg-content1 p-6 sm:p-8">
-        <h3 className="text-xl font-semibold text-foreground">Your postings</h3>
+      <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
+        <h3 className="text-2xl text-foreground">Your postings</h3>
         <div className="mt-5 grid gap-4">
           {postings.length === 0 ? (
-            <div className="rounded-3xl border border-dashed border-divider bg-content2 p-6 text-sm text-foreground-500">
+            <div className="rounded-xl border border-dashed border-divider bg-content2 p-6 text-sm text-foreground-500">
               No job postings yet.
             </div>
           ) : (
             postings.map((posting) => (
-              <article key={posting.id} className="rounded-3xl border border-divider bg-content2 p-5">
+              <article key={posting.id} className="rounded-xl border border-divider bg-content2 p-5">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <h4 className="text-lg font-semibold text-foreground">{posting.title || 'Untitled role'}</h4>
+                    <h4 className="text-lg font-medium text-foreground">{posting.title || 'Untitled role'}</h4>
                     <p className="mt-1 text-sm text-foreground-500">{posting.shortDescription || 'No description yet.'}</p>
                   </div>
-                  <span className="rounded-full border border-divider bg-content1 px-3 py-1 text-xs font-medium text-foreground">
+                  <span className="rounded-md border border-divider bg-content1 px-3 py-1 text-xs font-medium text-foreground">
                     {posting.status}
                   </span>
                 </div>
@@ -186,7 +186,7 @@ export const RecruiterJobPostingsPage = ({ loading }: RecruiterJobPostingsPagePr
                   </div>
                   <div className="sm:col-span-3">
                     <Link
-                      className="inline-flex rounded-2xl border border-divider bg-content1 px-4 py-2 text-sm font-medium text-foreground transition hover:bg-content2"
+                      className="inline-flex rounded-lg border border-divider bg-content1 px-4 py-2 text-sm font-medium text-foreground"
                       to={`/panel/job-postings/${posting.id}`}
                     >
                       Open detail

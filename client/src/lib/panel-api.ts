@@ -1,4 +1,4 @@
-import { fetchJson, getApiBaseUrl, type FetchJsonOptions, HttpError } from './http';
+import { fetchJson, getApiBaseUrl, getSafeErrorMessage, type FetchJsonOptions, HttpError } from './http';
 
 export type ApiPagination = {
   currentPage: number;
@@ -85,7 +85,7 @@ const readUploadErrorMessage = async (response: Response) => {
     }
   }
 
-  return text.trim() || response.statusText || 'Request failed';
+  return getSafeErrorMessage(text, response.statusText);
 };
 
 export const apiUpload = async <T>(path: string, formData: FormData) => {

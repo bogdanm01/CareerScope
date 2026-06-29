@@ -52,7 +52,7 @@ export const ForgotPasswordPage = ({ loading }: ForgotPasswordPageProps) => {
         </label>
 
         {(message || loading) && (
-          <div className="rounded-2xl border border-primary/20 bg-primary/10 px-4 py-3 text-sm leading-6 text-primary-700">
+          <div className="rounded-lg border border-primary/20 bg-primary/10 px-4 py-3 text-sm leading-6 text-primary-700">
             {message || 'Requesting reset link...'}
           </div>
         )}

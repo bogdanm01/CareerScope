@@ -92,16 +92,16 @@ export const ResetPasswordPage = ({ loading }: ResetPasswordPageProps) => {
         </label>
 
         {message && !loading && (
-          <div className="rounded-2xl border border-primary/20 bg-primary/10 px-4 py-3 text-sm leading-6 text-primary-700">
+          <div className="rounded-lg border border-primary/20 bg-primary/10 px-4 py-3 text-sm leading-6 text-primary-700">
             {message}
           </div>
         )}
         {!hasToken && (
-          <div className="rounded-2xl border border-primary/20 bg-primary/10 px-4 py-3 text-sm leading-6 text-primary-700">
+          <div className="rounded-lg border border-primary/20 bg-primary/10 px-4 py-3 text-sm leading-6 text-primary-700">
             No reset token found. <Link className="text-primary hover:underline" to="/forgot-password">Request a new link</Link>.
           </div>
         )}
-        {loading && <div className="rounded-2xl border border-primary/20 bg-primary/10 px-4 py-3 text-sm leading-6 text-primary-700">Updating password...</div>}
+        {loading && <div className="rounded-lg border border-primary/20 bg-primary/10 px-4 py-3 text-sm leading-6 text-primary-700">Updating password...</div>}
 
         <Button
           type="submit"

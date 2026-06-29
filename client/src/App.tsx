@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import type { ReactNode } from 'react';
+import { Toast } from '@heroui/react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { PanelShell } from './components/PanelShell';
@@ -83,6 +84,7 @@ function App() {
 
   return (
     <AppThemeProvider>
+      <Toast.Provider placement="top" />
       <BrowserRouter>
         <AppBootstrap />
         <Routes>
@@ -119,7 +121,7 @@ function App() {
             </ProtectedRoute>
           }
         >
-          <Route index element={<DashboardPage loading={loading} />} />
+          <Route index element={<DashboardPage />} />
           <Route
             path="profile"
             element={
@@ -197,7 +199,7 @@ function App() {
               index
               element={
                 <RoleRoute allow={['Admin']}>
-                  <DashboardPage loading={loading} />
+                  <DashboardPage />
                 </RoleRoute>
               }
             />

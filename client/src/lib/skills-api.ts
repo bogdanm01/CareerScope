@@ -12,6 +12,7 @@ export type Skill = {
   name: string;
   slug: string;
   description: string;
+  requiresYearsOfExperience: boolean;
   category: {
     id: number;
     name: string;

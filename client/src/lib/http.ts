@@ -28,6 +28,31 @@ const buildUrl = (path: string) => {
   return new URL(path, baseUrl).toString();
 };
 
+export const getSafeErrorMessage = (text: string, fallback: string) => {
+  const trimmedText = text.trim();
+
+  if (!trimmedText) {
+    return fallback || 'Request failed';
+  }
+
+  const htmlErrorMatch = trimmedText.match(/(?:Error:\s*)?([^<>]+?)(?:<br\s*\/?>|<\/pre>)/i);
+
+  if (htmlErrorMatch?.[1]) {
+    return htmlErrorMatch[1]
+      .replace(/^Error:\s*/i, '')
+      .replace(/&nbsp;/gi, ' ')
+      .replace(/&amp;/gi, '&')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  if (/<(?:!doctype|html|head|body|pre)\b/i.test(trimmedText)) {
+    return fallback || 'Request failed';
+  }
+
+  return trimmedText;
+};
+
 const readErrorMessage = async (response: Response) => {
   const text = await response.text().catch(() => '');
 
@@ -40,11 +65,11 @@ const readErrorMessage = async (response: Response) => {
         return message;
       }
     } catch {
-      // Fall through to the raw response text.
+      // Fall through to the sanitized response text.
     }
   }
 
-  return text.trim() || response.statusText || 'Request failed';
+  return getSafeErrorMessage(text, response.statusText);
 };
 
 export type FetchJsonOptions = Omit<RequestInit, 'body'> & {

@@ -69,7 +69,7 @@ export const AdminCompaniesPage = () => {
   };
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-8">
       <ConfirmDialog
         open={confirmCompanyId !== null}
         title="Approve company?"
@@ -85,13 +85,13 @@ export const AdminCompaniesPage = () => {
         loading={actioningId !== null}
       />
 
-      <section className="rounded-[2rem] border border-divider bg-content1 p-6 sm:p-8">
+      <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <div className="inline-flex rounded-full border border-divider bg-content2 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-foreground-600">
+            <div className="inline-flex rounded-md bg-[#fcab79] px-3 py-1 text-xs font-medium uppercase tracking-[0.16em] text-[#181d26]">
               Admin
             </div>
-            <h2 className="mt-4 text-3xl font-semibold tracking-tight text-foreground">Approve companies</h2>
+            <h2 className="mt-4 text-4xl leading-[1.15] text-foreground">Approve companies</h2>
             <p className="mt-3 max-w-2xl text-sm leading-7 text-foreground-500">
               Review pending recruiter companies and approve the ones ready to join the platform.
             </p>
@@ -103,21 +103,21 @@ export const AdminCompaniesPage = () => {
         </div>
 
         {message && (
-          <div className="mt-5 rounded-2xl border border-success/20 bg-success/10 px-4 py-3 text-sm leading-6 text-success-700">
+          <div className="mt-5 rounded-lg border border-success/20 bg-success/10 px-4 py-3 text-sm leading-6 text-success-700">
             {message}
           </div>
         )}
 
         {error && (
-          <div className="mt-5 rounded-2xl border border-danger/20 bg-danger/10 px-4 py-3 text-sm leading-6 text-danger-700">
+          <div className="mt-5 rounded-lg border border-danger/20 bg-danger/10 px-4 py-3 text-sm leading-6 text-danger-700">
             {error}
           </div>
         )}
       </section>
 
-      <section className="rounded-[2rem] border border-divider bg-content1 p-6 sm:p-8">
+      <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h3 className="text-xl font-semibold text-foreground">Pending companies</h3>
+          <h3 className="text-2xl text-foreground">Pending companies</h3>
           <div className="flex items-center gap-2 text-sm text-foreground-500">
             <Button
               type="button"
@@ -144,25 +144,25 @@ export const AdminCompaniesPage = () => {
         </div>
 
         {loading ? (
-          <div className="mt-5 rounded-3xl border border-divider bg-content2 p-6 text-sm text-foreground-500">
+          <div className="mt-5 rounded-xl border border-divider bg-content2 p-6 text-sm text-foreground-500">
             Loading company approvals...
           </div>
         ) : requests.length === 0 ? (
-          <div className="mt-5 rounded-3xl border border-dashed border-divider bg-content2 p-6 text-sm text-foreground-500">
+          <div className="mt-5 rounded-xl border border-dashed border-divider bg-content2 p-6 text-sm text-foreground-500">
             No pending company approvals.
           </div>
         ) : (
           <div className="mt-5 grid gap-4">
             {requests.map((request) => (
-              <article key={request.company.id} className="rounded-3xl border border-divider bg-content2 p-5">
+              <article key={request.company.id} className="rounded-xl border border-divider bg-content2 p-5">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <h4 className="text-lg font-semibold text-foreground">{request.company.name}</h4>
+                    <h4 className="text-lg font-medium text-foreground">{request.company.name}</h4>
                     <p className="mt-1 text-sm text-foreground-500">
                       {request.recruiter.firstName} {request.recruiter.lastName} · {request.recruiter.email}
                     </p>
                   </div>
-                  <span className="rounded-full border border-divider bg-content1 px-3 py-1 text-xs font-medium text-foreground">
+                  <span className="rounded-md border border-divider bg-content1 px-3 py-1 text-xs font-medium text-foreground">
                     {request.company.approvalStatus}
                   </span>
                 </div>
@@ -192,7 +192,7 @@ export const AdminCompaniesPage = () => {
 
                 <div className="mt-5 flex flex-wrap gap-3">
                   <Link
-                    className="rounded-2xl border border-divider bg-content1 px-4 py-2 text-sm font-medium text-foreground transition hover:bg-content2"
+                    className="rounded-lg border border-divider bg-content1 px-4 py-2 text-sm font-medium text-foreground"
                     to={`/panel/admin/companies/${request.company.id}`}
                     state={{ request }}
                   >

@@ -1,9 +1,10 @@
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { Button } from '@heroui/react';
 import { authSessionAtom, signOutAtom } from '../store/auth';
 import { useAppTheme } from './ThemeContext';
+import { getApiBaseUrl } from '../lib/http';
 
 type PanelNavItem = {
   to: string;
@@ -28,9 +29,9 @@ const NavGlyph = ({ name }: { name: PanelNavItem['icon'] }) => (
 
 const candidateNav: PanelNavItem[] = [
   { to: '/panel', label: 'Dashboard', icon: 'dashboard' },
-  { to: '/panel/profile', label: 'Profile', icon: 'profile' },
   { to: '/panel/jobs', label: 'Jobs', icon: 'jobs' },
   { to: '/panel/applications', label: 'Applications', icon: 'applications' },
+  { to: '/panel/profile', label: 'Profile', icon: 'profile' },
 ];
 
 const recruiterNav: PanelNavItem[] = [
@@ -67,8 +68,28 @@ export const PanelShell = () => {
   const navItems = getNavItems(session?.user.role);
   const roleLabel = session?.user.role || 'User';
   const displayName = session?.user.name || [session?.user.firstName, session?.user.lastName].filter(Boolean).join(' ') || 'there';
+  const initials = displayName
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join('');
+  const profileImageUrl = useMemo(() => {
+    const imageUrl = session?.user.image;
+
+    if (!imageUrl) {
+      return null;
+    }
+
+    if (imageUrl.startsWith('http')) {
+      return imageUrl;
+    }
+
+    const baseUrl = getApiBaseUrl();
+    return baseUrl.startsWith('/') ? `${baseUrl.replace(/\/$/, '')}${imageUrl}` : new URL(imageUrl, baseUrl).toString();
+  }, [session?.user.image]);
+  const showRoleLabel = session?.user.role && session.user.role !== 'Candidate';
   const isDark = theme === 'dark';
-  const sidebarBackground = isDark ? '#18181b' : '#ffffff';
 
   useEffect(() => {
     setSidebarOpen(false);
@@ -85,11 +106,12 @@ export const PanelShell = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <div className="sticky top-0 z-30 flex items-center justify-between border-b border-divider bg-background/95 px-4 py-3 backdrop-blur lg:hidden">
+      <div className="sticky top-0 z-30 flex items-center justify-between border-b border-white/10 bg-[#181d26] px-4 py-3 text-white lg:hidden">
         <Button
           isIconOnly
           aria-label={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
           variant="secondary"
+          className="bg-white/10 text-white"
           onPress={() => setSidebarOpen((current) => !current)}
         >
           <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5 fill-none stroke-current stroke-[1.8]">
@@ -100,7 +122,7 @@ export const PanelShell = () => {
             )}
           </svg>
         </Button>
-        <div className="text-sm font-semibold tracking-[0.24em] text-default-400">CareerScope</div>
+        <div className="text-sm font-medium text-white">CareerScope</div>
         <div className="w-10" />
       </div>
 
@@ -113,38 +135,43 @@ export const PanelShell = () => {
         />
       )}
 
-      <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col lg:flex-row">
+      <div className="flex min-h-screen w-full flex-col lg:flex-row">
         <aside
-          style={{
-            backgroundColor: sidebarBackground,
-            backgroundImage: 'none',
-            opacity: 1,
-            backdropFilter: 'none',
-          }}
           className={[
-            'fixed inset-y-0 left-0 z-40 w-73 border-r border-divider px-5 py-6 transition-transform duration-200 lg:static lg:z-auto lg:min-h-screen lg:translate-x-0 lg:border-b-0',
+            'fixed inset-y-0 left-0 z-40 w-68 overflow-y-auto border-r border-white/10 bg-[#181d26] px-5 py-6 text-white transition-transform duration-200 lg:sticky lg:top-0 lg:z-auto lg:h-screen lg:self-start lg:translate-x-0 lg:border-b-0',
             sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
           ].join(' ')}
         >
-          <div className="flex h-full flex-col gap-7">
-            <div className="space-y-4">
+          <div className="flex h-full flex-col gap-8">
+            <div className="space-y-5">
               <div>
-                <div className="text-xs font-semibold uppercase tracking-[0.24em] text-default-400">CareerScope</div>
-                <h1 className="mt-2 text-2xl font-semibold tracking-tight text-foreground">Panel</h1>
+                <div className="text-lg font-medium tracking-[-0.01em] text-white">CareerScope</div>
               </div>
-              <div className="rounded-2xl border border-divider bg-content2 px-4 py-3 shadow-sm">
-                <div className="text-sm font-medium text-foreground">{displayName}</div>
-                <div className="mt-0.5 text-xs leading-5 text-default-400">
-                  {roleLabel}
-                  {' '}
-                  <span className="text-default-300">•</span>
-                  {' '}
-                  {session?.user.email}
+              <div className="rounded-2xl border border-white/10 bg-[#202732] p-3.5">
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#f5e9d4] text-sm font-semibold text-[#181d26]">
+                    {profileImageUrl ? (
+                      <img src={profileImageUrl} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      initials || displayName[0]?.toUpperCase()
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-medium leading-5 text-white">{displayName}</div>
+                    <div className="truncate text-xs leading-5 text-white/50" title={session?.user.email || undefined}>
+                      {session?.user.email}
+                    </div>
+                  </div>
                 </div>
+                {showRoleLabel && (
+                  <div className="mt-3 inline-flex rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-medium leading-none text-white/65">
+                    {roleLabel}
+                  </div>
+                )}
               </div>
             </div>
 
-            <nav className="grid gap-2">
+            <nav className="grid gap-1">
               {navItems.map((item) => (
                 <NavLink
                   key={item.to}
@@ -153,10 +180,10 @@ export const PanelShell = () => {
                   onClick={() => setSidebarOpen(false)}
                   className={({ isActive }) =>
                     [
-                      'flex items-center gap-3 rounded-xl border px-3.5 py-2.5 text-[0.94rem] transition',
+                      'flex items-center gap-3 rounded-lg border px-3.5 py-2.5 text-sm',
                       isActive
-                        ? 'border-primary/25 bg-primary/10 text-foreground shadow-sm'
-                        : 'border-divider bg-content1 text-default-500 hover:border-divider hover:bg-content2 hover:text-foreground',
+                        ? 'border-[#f5e9d4] bg-[#f5e9d4] !text-[#181d26]'
+                        : 'border-transparent bg-transparent !text-white/60',
                     ].join(' ')
                   }
                 >
@@ -166,11 +193,10 @@ export const PanelShell = () => {
               ))}
             </nav>
 
-            <div className="mt-auto border-t border-divider pt-4">
-              <div className="mb-3 text-xs uppercase tracking-[0.22em] text-default-400">Sidebar footer</div>
+            <div className="mt-auto border-t border-white/10 pt-4">
               <div className="grid gap-2">
                 <Button
-                  className="w-full justify-start"
+                  className="w-full justify-start bg-white/5 text-white"
                   variant="secondary"
                   onPress={() => setTheme(isDark ? 'light' : 'dark')}
                   aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
@@ -188,16 +214,24 @@ export const PanelShell = () => {
                     <span>{isDark ? 'Light mode' : 'Dark mode'}</span>
                   </span>
                 </Button>
-                <Button className="w-full justify-start" variant="ghost" onPress={() => void handleSignOut()}>
-                  Sign out
+                <Button className="w-full justify-start text-white/70" variant="ghost" onPress={() => void handleSignOut()}>
+                  <span className="inline-flex items-center gap-2">
+                    <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4 fill-none stroke-current stroke-[1.8]">
+                      <path d="M15 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2-2v-2" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M10 12h10m0 0-3-3m3 3-3 3" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    <span>Sign out</span>
+                  </span>
                 </Button>
               </div>
             </div>
           </div>
         </aside>
 
-        <main className="min-w-0 flex-1 px-4 py-4 sm:px-6 lg:px-7 lg:py-7">
-          <Outlet />
+        <main className="min-w-0 flex-1 bg-background px-4 py-6 sm:px-8 lg:px-12 lg:py-12">
+          <div className="mx-auto w-full max-w-7xl">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

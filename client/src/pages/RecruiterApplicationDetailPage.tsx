@@ -38,7 +38,7 @@ export const RecruiterApplicationDetailPage = () => {
 
   if (loading) {
     return (
-      <section className="rounded-[2rem] border border-divider bg-content1 p-6 text-sm text-foreground-500 sm:p-8">
+      <section className="rounded-xl border border-divider bg-content1 p-6 text-sm text-foreground-500 sm:p-8">
         Loading application...
       </section>
     );
@@ -46,13 +46,13 @@ export const RecruiterApplicationDetailPage = () => {
 
   if (error && !detail) {
     return (
-      <section className="rounded-[2rem] border border-divider bg-content1 p-6 sm:p-8">
+      <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
         <div className="rounded-3xl border border-danger/20 bg-danger/10 p-4 text-sm leading-6 text-danger-700">{error}</div>
         <div className="mt-4 flex flex-wrap gap-3">
           <Button type="button" variant="primary" onPress={() => void loadDetail()}>
             Retry
           </Button>
-          <Link className="rounded-2xl border border-divider bg-content1 px-4 py-2 text-sm font-medium text-foreground" to="/panel/job-applications">
+          <Link className="rounded-lg border border-divider bg-content1 px-4 py-2 text-sm font-medium text-foreground" to="/panel/job-applications">
             Back to applications
           </Link>
         </div>
@@ -63,21 +63,21 @@ export const RecruiterApplicationDetailPage = () => {
   const backToApplications = detail ? `/panel/job-applications?postingId=${detail.jobPosting.id}` : '/panel/job-applications';
 
   return (
-    <div className="grid gap-6">
-      <section className="rounded-[2rem] border border-divider bg-content1 p-6 sm:p-8">
+    <div className="grid gap-8">
+      <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <div className="inline-flex rounded-full border border-divider bg-content2 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-foreground-600">
+            <div className="inline-flex rounded-md bg-[#a8d8c4] px-3 py-1 text-xs font-medium uppercase tracking-[0.16em] text-[#181d26]">
               Recruiter
             </div>
-            <h2 className="mt-4 text-3xl font-semibold tracking-tight text-foreground">Application detail</h2>
+            <h2 className="mt-4 text-4xl leading-[1.15] text-foreground">Application detail</h2>
             <p className="mt-3 max-w-2xl text-sm leading-7 text-foreground-500">
               Review a candidate submission with the full applicant profile and posting requirements in one place.
             </p>
           </div>
 
           <Link
-            className="rounded-2xl border border-divider bg-content1 px-4 py-2 text-sm font-medium text-foreground transition hover:bg-content2"
+            className="rounded-lg border border-divider bg-content1 px-4 py-2 text-sm font-medium text-foreground"
             to={backToApplications}
           >
             Back to applications
@@ -85,17 +85,17 @@ export const RecruiterApplicationDetailPage = () => {
         </div>
 
         <div className="mt-6 grid gap-4 md:grid-cols-3">
-          <div className="rounded-3xl border border-divider bg-content2 p-4">
+          <div className="rounded-lg border border-divider bg-content2 p-4">
             <span className="block text-sm text-foreground-500">Status</span>
             <strong className="mt-2 block text-sm font-medium text-foreground">{detail?.status || 'Unknown'}</strong>
           </div>
-          <div className="rounded-3xl border border-divider bg-content2 p-4">
+          <div className="rounded-lg border border-divider bg-content2 p-4">
             <span className="block text-sm text-foreground-500">Applied</span>
             <strong className="mt-2 block text-sm font-medium text-foreground">
               {detail?.createdAt ? new Date(detail.createdAt).toLocaleString() : 'Unknown'}
             </strong>
           </div>
-          <div className="rounded-3xl border border-divider bg-content2 p-4">
+          <div className="rounded-lg border border-divider bg-content2 p-4">
             <span className="block text-sm text-foreground-500">Updated</span>
             <strong className="mt-2 block text-sm font-medium text-foreground">
               {detail?.updatedAt ? new Date(detail.updatedAt).toLocaleString() : 'Unknown'}
@@ -105,8 +105,8 @@ export const RecruiterApplicationDetailPage = () => {
       </section>
 
       <section className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
-        <section className="rounded-[2rem] border border-divider bg-content1 p-6 sm:p-8">
-          <h3 className="text-xl font-semibold text-foreground">Applicant</h3>
+        <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
+          <h3 className="text-2xl text-foreground">Applicant</h3>
           <div className="mt-5 grid gap-3 text-sm text-foreground-500">
             <div>
               <span className="block text-foreground-500">Name</span>
@@ -123,8 +123,8 @@ export const RecruiterApplicationDetailPage = () => {
                   <span className="text-foreground">No skills listed.</span>
                 ) : (
                   detail?.user.skills?.map((skill) => (
-                    <Chip key={skill.id} size="sm" variant="secondary">
-                      {skill.name} · {skill.yearsOfExperience}y
+                    <Chip key={skill.id} className="rounded-md" size="sm" variant="secondary">
+                      {skill.name} · {skill.yearsOfExperience === null ? 'No YOE required' : `${skill.yearsOfExperience}y`}
                     </Chip>
                   ))
                 )}
@@ -133,9 +133,9 @@ export const RecruiterApplicationDetailPage = () => {
           </div>
         </section>
 
-        <div className="grid gap-6">
-          <section className="rounded-[2rem] border border-divider bg-content1 p-6 sm:p-8">
-            <h3 className="text-xl font-semibold text-foreground">Posting</h3>
+        <div className="grid gap-8">
+          <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
+            <h3 className="text-2xl text-foreground">Posting</h3>
             <div className="mt-5 grid gap-3 text-sm text-foreground-500">
               <div>
                 <span className="block text-foreground-500">Title</span>
@@ -152,16 +152,16 @@ export const RecruiterApplicationDetailPage = () => {
             </div>
           </section>
 
-          <section className="rounded-[2rem] border border-divider bg-content1 p-6 sm:p-8">
-            <h3 className="text-xl font-semibold text-foreground">Required skills</h3>
+          <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
+            <h3 className="text-2xl text-foreground">Required skills</h3>
             <div className="mt-5 grid gap-3">
               {(detail?.jobPosting.skills || []).length === 0 ? (
-                <div className="rounded-3xl border border-dashed border-divider bg-content2 p-4 text-sm text-foreground-500">
+                <div className="rounded-xl border border-dashed border-divider bg-content2 p-4 text-sm text-foreground-500">
                   No skill requirements listed.
                 </div>
               ) : (
                 detail?.jobPosting.skills?.map((skill) => (
-                  <div key={skill.id} className="rounded-3xl border border-divider bg-content2 p-4 text-sm text-foreground">
+                  <div key={skill.id} className="rounded-lg border border-divider bg-content2 p-4 text-sm text-foreground">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <strong>{skill.name}</strong>
                       <span className="text-foreground-500">
@@ -177,7 +177,7 @@ export const RecruiterApplicationDetailPage = () => {
       </section>
 
       {error && detail && (
-        <section className="rounded-[2rem] border border-danger/20 bg-danger/10 p-6 text-sm leading-6 text-danger-700 sm:p-8">
+        <section className="rounded-3xl border border-danger/20 bg-danger/10 p-6 text-sm leading-6 text-danger-700 sm:p-8">
           {error}
         </section>
       )}

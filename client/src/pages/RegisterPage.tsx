@@ -2,7 +2,8 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSetAtom } from 'jotai';
-import { Button, Input } from '@heroui/react';
+import { Button, Calendar, DateField, DatePicker, Input, Label } from '@heroui/react';
+import { parseDate } from '@internationalized/date';
 import { AuthShell } from '../components/AuthShell';
 import { authErrorAtom, authLoadingAtom, signUpAtom } from '../store/auth';
 
@@ -54,12 +55,12 @@ export const RegisterPage = ({ loading }: RegisterPageProps) => {
   return (
     <AuthShell
       eyebrow="CareerScope"
-      title="Create your candidate account."
+      title="Create account."
       description="Set up your profile with the standard candidate registration flow."
-      asideTitle="Candidate registration"
-      asideText="Candidates use the regular Better Auth sign-up flow with first name, last name, date of birth, email and password."
+      asideTitle=""
+      asideText=""
     >
-      <form className="grid gap-4 sm:grid-cols-2" onSubmit={onSubmit}>
+      <form className="grid gap-5 sm:grid-cols-2" onSubmit={onSubmit}>
         <label className="grid gap-2">
           <span className="text-sm text-foreground-600">First name</span>
           <Input value={firstName} onChange={(event) => setFirstName(event.target.value)} autoComplete="given-name" required />
@@ -70,10 +71,59 @@ export const RegisterPage = ({ loading }: RegisterPageProps) => {
           <Input value={lastName} onChange={(event) => setLastName(event.target.value)} autoComplete="family-name" required />
         </label>
 
-        <label className="grid gap-2 sm:col-span-2">
-          <span className="text-sm text-foreground-600">Date of birth</span>
-          <Input type="date" value={dateOfBirth} onChange={(event) => setDateOfBirth(event.target.value)} autoComplete="bday" required />
-        </label>
+        <DatePicker
+          className="sm:col-span-2"
+          value={dateOfBirth ? parseDate(dateOfBirth) : null}
+          onChange={(value) => setDateOfBirth(value?.toString() ?? '')}
+          isRequired
+          maxValue={parseDate(new Date().toISOString().slice(0, 10))}
+        >
+          <Label>Date of birth</Label>
+          <DateField.Group fullWidth>
+            <DateField.Input>
+              {(segment) => <DateField.Segment segment={segment} />}
+            </DateField.Input>
+            <DateField.Suffix>
+              <DatePicker.Trigger>
+                <DatePicker.TriggerIndicator />
+              </DatePicker.Trigger>
+            </DateField.Suffix>
+          </DateField.Group>
+          <DatePicker.Popover>
+            <Calendar>
+              <Calendar.Header>
+                <Calendar.NavButton slot="previous" />
+                <Calendar.YearPickerTrigger>
+                  <Calendar.YearPickerTriggerHeading />
+                  <Calendar.YearPickerTriggerIndicator />
+                </Calendar.YearPickerTrigger>
+                <Calendar.NavButton slot="next" />
+              </Calendar.Header>
+              <Calendar.Grid>
+                <Calendar.GridHeader>
+                  {(day) => <Calendar.HeaderCell>{day}</Calendar.HeaderCell>}
+                </Calendar.GridHeader>
+                <Calendar.GridBody>
+                  {(date) => (
+                    <Calendar.Cell date={date}>
+                      {({ formattedDate }) => (
+                        <>
+                          {formattedDate}
+                          <Calendar.CellIndicator />
+                        </>
+                      )}
+                    </Calendar.Cell>
+                  )}
+                </Calendar.GridBody>
+              </Calendar.Grid>
+              <Calendar.YearPickerGrid>
+                <Calendar.YearPickerGridBody>
+                  {({ year }) => <Calendar.YearPickerCell year={year} />}
+                </Calendar.YearPickerGridBody>
+              </Calendar.YearPickerGrid>
+            </Calendar>
+          </DatePicker.Popover>
+        </DatePicker>
 
         <label className="grid gap-2 sm:col-span-2">
           <span className="text-sm text-foreground-600">Email</span>
@@ -105,7 +155,7 @@ export const RegisterPage = ({ loading }: RegisterPageProps) => {
         </label>
 
         {(error || loading) && (
-          <div className="rounded-2xl border border-primary/20 bg-primary/10 px-4 py-3 text-sm leading-6 text-primary-700 sm:col-span-2">
+          <div className="rounded-lg border border-primary/20 bg-primary/10 px-4 py-3 text-sm leading-6 text-primary-700 sm:col-span-2">
             {error || 'Creating your account...'}
           </div>
         )}
@@ -114,17 +164,15 @@ export const RegisterPage = ({ loading }: RegisterPageProps) => {
           type="submit"
           variant="primary"
           isDisabled={loading}
-          className="sm:col-span-2"
+          className="h-12 w-full sm:col-span-2"
         >
           Create account
         </Button>
       </form>
 
-      <div className="mt-5 text-sm text-foreground-600">
+      <div className="mt-7 border-t border-divider pt-6 text-sm text-foreground-600">
         Already have an account? <Link className="text-primary hover:underline" to="/login">Sign in</Link>
-      </div>
-
-      <div className="mt-3 text-sm text-foreground-600">
+        <br />
         Are you a recruiter?{' '}
         <Link className="text-primary hover:underline" to="/register/recruiter">
           Complete recruiter onboarding

@@ -7,14 +7,43 @@
 
 :root {
   font-family:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    sans-serif;
+    Inter, "Helvetica Neue", Helvetica, ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.5;
   font-weight: 400;
+  --radius: 0.25rem;
+  --field-radius: 0.375rem;
+  --background: #ffffff;
+  --foreground: #181d26;
+  --surface: #ffffff;
+  --surface-foreground: #181d26;
+  --surface-secondary: #f8fafc;
+  --surface-secondary-foreground: #181d26;
+  --surface-tertiary: #e0e2e6;
+  --surface-tertiary-foreground: #181d26;
+  --overlay: #ffffff;
+  --overlay-foreground: #181d26;
+  --muted: #41454d;
+  --default: #f8fafc;
+  --default-foreground: #181d26;
+  --accent: #181d26;
+  --accent-foreground: #ffffff;
+  --border: #dddddd;
+  --separator: #dddddd;
+  --field-background: #ffffff;
+  --field-foreground: #181d26;
+  --field-border: #dddddd;
+  --field-border-width: 1px;
+  --field-border-focus: #458fff;
+  --focus: #458fff;
+  --link: #1b61c9;
+  --surface-shadow: none;
+  --field-shadow: none;
+  --overlay-shadow: 0 16px 40px rgb(24 29 38 / 12%);
 }
 
 html,
@@ -26,6 +55,8 @@ body,
 body {
   margin: 0;
   min-height: 100svh;
+  color: #333840;
+  background: #ffffff;
 }
 
 button,
@@ -39,9 +70,179 @@ a {
   color: inherit;
 }
 
+@layer base {
+  h1,
+  h2,
+  h3,
+  p {
+    margin: 0;
+  }
+}
+
 h1,
 h2,
-h3,
-p {
-  margin: 0;
+h3 {
+  font-weight: 400 !important;
+  letter-spacing: 0 !important;
+}
+
+.auth-title {
+  font-weight: 600 !important;
+}
+
+.job-description-markdown {
+  color: var(--muted);
+  font-size: 0.9375rem;
+  line-height: 1.75;
+}
+
+.job-description-markdown > :first-child {
+  margin-top: 0;
+}
+
+.job-description-markdown > :last-child {
+  margin-bottom: 0;
+}
+
+.job-description-markdown h1,
+.job-description-markdown h2,
+.job-description-markdown h3,
+.job-description-markdown h4 {
+  margin: 2rem 0 0.75rem;
+  color: var(--foreground);
+  font-weight: 600 !important;
+  line-height: 1.3;
+}
+
+.job-description-markdown h1 {
+  font-size: 1.5rem;
+}
+
+.job-description-markdown h2 {
+  font-size: 1.25rem;
+}
+
+.job-description-markdown h3,
+.job-description-markdown h4 {
+  font-size: 1rem;
+}
+
+.job-description-markdown p,
+.job-description-markdown ul,
+.job-description-markdown ol,
+.job-description-markdown blockquote,
+.job-description-markdown pre {
+  margin: 0 0 1rem;
+}
+
+.job-description-markdown ul,
+.job-description-markdown ol {
+  padding-left: 1.4rem;
+}
+
+.job-description-markdown ul {
+  list-style: disc;
+}
+
+.job-description-markdown ol {
+  list-style: decimal;
+}
+
+.job-description-markdown li + li {
+  margin-top: 0.35rem;
+}
+
+.job-description-markdown strong {
+  color: var(--foreground);
+  font-weight: 600;
+}
+
+.job-description-markdown a {
+  color: var(--link);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.job-description-markdown blockquote {
+  border-left: 3px solid var(--separator);
+  padding-left: 1rem;
+}
+
+.job-description-markdown code {
+  border-radius: 0.25rem;
+  background: var(--surface-secondary);
+  padding: 0.15rem 0.35rem;
+  color: var(--foreground);
+  font-size: 0.875em;
+}
+
+.job-description-markdown pre {
+  overflow-x: auto;
+  border: 1px solid var(--separator);
+  border-radius: 0.5rem;
+  background: var(--surface-secondary);
+  padding: 1rem;
+}
+
+.job-description-markdown pre code {
+  background: transparent;
+  padding: 0;
+}
+
+.number-field__input {
+  min-width: 2.5rem;
+  text-align: center;
+}
+
+button,
+[role="button"] {
+  font-weight: 500;
+}
+
+@layer utilities {
+  .bg-content1 {
+    background-color: var(--surface);
+  }
+
+  .bg-content2 {
+    background-color: var(--surface-secondary);
+  }
+
+  .border-divider {
+    border-color: var(--separator);
+  }
+
+  .text-foreground {
+    color: var(--foreground);
+  }
+
+  .text-foreground-500,
+  .text-foreground-600 {
+    color: var(--muted);
+  }
+}
+
+.dark,
+[data-theme="dark"] {
+  --background: #0d1218;
+  --foreground: #ffffff;
+  --surface: #181d26;
+  --surface-foreground: #ffffff;
+  --surface-secondary: #1d232d;
+  --surface-secondary-foreground: #ffffff;
+  --surface-tertiary: #29313d;
+  --surface-tertiary-foreground: #ffffff;
+  --overlay: #181d26;
+  --overlay-foreground: #ffffff;
+  --muted: #b9bec6;
+  --default: #252c36;
+  --default-foreground: #ffffff;
+  --accent: #ffffff;
+  --accent-foreground: #181d26;
+  --border: #3b424d;
+  --separator: #3b424d;
+  --field-background: #181d26;
+  --field-foreground: #ffffff;
+  --field-border: #565e69;
+  --link: #8ab4f8;
 }
