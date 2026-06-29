@@ -1,10 +1,31 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { ListBox, Select } from '@heroui/react';
+import { useAtomValue } from 'jotai';
+import { Chip, ListBox, Select, Table } from '@heroui/react';
 import { getRecruiterJobPostings, type JobPostingListItem } from '../lib/job-postings-api';
 import { getRecruiterJobApplications, type RecruiterJobApplicationListItem } from '../lib/job-applications-api';
+import { authSessionAtom } from '../store/auth';
+import { formatDateTime } from '../lib/date-format';
+
+const formatStatus = (status: string) => (status === 'UnderReview' ? 'Under Review' : status);
+
+const getStatusColor = (status: string): 'accent' | 'danger' | 'default' | 'success' | 'warning' => {
+  switch (status) {
+    case 'Accepted':
+      return 'success';
+    case 'Rejected':
+      return 'danger';
+    case 'UnderReview':
+      return 'warning';
+    case 'Submitted':
+      return 'accent';
+    default:
+      return 'default';
+  }
+};
 
 export const RecruiterApplicationsPage = () => {
+  const session = useAtomValue(authSessionAtom);
   const [searchParams, setSearchParams] = useSearchParams();
   const [postings, setPostings] = useState<JobPostingListItem[]>([]);
   const [applications, setApplications] = useState<RecruiterJobApplicationListItem[]>([]);
@@ -74,7 +95,7 @@ export const RecruiterApplicationsPage = () => {
       <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
         <div className="mb-6">
           <div className="inline-flex rounded-md bg-[#a8d8c4] px-3 py-1 text-xs font-medium uppercase tracking-[0.16em] text-[#181d26]">
-            Recruiter
+            {session?.user.role === 'Admin' ? 'Admin' : 'Recruiter'}
           </div>
           <h2 className="mt-4 text-4xl leading-[1.15] text-foreground">Review job applications</h2>
           <p className="mt-3 max-w-2xl text-sm leading-7 text-foreground-500">
@@ -129,40 +150,64 @@ export const RecruiterApplicationsPage = () => {
             {selectedPostingId ? 'No applications found for this posting.' : 'Select a posting to view applications.'}
           </div>
         ) : (
-          <div className="mt-5 grid gap-4">
-            {applications.map((application) => (
-              <article key={application.id} className="rounded-xl border border-divider bg-content1 p-5">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <h4 className="text-lg font-medium text-foreground">{application.user.fullName}</h4>
-                    <p className="mt-1 text-sm text-foreground-500">{application.user.email}</p>
-                  </div>
-                  <span className="rounded-md border border-divider bg-content2 px-3 py-1 text-xs font-medium text-foreground">
-                    {application.status}
-                  </span>
-                </div>
-
-                <div className="mt-4 grid gap-3 text-sm text-foreground-500 sm:grid-cols-2">
-                  <div>
-                    <span className="block text-foreground-500">Applied</span>
-                    <span className="text-foreground">{new Date(application.createdAt).toLocaleString()}</span>
-                  </div>
-                  <div>
-                    <span className="block text-foreground-500">Application ID</span>
-                    <span className="text-foreground">#{application.id}</span>
-                  </div>
-                  <div className="sm:col-span-2">
-                    <Link
-                      className="inline-flex rounded-lg border border-divider bg-content1 px-4 py-2 text-sm font-medium text-foreground"
-                      to={`/panel/job-applications/${application.id}`}
-                    >
-                      Open detail
-                    </Link>
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
+          <Table className="mt-5" variant="secondary">
+            <Table.ScrollContainer>
+              <Table.Content aria-label="Job applications">
+                <Table.Header>
+                  <Table.Column isRowHeader>Application ID</Table.Column>
+                  <Table.Column>Applicant</Table.Column>
+                  <Table.Column>Email</Table.Column>
+                  <Table.Column>Status</Table.Column>
+                  <Table.Column>Applied</Table.Column>
+                  <Table.Column>Action</Table.Column>
+                </Table.Header>
+                <Table.Body>
+                  {applications.map((application) => (
+                    <Table.Row key={application.id} id={application.id}>
+                      <Table.Cell>
+                        <span className="whitespace-nowrap font-medium text-foreground">#{application.id}</span>
+                      </Table.Cell>
+                      <Table.Cell>
+                        <span className="whitespace-nowrap font-medium text-foreground">
+                          {application.user.fullName}
+                        </span>
+                      </Table.Cell>
+                      <Table.Cell>
+                        <span className="block max-w-72 truncate text-foreground-500" title={application.user.email}>
+                          {application.user.email}
+                        </span>
+                      </Table.Cell>
+                      <Table.Cell>
+                        <Chip
+                          className="rounded-md"
+                          color={getStatusColor(application.status)}
+                          size="sm"
+                          variant="soft"
+                        >
+                          {formatStatus(application.status)}
+                        </Chip>
+                      </Table.Cell>
+                      <Table.Cell>
+                        <span className="whitespace-nowrap text-foreground-500">
+                          {formatDateTime(application.createdAt)}
+                        </span>
+                      </Table.Cell>
+                      <Table.Cell>
+                        <div className="flex justify-start">
+                          <Link
+                            className="whitespace-nowrap rounded-lg border border-divider bg-content1 px-3 py-2 text-sm font-medium text-foreground"
+                            to={`/panel/job-applications/${application.id}`}
+                          >
+                            Open detail
+                          </Link>
+                        </div>
+                      </Table.Cell>
+                    </Table.Row>
+                  ))}
+                </Table.Body>
+              </Table.Content>
+            </Table.ScrollContainer>
+          </Table>
         )}
       </section>
     </div>

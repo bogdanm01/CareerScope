@@ -8,6 +8,7 @@ import remarkGfm from 'remark-gfm';
 import { getJobPostingDetail, type JobPostingDetail } from '../lib/job-postings-api';
 import { applyToJobPosting } from '../lib/job-applications-api';
 import { authErrorAtom, authLoadingAtom } from '../store/auth';
+import { formatDate } from '../lib/date-format';
 
 const getWebsiteHref = (websiteUrl: string) =>
   /^https?:\/\//i.test(websiteUrl) ? websiteUrl : `https://${websiteUrl}`;
@@ -107,7 +108,7 @@ export const CandidateJobDetailPage = () => {
             <span className="inline-flex items-center gap-1.5 text-sm text-foreground-500">
               <CalendarDays aria-hidden="true" className="h-4 w-4" strokeWidth={1.7} />
               {detail?.expiresAt
-                ? `Closes ${new Date(detail.expiresAt).toLocaleDateString()}`
+                ? `Closes ${formatDate(detail.expiresAt)}`
                 : 'No closing date'}
             </span>
           </div>
@@ -196,7 +197,16 @@ export const CandidateJobDetailPage = () => {
               )}
             </div>
             <div className="min-w-0">
-              <h3 className="text-lg font-medium text-foreground">{detail?.company?.name || 'Unknown company'}</h3>
+              {detail?.company?.id ? (
+                <Link
+                  className="text-lg font-medium text-foreground underline-offset-4 hover:underline"
+                  to={`/companies/${detail.company.id}`}
+                >
+                  {detail.company.name || 'Unknown company'}
+                </Link>
+              ) : (
+                <h3 className="text-lg font-medium text-foreground">{detail?.company?.name || 'Unknown company'}</h3>
+              )}
               <p className="mt-1 text-sm leading-6 text-foreground-500">
                 {detail?.company?.shortDescription || 'No company description provided.'}
               </p>

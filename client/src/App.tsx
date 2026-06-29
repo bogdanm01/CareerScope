@@ -14,6 +14,7 @@ import { AdminCompaniesPage } from './pages/AdminCompaniesPage';
 import { AdminCompanyDetailPage } from './pages/AdminCompanyDetailPage';
 import { AdminJobPostingsPage } from './pages/AdminJobPostingsPage';
 import { AdminJobPostingDetailPage } from './pages/AdminJobPostingDetailPage';
+import { CompanyProfilePage } from './pages/CompanyProfilePage';
 import { DashboardPage } from './pages/DashboardPage';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { HomeRedirect } from './pages/HomeRedirect';
@@ -22,6 +23,7 @@ import { RegisterPage } from './pages/RegisterPage';
 import { RecruiterApplicationDetailPage } from './pages/RecruiterApplicationDetailPage';
 import { RecruiterOnboardingPage } from './pages/RecruiterOnboardingPage';
 import { RecruiterApplicationsPage } from './pages/RecruiterApplicationsPage';
+import { RecruiterJobPostingCreatePage } from './pages/RecruiterJobPostingCreatePage';
 import { RecruiterJobPostingDetailPage } from './pages/RecruiterJobPostingDetailPage';
 import { RecruiterJobPostingsPage } from './pages/RecruiterJobPostingsPage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
@@ -89,6 +91,7 @@ function App() {
         <AppBootstrap />
         <Routes>
         <Route path="/" element={<HomeRedirect />} />
+        <Route path="/companies/:id" element={<CompanyProfilePage />} />
         <Route
           path="/login"
           element={
@@ -150,7 +153,15 @@ function App() {
             path="job-postings"
             element={
               <RoleRoute allow={['Recruiter']}>
-                <RecruiterJobPostingsPage loading={loading} />
+                <RecruiterJobPostingsPage />
+              </RoleRoute>
+            }
+          />
+          <Route
+            path="job-postings/new"
+            element={
+              <RoleRoute allow={['Recruiter']}>
+                <RecruiterJobPostingCreatePage loading={loading} />
               </RoleRoute>
             }
           />
@@ -165,7 +176,7 @@ function App() {
           <Route
             path="job-applications"
             element={
-              <RoleRoute allow={['Recruiter']}>
+              <RoleRoute allow={['Recruiter', 'Admin']}>
                 <RecruiterApplicationsPage />
               </RoleRoute>
             }
@@ -173,7 +184,7 @@ function App() {
           <Route
             path="job-applications/:id"
             element={
-              <RoleRoute allow={['Recruiter']}>
+              <RoleRoute allow={['Recruiter', 'Admin']}>
                 <RecruiterApplicationDetailPage />
               </RoleRoute>
             }

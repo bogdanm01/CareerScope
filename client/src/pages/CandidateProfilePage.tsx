@@ -119,6 +119,12 @@ export const CandidateProfilePage = () => {
       setProfileFirstName(response.data.firstName);
       setProfileLastName(response.data.lastName);
       setProfileImageUrl(response.data.image);
+      syncSessionProfile({
+        name: response.data.name,
+        firstName: response.data.firstName,
+        lastName: response.data.lastName,
+        image: response.data.image,
+      });
       setSelectedSkills(
         response.data.skills.map((skill) => ({
           id: skill.id,

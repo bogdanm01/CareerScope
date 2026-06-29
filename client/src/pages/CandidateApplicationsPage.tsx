@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button, Chip, Table } from '@heroui/react';
 import { getMyJobApplications, type CandidateJobApplicationListItem } from '../lib/job-applications-api';
+import { formatDate } from '../lib/date-format';
 
 const getStatusColor = (status: string): 'accent' | 'danger' | 'default' | 'success' | 'warning' => {
   switch (status) {
@@ -118,13 +119,13 @@ export const CandidateApplicationsPage = () => {
                       </Table.Cell>
                       <Table.Cell>
                         <span className="whitespace-nowrap text-foreground-500">
-                          {new Date(application.createdAt).toLocaleDateString()}
+                          {formatDate(application.createdAt)}
                         </span>
                       </Table.Cell>
                       <Table.Cell>
                         <span className="whitespace-nowrap text-foreground-500">
                           {application.jobPosting.expiresAt
-                            ? new Date(application.jobPosting.expiresAt).toLocaleDateString()
+                            ? formatDate(application.jobPosting.expiresAt)
                             : 'No expiry'}
                         </span>
                       </Table.Cell>

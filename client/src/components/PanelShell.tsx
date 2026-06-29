@@ -44,6 +44,7 @@ const adminNav: PanelNavItem[] = [
   { to: '/panel', label: 'Dashboard', icon: 'dashboard' },
   { to: '/panel/admin/companies', label: 'Companies', icon: 'companies' },
   { to: '/panel/admin/job-postings', label: 'Job Postings', icon: 'postings' },
+  { to: '/panel/job-applications', label: 'Applications', icon: 'applications' },
 ];
 
 const getNavItems = (role?: string) => {
@@ -66,7 +67,6 @@ export const PanelShell = () => {
   const { theme, setTheme } = useAppTheme();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const navItems = getNavItems(session?.user.role);
-  const roleLabel = session?.user.role || 'User';
   const displayName = session?.user.name || [session?.user.firstName, session?.user.lastName].filter(Boolean).join(' ') || 'there';
   const initials = displayName
     .split(' ')
@@ -88,7 +88,6 @@ export const PanelShell = () => {
     const baseUrl = getApiBaseUrl();
     return baseUrl.startsWith('/') ? `${baseUrl.replace(/\/$/, '')}${imageUrl}` : new URL(imageUrl, baseUrl).toString();
   }, [session?.user.image]);
-  const showRoleLabel = session?.user.role && session.user.role !== 'Candidate';
   const isDark = theme === 'dark';
 
   useEffect(() => {
@@ -163,11 +162,6 @@ export const PanelShell = () => {
                     </div>
                   </div>
                 </div>
-                {showRoleLabel && (
-                  <div className="mt-3 inline-flex rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-medium leading-none text-white/65">
-                    {roleLabel}
-                  </div>
-                )}
               </div>
             </div>
 

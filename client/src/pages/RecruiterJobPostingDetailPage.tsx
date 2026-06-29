@@ -13,6 +13,8 @@ import {
 import type { Skill } from '../lib/skills-api';
 import { authErrorAtom, authLoadingAtom } from '../store/auth';
 import { SkillAutocomplete } from '../components/SkillAutocomplete';
+import { ConfirmDialog } from '../components/ConfirmDialog';
+import { formatDateTime } from '../lib/date-format';
 
 type SelectedSkill = {
   id: number;
@@ -49,6 +51,8 @@ export const RecruiterJobPostingDetailPage = () => {
   const [skillMessage, setSkillMessage] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [skillResetKey, setSkillResetKey] = useState(0);
+  const [confirmPublishOpen, setConfirmPublishOpen] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   const postingId = Number(id);
 
@@ -222,11 +226,6 @@ export const RecruiterJobPostingDetailPage = () => {
       return;
     }
 
-    const confirmed = window.confirm('Delete this job posting? This cannot be undone.');
-    if (!confirmed) {
-      return;
-    }
-
     setSaving(true);
     setError(null);
     setActionMessage(null);
@@ -272,6 +271,33 @@ export const RecruiterJobPostingDetailPage = () => {
 
   return (
     <div className="grid gap-8">
+      <ConfirmDialog
+        open={confirmPublishOpen}
+        title="Publish for approval?"
+        description="This will submit the posting for admin review. Make sure the role details, expiry date, and required skills are ready before continuing."
+        confirmLabel="Publish for approval"
+        loading={saving}
+        onCancel={() => setConfirmPublishOpen(false)}
+        onConfirm={() => {
+          setConfirmPublishOpen(false);
+          void savePosting('PendingApproval');
+        }}
+      />
+
+      <ConfirmDialog
+        open={confirmDeleteOpen}
+        title="Delete job posting?"
+        description="This will permanently delete this job posting. This action cannot be undone."
+        confirmLabel="Delete"
+        confirmTone="danger"
+        loading={saving}
+        onCancel={() => setConfirmDeleteOpen(false)}
+        onConfirm={() => {
+          setConfirmDeleteOpen(false);
+          void handleDelete();
+        }}
+      />
+
       <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
@@ -289,26 +315,25 @@ export const RecruiterJobPostingDetailPage = () => {
               Back to postings
             </Link>
             <Button
+              className="rounded-lg"
               variant="secondary"
               type="button"
-              onPress={() => void savePosting('PendingApproval')}
+              onPress={() => setConfirmPublishOpen(true)}
               isDisabled={isBusy}
             >
               Publish for approval
             </Button>
             {detail?.status !== 'Active' && (
               <Button
+                className="rounded-lg"
                 variant="outline"
                 type="button"
-                onPress={() => void handleDelete()}
+                onPress={() => setConfirmDeleteOpen(true)}
                 isDisabled={isBusy}
               >
                 Delete
               </Button>
             )}
-            <Button type="button" variant="primary" onPress={() => void loadDetail()} isDisabled={isBusy}>
-              Refresh
-            </Button>
           </div>
         </div>
 
@@ -324,7 +349,7 @@ export const RecruiterJobPostingDetailPage = () => {
           <div className="rounded-lg border border-divider bg-content2 p-4">
             <span className="block text-sm text-foreground-500">Updated</span>
             <strong className="mt-2 block text-sm font-medium text-foreground">
-              {detail?.updatedAt ? new Date(detail.updatedAt).toLocaleString() : 'Unknown'}
+              {formatDateTime(detail?.updatedAt)}
             </strong>
           </div>
         </div>
@@ -405,7 +430,7 @@ export const RecruiterJobPostingDetailPage = () => {
                   onChange={(event) => setSelectedYears(event.target.value)}
                 />
 
-                <Button type="button" variant="secondary" onPress={addSkill}>
+                <Button className="rounded-lg" type="button" variant="secondary" onPress={addSkill}>
                   Add
                 </Button>
               </div>
@@ -425,6 +450,7 @@ export const RecruiterJobPostingDetailPage = () => {
                         {skill.name} · {skill.yearsOfExperience} years
                       </span>
                       <Button
+                        className="rounded-lg"
                         variant="outline"
                         size="sm"
                         type="button"
@@ -463,6 +489,7 @@ export const RecruiterJobPostingDetailPage = () => {
             )}
 
             <Button
+              className="rounded-lg"
               type="submit"
               variant="primary"
               isDisabled={saving}
@@ -507,7 +534,7 @@ export const RecruiterJobPostingDetailPage = () => {
                   <div key={entry.id} className="rounded-lg border border-divider bg-content2 p-4 text-sm text-foreground">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <strong>{entry.status}</strong>
-                      <span className="text-foreground-500">{new Date(entry.createdAt).toLocaleString()}</span>
+                      <span className="text-foreground-500">{formatDateTime(entry.createdAt)}</span>
                     </div>
                     {entry.reason && <p className="mt-2 leading-6 text-foreground-500">{entry.reason}</p>}
                   </div>

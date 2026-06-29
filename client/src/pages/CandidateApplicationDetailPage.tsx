@@ -1,13 +1,25 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { Button, Chip } from '@heroui/react';
-import { getMyJobApplication, type JobApplicationDetail } from '../lib/job-applications-api';
+import { Button, Chip, Input, TextArea, toast } from '@heroui/react';
+import { createApplicationReview, getMyJobApplication, type JobApplicationDetail } from '../lib/job-applications-api';
+import { formatDateTime } from '../lib/date-format';
+
+const formatStatus = (status?: string) => {
+  if (!status) {
+    return 'Unknown';
+  }
+
+  return status === 'UnderReview' ? 'Under Review' : status;
+};
 
 export const CandidateApplicationDetailPage = () => {
   const { id } = useParams();
   const [detail, setDetail] = useState<JobApplicationDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [rating, setRating] = useState('5');
+  const [comment, setComment] = useState('');
+  const [reviewing, setReviewing] = useState(false);
 
   const applicationId = Number(id);
 
@@ -35,6 +47,47 @@ export const CandidateApplicationDetailPage = () => {
   useEffect(() => {
     void loadDetail();
   }, [applicationId]);
+
+  const handleReviewSubmit = async () => {
+    const numericRating = Number(rating);
+    const trimmedComment = comment.trim();
+
+    if (!Number.isInteger(numericRating) || numericRating < 1 || numericRating > 5) {
+      toast.danger('Invalid rating', {
+        description: 'Rating must be a number from 1 to 5.',
+      });
+      return;
+    }
+
+    if (trimmedComment.length < 3) {
+      toast.danger('Comment required', {
+        description: 'Add a short comment before submitting your review.',
+      });
+      return;
+    }
+
+    setReviewing(true);
+
+    try {
+      await createApplicationReview(applicationId, {
+        rating: numericRating,
+        comment: trimmedComment,
+      });
+      toast.success('Company review submitted', {
+        description: 'Thanks for sharing feedback about this company.',
+      });
+      setComment('');
+      setRating('5');
+    } catch (reviewError) {
+      const message = reviewError instanceof Error ? reviewError.message : 'Unable to submit company review.';
+      const isDuplicate = /already|duplicate|conflict/i.test(message);
+      toast.danger(isDuplicate ? 'Review already submitted' : 'Unable to submit review', {
+        description: isDuplicate ? 'This application has already been reviewed.' : message,
+      });
+    } finally {
+      setReviewing(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -85,18 +138,18 @@ export const CandidateApplicationDetailPage = () => {
         <div className="mt-6 grid gap-4 md:grid-cols-3">
           <div className="rounded-lg border border-divider bg-content2 p-4">
             <span className="block text-sm text-foreground-500">Status</span>
-            <strong className="mt-2 block text-sm font-medium text-foreground">{detail?.status || 'Unknown'}</strong>
+            <strong className="mt-2 block text-sm font-medium text-foreground">{formatStatus(detail?.status)}</strong>
           </div>
           <div className="rounded-lg border border-divider bg-content2 p-4">
             <span className="block text-sm text-foreground-500">Applied</span>
             <strong className="mt-2 block text-sm font-medium text-foreground">
-              {detail?.createdAt ? new Date(detail.createdAt).toLocaleString() : 'Unknown'}
+              {formatDateTime(detail?.createdAt)}
             </strong>
           </div>
           <div className="rounded-lg border border-divider bg-content2 p-4">
             <span className="block text-sm text-foreground-500">Updated</span>
             <strong className="mt-2 block text-sm font-medium text-foreground">
-              {detail?.updatedAt ? new Date(detail.updatedAt).toLocaleString() : 'Unknown'}
+              {formatDateTime(detail?.updatedAt)}
             </strong>
           </div>
         </div>
@@ -113,7 +166,13 @@ export const CandidateApplicationDetailPage = () => {
               </div>
               <div>
                 <span className="block text-foreground-500">Company</span>
-                <span className="text-foreground">{detail?.jobPosting.company.name || 'Unknown company'}</span>
+                {detail?.jobPosting.company.id ? (
+                  <Link className="text-foreground underline-offset-4 hover:underline" to={`/companies/${detail.jobPosting.company.id}`}>
+                    {detail.jobPosting.company.name || 'Unknown company'}
+                  </Link>
+                ) : (
+                  <span className="text-foreground">{detail?.jobPosting.company.name || 'Unknown company'}</span>
+                )}
               </div>
               <div>
                 <span className="block text-foreground-500">Posting status</span>
@@ -177,6 +236,43 @@ export const CandidateApplicationDetailPage = () => {
                   </div>
                 ))
               )}
+            </div>
+          </section>
+
+          <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
+            <h3 className="text-2xl text-foreground">Review company</h3>
+            <p className="mt-2 text-sm leading-6 text-foreground-500">
+              Share public feedback about {detail?.jobPosting.company.name || 'this company'} based on this application.
+            </p>
+            <div className="mt-5 grid gap-4">
+              <label className="grid gap-2 text-sm font-medium text-foreground">
+                Rating
+                <Input
+                  max={5}
+                  min={1}
+                  type="number"
+                  value={rating}
+                  onChange={(event) => setRating(event.target.value)}
+                />
+              </label>
+              <label className="grid gap-2 text-sm font-medium text-foreground">
+                Comment
+                <TextArea
+                  minLength={3}
+                  value={comment}
+                  onChange={(event) => setComment(event.target.value)}
+                  placeholder="What should other candidates know?"
+                />
+              </label>
+              <Button
+                className="w-fit rounded-lg"
+                type="button"
+                variant="primary"
+                isDisabled={reviewing}
+                onPress={() => void handleReviewSubmit()}
+              >
+                {reviewing ? 'Submitting...' : 'Submit review'}
+              </Button>
             </div>
           </section>
 
