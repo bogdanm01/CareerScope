@@ -46,6 +46,11 @@ export type ApplicationReviewTarget = {
   companyId: number;
 };
 
+export type JobApplicationCvDownloadTarget = {
+  candidateName: string;
+  cvUrl: string | null;
+};
+
 export type JobApplicationListItem = JobApplication & {
   user: {
     fullName: string;
@@ -155,6 +160,37 @@ export class JobApplicationRepository extends GenericRepository<JobApplication, 
       .from(jobApplication)
       .innerJoin(jobPosting, eq(jobApplication.jobPostingId, jobPosting.id))
       .innerJoin(company, eq(jobPosting.companyId, company.id))
+      .where(and(...filters))
+      .limit(1);
+
+    return record ?? null;
+  }
+
+  async findCvDownloadTarget(
+    jobApplicationId: number,
+    scope: FindJobApplicationReviewTargetScope = {},
+  ): Promise<JobApplicationCvDownloadTarget | null> {
+    const filters: SQL[] = [
+      eq(jobApplication.id, jobApplicationId),
+      eq(jobApplication.isDeleted, false),
+      eq(jobPosting.isDeleted, false),
+      eq(company.isDeleted, false),
+      eq(user.isDeleted, false),
+    ];
+
+    if (scope.companyId !== undefined) {
+      filters.push(eq(jobPosting.companyId, scope.companyId));
+    }
+
+    const [record] = await this.db
+      .select({
+        candidateName: sql<string>`concat(${user.firstName}, ' ', ${user.lastName})`,
+        cvUrl: user.cvUrl,
+      })
+      .from(jobApplication)
+      .innerJoin(jobPosting, eq(jobApplication.jobPostingId, jobPosting.id))
+      .innerJoin(company, eq(jobPosting.companyId, company.id))
+      .innerJoin(user, eq(jobApplication.userId, user.id))
       .where(and(...filters))
       .limit(1);
 

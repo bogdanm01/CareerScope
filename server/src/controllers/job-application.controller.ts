@@ -69,6 +69,11 @@ export class JobApplicationController {
     res.status(201).json(successResponse<ApplicationReview>(result.data, 'Application review created'));
   }
 
+  async downloadCandidateCv(req: Request, res: Response) {
+    const result = await this.jobApplicationService.getJobApplicationCandidateCv(req.params.id, req.user);
+    res.download(result.filePath, result.fileName);
+  }
+
   /**
    * Returns job applications for the authenticated candidate.
    *

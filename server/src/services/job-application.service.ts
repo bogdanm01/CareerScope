@@ -25,6 +25,12 @@ import { ERROR_CODE } from '../lib/error-codes.ts';
 import { PaginatedResult, SingleResult } from '../lib/api-response.ts';
 import { AuthenticatedUser } from '../data/util/utils.ts';
 import { ApplicationReview } from '../data/schema/application-review.schema.ts';
+import { resolveCvFilePath } from '../middleware/cv-upload.middleware.ts';
+
+type JobApplicationCvDownload = {
+  filePath: string;
+  fileName: string;
+};
 
 const DUPLICATE_JOB_APPLICATION_CONSTRAINT = 'user_id_job_posting_id_unq';
 const VALID_REVIEW_TRANSITIONS: Partial<Record<string, string[]>> = {
@@ -252,6 +258,36 @@ export class JobApplicationService {
     };
   }
 
+  async getJobApplicationCandidateCv(
+    jobApplicationId: unknown,
+    user: AuthenticatedUser,
+  ): Promise<JobApplicationCvDownload> {
+    const idValidationResult = IntegerIdSchema.safeParse({ id: jobApplicationId });
+
+    if (!idValidationResult.success) {
+      throw new ZodValidationError(idValidationResult.error);
+    }
+
+    const validId = idValidationResult.data.id;
+    const companyId = this.getReviewScopeCompanyId(user);
+    const target = await this.jobApplicationRepository.findCvDownloadTarget(validId, { companyId });
+
+    if (!target) {
+      throw new NotFoundError(`No job application found with provided id.`);
+    }
+
+    const filePath = resolveCvFilePath(target.cvUrl);
+
+    if (!filePath) {
+      throw new NotFoundError('Candidate CV not found.');
+    }
+
+    return {
+      filePath,
+      fileName: `${this.toSafeFileName(target.candidateName || 'candidate')}-cv.pdf`,
+    };
+  }
+
   private getReviewScopeCompanyId(user: AuthenticatedUser): number | undefined {
     if (user.role === USER_ROLE.ADMIN) {
       return undefined;
@@ -278,6 +314,16 @@ export class JobApplicationService {
     if (!allowedNextStatuses.includes(payload.status)) {
       throw new BadRequestError(`Invalid job application status transition from ${currentStatus} to ${payload.status}.`);
     }
+  }
+
+  private toSafeFileName(value: string): string {
+    const sanitized = value
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+
+    return sanitized || 'candidate';
   }
 
   async getMyJobApplications(

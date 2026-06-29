@@ -16,6 +16,12 @@ export const getJobApplicationRouter = () => {
   );
 
   router.get(
+    '/:id/cv',
+    authGuard([USER_ROLE.RECRUITER, USER_ROLE.ADMIN]),
+    jobApplicationController.downloadCandidateCv.bind(jobApplicationController),
+  );
+
+  router.get(
     '/:id',
     authGuard([USER_ROLE.RECRUITER, USER_ROLE.ADMIN]),
     jobApplicationController.getJobApplication.bind(jobApplicationController),
