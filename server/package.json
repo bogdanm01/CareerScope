@@ -25,7 +25,7 @@
   },
   "dependencies": {
     "@better-auth/redis-storage": "^1.6.9",
-    "better-auth": "^1.6.9",
+    "better-auth": "^1.6.11",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
