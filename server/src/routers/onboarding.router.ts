@@ -4,12 +4,13 @@ import { TOKENS } from '../config/dependency-tokens.ts';
 import { OnboardingController } from '../controllers/onboarding.controller.ts';
 import { authGuard } from '../middleware/auth-guard.ts';
 import { USER_ROLE } from '../data/util/constants.ts';
+import { companyLogoUploadMiddleware } from '../middleware/company-logo-upload.middleware.ts';
 
 export const getOnboardingRouter = () => {
   const router = express.Router();
   const onboardingController = container.resolve<OnboardingController>(TOKENS.onboardingController);
 
-  router.post('/recruiter', onboardingController.registerRecruiter.bind(onboardingController));
+  router.post('/recruiter', companyLogoUploadMiddleware, onboardingController.registerRecruiter.bind(onboardingController));
 
   router.get(
     '/recruiter/pending',

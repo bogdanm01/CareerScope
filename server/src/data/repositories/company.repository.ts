@@ -4,11 +4,12 @@ import { inject, injectable } from 'tsyringe';
 import { TOKENS } from '../../config/dependency-tokens.ts';
 import { DbClient } from '../../config/db-client.ts';
 import { company } from '../schema/company.schema.ts';
-import { and, count, desc, eq, sql } from 'drizzle-orm';
+import { and, asc, count, desc, eq, ilike, or, SQL, sql } from 'drizzle-orm';
 import { user } from '../schema/auth.schema.ts';
 import { COMPANY_APPROVAL_STATUS, ONBOARDING_STATUS, USER_ROLE } from '../util/constants.ts';
 import { applicationReview } from '../schema/application-review.schema.ts';
 import { jobApplication } from '../schema/job-application.schema.ts';
+import type { AdminCompanyListRequest } from '../../lib/zod/admin-company.zod-schema.ts';
 
 export type PendingRecruiterOnboardingRequest = {
   company: {
@@ -77,6 +78,34 @@ type FindCompanyReviewsPagination = {
   pageSize?: number;
 };
 
+type FindAdminCompaniesFilters = Pick<
+  AdminCompanyListRequest,
+  'search' | 'approvalStatus' | 'isApproved' | 'isDeleted' | 'sort' | 'orderBy'
+>;
+
+type FindAdminCompaniesPagination = {
+  page?: number;
+  pageSize?: number;
+};
+
+export type AdminCompanyListItem = {
+  id: number;
+  name: string;
+  taxId: string;
+  shortDescription: string | null;
+  description: string | null;
+  foundingYear: number | null;
+  numberOfEmployees: number | null;
+  address: string;
+  logoUrl: string | null;
+  websiteUrl: string | null;
+  isApproved: boolean;
+  approvalStatus: string;
+  approvalRejectionReason: string | null;
+  approvedAt: Date | null;
+  isDeleted: boolean;
+};
+
 export type CompanyReviewListItem = {
   id: number;
   rating: number;
@@ -108,6 +137,80 @@ export class CompanyRepository extends GenericRepository<Company, CompanyInsert,
       .limit(1);
 
     return record ?? null;
+  }
+
+  async findAdminCompanies(
+    filters: FindAdminCompaniesFilters,
+    pagination: FindAdminCompaniesPagination = {},
+  ): Promise<{ data: AdminCompanyListItem[]; totalItems: number }> {
+    const { page = 1, pageSize = 50 } = pagination;
+    const { search, approvalStatus, isApproved, isDeleted, orderBy = 'id', sort = 'desc' } = filters;
+    const offset = (page - 1) * pageSize;
+    const conditions: SQL[] = [];
+
+    if (typeof isDeleted === 'boolean') {
+      conditions.push(eq(company.isDeleted, isDeleted));
+    }
+
+    if (typeof isApproved === 'boolean') {
+      conditions.push(eq(company.isApproved, isApproved));
+    }
+
+    if (approvalStatus) {
+      conditions.push(eq(company.approvalStatus, approvalStatus));
+    }
+
+    if (search) {
+      const pattern = `%${search}%`;
+      conditions.push(or(
+        ilike(company.name, pattern),
+        ilike(company.taxId, pattern),
+        ilike(company.shortDescription, pattern),
+      ) as SQL);
+    }
+
+    let recordsQuery = this.db
+      .select({
+        id: company.id,
+        name: company.name,
+        taxId: company.taxId,
+        shortDescription: company.shortDescription,
+        description: company.description,
+        foundingYear: company.foundingYear,
+        numberOfEmployees: company.numberOfEmployees,
+        address: company.address,
+        logoUrl: company.logoUrl,
+        websiteUrl: company.websiteUrl,
+        isApproved: company.isApproved,
+        approvalStatus: company.approvalStatus,
+        approvalRejectionReason: company.approvalRejectionReason,
+        approvedAt: company.approvedAt,
+        isDeleted: company.isDeleted,
+      })
+      .from(company)
+      .$dynamic();
+
+    let countQuery = this.db.select({ totalItems: count() }).from(company).$dynamic();
+
+    if (conditions.length > 0) {
+      recordsQuery = recordsQuery.where(and(...conditions));
+      countQuery = countQuery.where(and(...conditions));
+    }
+
+    if (sort === 'asc') {
+      recordsQuery = recordsQuery.orderBy(asc(company[orderBy]));
+    } else {
+      recordsQuery = recordsQuery.orderBy(desc(company[orderBy]));
+    }
+
+    recordsQuery = recordsQuery.limit(pageSize).offset(offset);
+
+    const [records, [countResult]] = await Promise.all([recordsQuery, countQuery]);
+
+    return {
+      data: records,
+      totalItems: countResult?.totalItems ?? 0,
+    };
   }
 
   async findCompanyReviews(

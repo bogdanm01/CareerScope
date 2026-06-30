@@ -33,6 +33,7 @@ const configureMiddleware = (app: express.Application): void => {
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
   app.use('/uploads/profile', express.static(path.resolve(process.cwd(), 'uploads', 'profile')));
+  app.use('/uploads/company-logos', express.static(path.resolve(process.cwd(), 'uploads', 'company-logos')));
   app.use('/api', getApiRouter());
   app.use(globalErrorHandler);
 };

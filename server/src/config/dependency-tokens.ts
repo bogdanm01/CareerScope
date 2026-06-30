@@ -20,6 +20,9 @@ export const TOKENS = {
   companyService: Symbol('CompanyService'),
   companyRepository: Symbol('CompanyRepository'),
 
+  adminController: Symbol('AdminController'),
+  adminService: Symbol('AdminService'),
+
   meController: Symbol('MeController'),
   meService: Symbol('MeService'),
 

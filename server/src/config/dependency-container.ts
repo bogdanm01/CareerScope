@@ -20,6 +20,8 @@ import { OnboardingController } from '../controllers/onboarding.controller.ts';
 import { OnboardingService } from '../services/onboarding.service.ts';
 import { SkillController } from '../controllers/skill.controller.ts';
 import { SkillService } from '../services/skill.service.ts';
+import { AdminController } from '../controllers/admin.controller.ts';
+import { AdminService } from '../services/admin.service.ts';
 
 export const registerDependencies = async () => {
   const dbClient = getDbClient();
@@ -45,6 +47,9 @@ export const registerDependencies = async () => {
   container.register<CompanyController>(TOKENS.companyController, { useClass: CompanyController });
   container.register<CompanyService>(TOKENS.companyService, { useClass: CompanyService });
   container.register<CompanyRepository>(TOKENS.companyRepository, { useClass: CompanyRepository });
+
+  container.register<AdminController>(TOKENS.adminController, { useClass: AdminController });
+  container.register<AdminService>(TOKENS.adminService, { useClass: AdminService });
 
   container.register<MeController>(TOKENS.meController, { useClass: MeController });
   container.register<MeService>(TOKENS.meService, { useClass: MeService });
