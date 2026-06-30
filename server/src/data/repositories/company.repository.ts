@@ -124,6 +124,26 @@ export class CompanyRepository extends GenericRepository<Company, CompanyInsert,
     super(db, company);
   }
 
+  private getAdminCompanySelectFields() {
+    return {
+      id: company.id,
+      name: company.name,
+      taxId: company.taxId,
+      shortDescription: company.shortDescription,
+      description: company.description,
+      foundingYear: company.foundingYear,
+      numberOfEmployees: company.numberOfEmployees,
+      address: company.address,
+      logoUrl: company.logoUrl,
+      websiteUrl: company.websiteUrl,
+      isApproved: company.isApproved,
+      approvalStatus: company.approvalStatus,
+      approvalRejectionReason: company.approvalRejectionReason,
+      approvedAt: company.approvedAt,
+      isDeleted: company.isDeleted,
+    };
+  }
+
   async findByTaxId(taxId: string) {
     const [record] = await this.db.select({ id: company.id }).from(company).where(eq(company.taxId, taxId)).limit(1);
     return record ?? null;
@@ -170,23 +190,7 @@ export class CompanyRepository extends GenericRepository<Company, CompanyInsert,
     }
 
     let recordsQuery = this.db
-      .select({
-        id: company.id,
-        name: company.name,
-        taxId: company.taxId,
-        shortDescription: company.shortDescription,
-        description: company.description,
-        foundingYear: company.foundingYear,
-        numberOfEmployees: company.numberOfEmployees,
-        address: company.address,
-        logoUrl: company.logoUrl,
-        websiteUrl: company.websiteUrl,
-        isApproved: company.isApproved,
-        approvalStatus: company.approvalStatus,
-        approvalRejectionReason: company.approvalRejectionReason,
-        approvedAt: company.approvedAt,
-        isDeleted: company.isDeleted,
-      })
+      .select(this.getAdminCompanySelectFields())
       .from(company)
       .$dynamic();
 
@@ -211,6 +215,16 @@ export class CompanyRepository extends GenericRepository<Company, CompanyInsert,
       data: records,
       totalItems: countResult?.totalItems ?? 0,
     };
+  }
+
+  async findAdminCompanyById(companyId: number): Promise<AdminCompanyListItem | null> {
+    const [record] = await this.db
+      .select(this.getAdminCompanySelectFields())
+      .from(company)
+      .where(eq(company.id, companyId))
+      .limit(1);
+
+    return record ?? null;
   }
 
   async findCompanyReviews(

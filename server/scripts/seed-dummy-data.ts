@@ -262,6 +262,16 @@ const users = [
     companyTaxId: 'RS-639027411',
   },
   {
+    key: 'recruiterBluePeak',
+    name: 'Ivana Recruiter',
+    email: 'ivana.recruiter+seed@careerscope.local',
+    firstName: 'Ivana',
+    lastName: 'Recruiter',
+    role: USER_ROLE.RECRUITER,
+    dateOfBirth: '1990-08-18',
+    companyTaxId: 'RS-510936284',
+  },
+  {
     key: 'recruiterDanube',
     name: 'Luka Recruiter',
     email: 'luka.recruiter+seed@careerscope.local',
@@ -1007,11 +1017,18 @@ const seedCompanies = async () => {
 
 const seedUsers = async () => {
   const companiesByTaxId = await getCompaniesByTaxId();
+  const companyApprovalStatusByTaxId = new Map(companies.map((item) => [item.taxId, item.approvalStatus]));
   const userByKey = await getSeedUsersByKey();
 
   for (const item of users) {
     const companyId =
       'companyTaxId' in item ? requireMapValue(companiesByTaxId, item.companyTaxId, 'company tax id') : null;
+    const onboardingStatus =
+      item.role === USER_ROLE.RECRUITER && 'companyTaxId' in item
+        ? companyApprovalStatusByTaxId.get(item.companyTaxId) === COMPANY_APPROVAL_STATUS.APPROVED
+          ? ONBOARDING_STATUS.COMPLETED
+          : ONBOARDING_STATUS.COMPANY_PENDING_APPROVAL
+        : ONBOARDING_STATUS.COMPLETED;
 
     await db
       .update(user)
@@ -1025,7 +1042,7 @@ const seedUsers = async () => {
         role: item.role,
         dateOfBirth: item.dateOfBirth,
         isDeleted: false,
-        onboardingStatus: ONBOARDING_STATUS.COMPLETED,
+        onboardingStatus,
         updatedAt: now(),
       })
       .where(inArray(user.id, [requireMapValue(userByKey, item.key, 'seed user key')]));
