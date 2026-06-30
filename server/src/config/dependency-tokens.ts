@@ -23,6 +23,10 @@ export const TOKENS = {
   adminController: Symbol('AdminController'),
   adminService: Symbol('AdminService'),
 
+  analyticsController: Symbol('AnalyticsController'),
+  analyticsService: Symbol('AnalyticsService'),
+  analyticsRepository: Symbol('AnalyticsRepository'),
+
   meController: Symbol('MeController'),
   meService: Symbol('MeService'),
 
