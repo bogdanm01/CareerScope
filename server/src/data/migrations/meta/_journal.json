@@ -43,6 +43,13 @@
       "when": 1782525600000,
       "tag": "0005_add_skill_yoe_requirement",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1782894553307,
+      "tag": "0006_magenta_blockbuster",
+      "breakpoints": true
     }
   ]
 }

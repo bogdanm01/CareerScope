@@ -1,7 +1,11 @@
 import { boolean, index, integer, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
 import { enumCheckConstraint, timestamps } from '../util/utils.ts';
 import { company } from './company.schema.ts';
-import { JOB_POSTING_STATUS } from '../util/constants.ts';
+import {
+  JOB_POSTING_EMPLOYMENT_TYPE,
+  JOB_POSTING_STATUS,
+  JOB_POSTING_WORK_LOCATION,
+} from '../util/constants.ts';
 import { user } from './auth.schema.ts';
 
 export const jobPosting = pgTable(
@@ -14,6 +18,9 @@ export const jobPosting = pgTable(
     title: text('title'),
     shortDescription: text('short_description'),
     description: text('description'),
+    workLocation: text('work_location'),
+    employmentType: text('employment_type'),
+    salaryRange: text('salary_range'),
     status: text('status').notNull(),
     expiresAt: timestamp('expires_at', { withTimezone: true }),
     createdBy: text('created_by')
@@ -24,6 +31,8 @@ export const jobPosting = pgTable(
   },
   (table) => [
     enumCheckConstraint('status_check', table.status, JOB_POSTING_STATUS),
+    enumCheckConstraint('work_location_check', table.workLocation, JOB_POSTING_WORK_LOCATION),
+    enumCheckConstraint('employment_type_check', table.employmentType, JOB_POSTING_EMPLOYMENT_TYPE),
     index('job_posting_status_created_at_idx').on(table.status, table.createdAt),
     index('job_posting_status_expires_at_idx').on(table.status, table.expiresAt),
     index('job_posting_status_company_id_idx').on(table.status, table.companyId),

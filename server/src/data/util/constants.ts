@@ -14,6 +14,21 @@ export const JOB_POSTING_STATUS = {
   EXPIRED: 'Expired',
 } as const;
 
+export const JOB_POSTING_WORK_LOCATION = {
+  REMOTE: 'Remote',
+  ON_SITE: 'OnSite',
+  HYBRID: 'Hybrid',
+} as const;
+
+export const JOB_POSTING_EMPLOYMENT_TYPE = {
+  FULL_TIME: 'FullTime',
+  PART_TIME: 'PartTime',
+  CONTRACT: 'Contract',
+  INTERNSHIP: 'Internship',
+  TEMPORARY: 'Temporary',
+  OTHER: 'Other',
+} as const;
+
 export const JOB_APPLICATION_STATUS = {
   SUBMITTED: 'Submitted',
   UNDER_REVIEW: 'UnderReview',
@@ -38,6 +53,9 @@ export const COMPANY_APPROVAL_STATUS = {
 } as const;
 
 export type UserRole = (typeof USER_ROLE)[keyof typeof USER_ROLE];
+export type JobPostingWorkLocation = (typeof JOB_POSTING_WORK_LOCATION)[keyof typeof JOB_POSTING_WORK_LOCATION];
+export type JobPostingEmploymentType =
+  (typeof JOB_POSTING_EMPLOYMENT_TYPE)[keyof typeof JOB_POSTING_EMPLOYMENT_TYPE];
 export type JobApplicationStatus = (typeof JOB_APPLICATION_STATUS)[keyof typeof JOB_APPLICATION_STATUS];
 export type OnboardingStatus = (typeof ONBOARDING_STATUS)[keyof typeof ONBOARDING_STATUS];
 export type CompanyApprovalStatus = (typeof COMPANY_APPROVAL_STATUS)[keyof typeof COMPANY_APPROVAL_STATUS];

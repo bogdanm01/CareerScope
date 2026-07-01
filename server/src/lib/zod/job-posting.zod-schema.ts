@@ -1,5 +1,9 @@
 import { z } from 'zod';
-import { JOB_POSTING_STATUS } from '../../data/util/constants.ts';
+import {
+  JOB_POSTING_EMPLOYMENT_TYPE,
+  JOB_POSTING_STATUS,
+  JOB_POSTING_WORK_LOCATION,
+} from '../../data/util/constants.ts';
 
 const MIN_EXPIRATION_DAYS = 7;
 const MAX_EXPIRATION_DAYS = 90;
@@ -24,6 +28,9 @@ const JobPostingSkillSchema = z.object({
   skillId: z.number().int().positive(),
   yoe: z.number().int().nonnegative().optional(),
 });
+
+const JobPostingWorkLocationSchema = z.enum(Object.values(JOB_POSTING_WORK_LOCATION));
+const JobPostingEmploymentTypeSchema = z.enum(Object.values(JOB_POSTING_EMPLOYMENT_TYPE));
 
 export const JobPostingListRequestSchema = z.object({
   companyId: z.coerce.number().int().positive().optional(),
@@ -50,6 +57,9 @@ const JobPostingUpdateBaseRequestSchema = z.object({
   title: z.string().trim().min(3).optional(),
   shortDescription: z.string().trim().max(80).optional(),
   description: z.string().trim().min(60).optional(), // TODO: Decide min length (markdown)
+  workLocation: JobPostingWorkLocationSchema.optional(),
+  employmentType: JobPostingEmploymentTypeSchema.optional(),
+  salaryRange: z.string().trim().max(80).optional(),
   expiresAt: z.coerce.date().optional(),
   skills: z.array(JobPostingSkillSchema).optional(),
 });
@@ -134,6 +144,9 @@ export const JobPostingInsertRequestSchema = z
       error: 'Short description cannot be more than 80 characters long.',
     }).optional(),
     description: z.string().trim().optional(),
+    workLocation: JobPostingWorkLocationSchema.optional(),
+    employmentType: JobPostingEmploymentTypeSchema.optional(),
+    salaryRange: z.string().trim().max(80).optional(),
     status: z.enum(CREATE_JOB_POSTING_STATUS, {
       error: 'Invalid status. New job postings can only be created as Draft or PendingApproval.',
     }),

@@ -95,6 +95,9 @@ export class JobPostingService {
       title: newJobPosting.title,
       shortDescription: newJobPosting.shortDescription,
       description: newJobPosting.description,
+      workLocation: newJobPosting.workLocation,
+      employmentType: newJobPosting.employmentType,
+      salaryRange: newJobPosting.salaryRange,
       status: newJobPosting.status,
       createdBy: user.id,
       expiresAt: newJobPosting.expiresAt ? toEndOfDayUtc(newJobPosting.expiresAt) : undefined,
@@ -313,6 +316,9 @@ export class JobPostingService {
         title: updatePayload.title,
         shortDescription: updatePayload.shortDescription,
         description: updatePayload.description,
+        workLocation: updatePayload.workLocation,
+        employmentType: updatePayload.employmentType,
+        salaryRange: updatePayload.salaryRange,
         expiresAt: updatePayload.expiresAt ? toEndOfDayUtc(updatePayload.expiresAt) : undefined,
         status: nextStatus,
         skills: updatePayload.skills,
@@ -398,6 +404,18 @@ export class JobPostingService {
     }
 
     if (payload.shortDescription !== undefined && payload.shortDescription !== existingJobPosting.shortDescription) {
+      return true;
+    }
+
+    if (payload.workLocation !== undefined && payload.workLocation !== existingJobPosting.workLocation) {
+      return true;
+    }
+
+    if (payload.employmentType !== undefined && payload.employmentType !== existingJobPosting.employmentType) {
+      return true;
+    }
+
+    if (payload.salaryRange !== undefined && payload.salaryRange !== existingJobPosting.salaryRange) {
       return true;
     }
 

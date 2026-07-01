@@ -710,6 +710,21 @@ Support research, wireframing, prototyping, and design-system work for clinic op
   },
 ] as const;
 
+const seededJobLogistics = [
+  { workLocation: 'Hybrid', employmentType: 'FullTime', salaryRange: '$120k - $160k' },
+  { workLocation: 'Remote', employmentType: 'FullTime', salaryRange: '$110k - $150k' },
+  { workLocation: 'Hybrid', employmentType: 'FullTime', salaryRange: '$85k - $115k' },
+  { workLocation: 'Remote', employmentType: 'Contract', salaryRange: '$90k - $130k' },
+  { workLocation: 'Hybrid', employmentType: 'FullTime', salaryRange: '$100k - $140k' },
+  { workLocation: 'Remote', employmentType: 'FullTime', salaryRange: '$115k - $155k' },
+  { workLocation: 'OnSite', employmentType: 'FullTime', salaryRange: '$70k - $95k' },
+  { workLocation: 'Hybrid', employmentType: 'FullTime', salaryRange: '$115k - $150k' },
+  { workLocation: 'Remote', employmentType: 'FullTime', salaryRange: '$120k - $165k' },
+  { workLocation: 'Hybrid', employmentType: 'FullTime', salaryRange: '$75k - $105k' },
+  { workLocation: 'Remote', employmentType: 'FullTime', salaryRange: '$115k - $155k' },
+  { workLocation: 'Hybrid', employmentType: 'Internship', salaryRange: '$45k - $60k' },
+] as const;
+
 const applications = [
   {
     userKey: 'candidatePetar',
@@ -1143,6 +1158,7 @@ const seedJobs = async (userByKey: Map<UserKey, string>) => {
 
   for (const [jobIndex, item] of jobs.entries()) {
     const companyId = requireMapValue(companiesByTaxId, item.companyTaxId, 'company tax id');
+    const logistics = seededJobLogistics[jobIndex % seededJobLogistics.length];
     const createdAt = daysAgo(70 - jobIndex * 3);
     const [createdJob] = await db
       .insert(jobPosting)
@@ -1151,6 +1167,9 @@ const seedJobs = async (userByKey: Map<UserKey, string>) => {
         title: item.title,
         shortDescription: item.shortDescription,
         description: expandJobDescription(item.description),
+        workLocation: logistics.workLocation,
+        employmentType: logistics.employmentType,
+        salaryRange: logistics.salaryRange,
         status: item.status,
         expiresAt: item.expiresAt,
         createdBy: requireMapValue(userByKey, item.createdByUserKey, 'seed user key'),

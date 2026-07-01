@@ -278,7 +278,7 @@ export class AnalyticsRepository {
         .where(eq(jobPosting.isDeleted, false))
         .groupBy(skill.id, skill.name)
         .orderBy(desc(sql<number>`count(${jobPostingSkill.id})`))
-        .limit(6),
+        .limit(10),
       this.db
         .select({
           skill: skill.name,
@@ -290,21 +290,21 @@ export class AnalyticsRepository {
         .where(and(eq(user.isDeleted, false), eq(user.role, USER_ROLE.CANDIDATE)))
         .groupBy(skill.id, skill.name)
         .orderBy(desc(sql<number>`count(${userSkill.id})`))
-        .limit(6),
+        .limit(10),
     ]);
 
     return {
       stats: [
-        { key: 'companies', label: 'Total Companies', value: companyStats?.totalCompanies ?? 0 },
-        { key: 'pendingCompanies', label: 'Pending Companies', value: companyStats?.pendingCompanies ?? 0 },
-        { key: 'approvedCompanies', label: 'Approved Companies', value: companyStats?.approvedCompanies ?? 0 },
-        { key: 'postings', label: 'Total Job Postings', value: postingStats?.totalPostings ?? 0 },
-        { key: 'activePostings', label: 'Active Job Postings', value: postingStats?.activePostings ?? 0 },
-        { key: 'pendingPostings', label: 'Pending Job Postings', value: postingStats?.pendingPostings ?? 0 },
-        { key: 'applications', label: 'Total Job Applications', value: applicationStats?.totalApplications ?? 0 },
+        { key: 'companies', label: 'Companies', value: companyStats?.totalCompanies ?? 0 },
+        { key: 'pendingCompanies', label: 'Pending companies', value: companyStats?.pendingCompanies ?? 0 },
+        { key: 'approvedCompanies', label: 'Approved companies', value: companyStats?.approvedCompanies ?? 0 },
+        { key: 'postings', label: 'Postings', value: postingStats?.totalPostings ?? 0 },
+        { key: 'activePostings', label: 'Active postings', value: postingStats?.activePostings ?? 0 },
+        { key: 'pendingPostings', label: 'Pending postings', value: postingStats?.pendingPostings ?? 0 },
+        { key: 'applications', label: 'Applications', value: applicationStats?.totalApplications ?? 0 },
         {
           key: 'underReview',
-          label: 'Applications Under Review',
+          label: 'Under review',
           value: applicationStats?.underReviewApplications ?? 0,
         },
       ],

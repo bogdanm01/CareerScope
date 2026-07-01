@@ -116,6 +116,9 @@ type JobPostingUpdateWithSkillsPayload = {
   title?: string;
   shortDescription?: string;
   description?: string;
+  workLocation?: string;
+  employmentType?: string;
+  salaryRange?: string;
   expiresAt?: Date;
   status?: JobPostingStatus;
   skills?: JobPostingSkillUpdate[];
@@ -141,6 +144,9 @@ export class JobPostingRepository extends GenericRepository<JobPosting, JobPosti
       id: jobPosting.id,
       title: jobPosting.title,
       shortDescription: jobPosting.shortDescription,
+      workLocation: jobPosting.workLocation,
+      employmentType: jobPosting.employmentType,
+      salaryRange: jobPosting.salaryRange,
       status: jobPosting.status,
       expiresAt: jobPosting.expiresAt,
       createdBy: jobPosting.createdBy,
@@ -315,6 +321,9 @@ export class JobPostingRepository extends GenericRepository<JobPosting, JobPosti
       title: firstRow.title,
       shortDescription: firstRow.shortDescription,
       description: firstRow.description,
+      workLocation: firstRow.workLocation,
+      employmentType: firstRow.employmentType,
+      salaryRange: firstRow.salaryRange,
       status: firstRow.status,
       expiresAt: firstRow.expiresAt,
       createdBy: firstRow.createdBy,
@@ -371,6 +380,18 @@ export class JobPostingRepository extends GenericRepository<JobPosting, JobPosti
 
       if (payload.description !== undefined) {
         jobPostingUpdate.description = payload.description;
+      }
+
+      if (payload.workLocation !== undefined) {
+        jobPostingUpdate.workLocation = payload.workLocation;
+      }
+
+      if (payload.employmentType !== undefined) {
+        jobPostingUpdate.employmentType = payload.employmentType;
+      }
+
+      if (payload.salaryRange !== undefined) {
+        jobPostingUpdate.salaryRange = payload.salaryRange;
       }
 
       if (payload.expiresAt !== undefined) {
