@@ -58,6 +58,32 @@ export type RejectedRecruiterOnboardingRequest = {
   };
 };
 
+export type AdminCompanyListItem = {
+  id: number;
+  name: string;
+  taxId: string;
+  shortDescription: string | null;
+  description: string | null;
+  foundingYear: number | null;
+  numberOfEmployees: number | null;
+  address: string;
+  logoUrl: string | null;
+  websiteUrl: string | null;
+  isApproved: boolean;
+  approvalStatus: string;
+  approvalRejectionReason: string | null;
+  approvedAt: string | null;
+  isDeleted: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export const getAdminCompanies = async (query?: Record<string, string | number | boolean | null | undefined>) =>
+  apiGet<AdminCompanyListItem[]>('/api/admin/companies', { query });
+
+export const getAdminCompany = async (companyId: number) =>
+  apiGet<AdminCompanyListItem>(`/api/admin/companies/${companyId}`);
+
 export const getPendingRecruiterOnboardingRequests = async (
   query?: Record<string, string | number | boolean | null | undefined>,
 ) => apiGet<PendingRecruiterOnboardingRequest[]>('/api/onboarding/recruiter/pending', { query });
@@ -70,6 +96,9 @@ export const rejectRecruiterOnboarding = async (companyId: number, reason: strin
 
 export const getPendingJobPostings = async (query?: Record<string, string | number | boolean | null | undefined>) =>
   apiGet<JobPostingListItem[]>('/api/job-postings', { query: { status: 'PendingApproval', ...query } });
+
+export const getAdminJobPostings = async (query?: Record<string, string | number | boolean | null | undefined>) =>
+  apiGet<JobPostingListItem[]>('/api/job-postings', { query });
 
 export const approveJobPosting = async (jobPostingId: number) =>
   apiPatch(`/api/job-postings/${jobPostingId}`, { status: 'Active' });

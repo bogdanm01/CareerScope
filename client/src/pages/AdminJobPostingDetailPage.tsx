@@ -3,6 +3,8 @@ import type { FormEvent } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useSetAtom } from 'jotai';
 import { Button, TextArea } from '@heroui/react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import {
   approveJobPosting,
   rejectJobPosting,
@@ -165,10 +167,7 @@ export const AdminJobPostingDetailPage = () => {
       <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <div className="inline-flex rounded-md bg-[#fcab79] px-3 py-1 text-xs font-medium uppercase tracking-[0.16em] text-[#181d26]">
-              Admin
-            </div>
-            <h2 className="mt-4 text-4xl leading-[1.15] text-foreground">{detail.title || 'Untitled role'}</h2>
+            <h2 className="text-4xl leading-[1.15] text-foreground">{detail.title || 'Untitled role'}</h2>
             <p className="mt-3 max-w-2xl text-sm leading-7 text-foreground-500">
               Review the posting and approve or reject it before it goes live.
             </p>
@@ -217,7 +216,11 @@ export const AdminJobPostingDetailPage = () => {
             </div>
             <div>
               <span className="block text-foreground-500">Description</span>
-              <span className="whitespace-pre-line text-foreground">{detail.description || 'Not provided'}</span>
+              <div className="job-description-markdown mt-2 text-foreground">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {detail.description || 'Not provided'}
+                </ReactMarkdown>
+              </div>
             </div>
             <div>
               <span className="block text-foreground-500">Required skills</span>

@@ -107,6 +107,7 @@ export const ResetPasswordPage = ({ loading }: ResetPasswordPageProps) => {
           type="submit"
           variant="primary"
           isDisabled={loading || !hasToken}
+          className="h-12 w-full rounded-lg"
         >
           Update password
         </Button>

@@ -10,10 +10,13 @@ import { CandidateApplicationDetailPage } from './pages/CandidateApplicationDeta
 import { CandidateApplicationsPage } from './pages/CandidateApplicationsPage';
 import { CandidateJobDetailPage } from './pages/CandidateJobDetailPage';
 import { CandidateProfilePage } from './pages/CandidateProfilePage';
+import { AdminCompanyApprovalsPage } from './pages/AdminCompanyApprovalsPage';
 import { AdminCompaniesPage } from './pages/AdminCompaniesPage';
 import { AdminCompanyDetailPage } from './pages/AdminCompanyDetailPage';
+import { AdminCompanyProfilePage } from './pages/AdminCompanyProfilePage';
 import { AdminJobPostingsPage } from './pages/AdminJobPostingsPage';
 import { AdminJobPostingDetailPage } from './pages/AdminJobPostingDetailPage';
+import { AnalyticsPage } from './pages/AnalyticsPage';
 import { CompanyProfilePage } from './pages/CompanyProfilePage';
 import { DashboardPage } from './pages/DashboardPage';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
@@ -126,6 +129,14 @@ function App() {
         >
           <Route index element={<DashboardPage />} />
           <Route
+            path="analytics"
+            element={
+              <RoleRoute allow={['Candidate', 'Recruiter', 'Admin']}>
+                <AnalyticsPage />
+              </RoleRoute>
+            }
+          />
+          <Route
             path="profile"
             element={
               <RoleRoute allow={['Candidate']}>
@@ -224,6 +235,22 @@ function App() {
             />
             <Route
               path="companies/:id"
+              element={
+                <RoleRoute allow={['Admin']}>
+                  <AdminCompanyProfilePage />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="company-approvals"
+              element={
+                <RoleRoute allow={['Admin']}>
+                  <AdminCompanyApprovalsPage />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="company-approvals/:id"
               element={
                 <RoleRoute allow={['Admin']}>
                   <AdminCompanyDetailPage />

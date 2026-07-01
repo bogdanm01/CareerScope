@@ -164,7 +164,7 @@ export const RegisterPage = ({ loading }: RegisterPageProps) => {
           type="submit"
           variant="primary"
           isDisabled={loading}
-          className="h-12 w-full sm:col-span-2"
+          className="h-12 w-full rounded-lg sm:col-span-2"
         >
           Create account
         </Button>

@@ -93,7 +93,7 @@ export const LoginPage = ({ loading }: LoginPageProps) => {
         </Button>
       </form>
 
-      <div className="mt-7 border-t border-divider pt-6 text-sm text-foreground-600">
+      <div className="mt-7 border-t border-divider pt-6 text-center text-sm text-foreground-600">
         New here? <Link className="text-primary hover:underline" to="/register">Create a candidate account</Link>
         {' '}
         <Link className="text-primary hover:underline" to="/register/recruiter">

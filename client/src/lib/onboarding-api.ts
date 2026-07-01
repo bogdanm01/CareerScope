@@ -1,4 +1,4 @@
-import { fetchJson } from './http';
+import { apiPost, apiUpload } from './panel-api';
 
 export type RecruiterOnboardingPayload = {
   recruiter: {
@@ -19,6 +19,7 @@ export type RecruiterOnboardingPayload = {
     logoUrl?: string;
     websiteUrl?: string;
   };
+  logoFile?: File | null;
 };
 
 export type RecruiterOnboardingResponse = {
@@ -37,8 +38,23 @@ export type RecruiterOnboardingResponse = {
   };
 };
 
-export const registerRecruiter = async (payload: RecruiterOnboardingPayload) =>
-  fetchJson<RecruiterOnboardingResponse>('/api/onboarding/recruiter', {
-    method: 'POST',
-    body: payload,
-  });
+export const registerRecruiter = async (payload: RecruiterOnboardingPayload) => {
+  const { logoFile, ...requestPayload } = payload;
+
+  if (!logoFile) {
+    const response = await apiPost<RecruiterOnboardingResponse>(
+      '/api/onboarding/recruiter',
+      requestPayload as unknown as Record<string, unknown>,
+    );
+
+    return response.data;
+  }
+
+  const formData = new FormData();
+  formData.append('payload', JSON.stringify(requestPayload));
+  formData.append('logo', logoFile);
+
+  const response = await apiUpload<RecruiterOnboardingResponse>('/api/onboarding/recruiter', formData);
+
+  return response.data;
+};

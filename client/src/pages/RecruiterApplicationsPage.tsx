@@ -1,10 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { useAtomValue } from 'jotai';
 import { Chip, ListBox, Select, Table } from '@heroui/react';
 import { getRecruiterJobPostings, type JobPostingListItem } from '../lib/job-postings-api';
 import { getRecruiterJobApplications, type RecruiterJobApplicationListItem } from '../lib/job-applications-api';
-import { authSessionAtom } from '../store/auth';
 import { formatDateTime } from '../lib/date-format';
 
 const formatStatus = (status: string) => (status === 'UnderReview' ? 'Under Review' : status);
@@ -25,7 +23,6 @@ const getStatusColor = (status: string): 'accent' | 'danger' | 'default' | 'succ
 };
 
 export const RecruiterApplicationsPage = () => {
-  const session = useAtomValue(authSessionAtom);
   const [searchParams, setSearchParams] = useSearchParams();
   const [postings, setPostings] = useState<JobPostingListItem[]>([]);
   const [applications, setApplications] = useState<RecruiterJobApplicationListItem[]>([]);
@@ -94,10 +91,7 @@ export const RecruiterApplicationsPage = () => {
     <div className="grid gap-8">
       <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
         <div className="mb-6">
-          <div className="inline-flex rounded-md bg-[#a8d8c4] px-3 py-1 text-xs font-medium uppercase tracking-[0.16em] text-[#181d26]">
-            {session?.user.role === 'Admin' ? 'Admin' : 'Recruiter'}
-          </div>
-          <h2 className="mt-4 text-4xl leading-[1.15] text-foreground">Review job applications</h2>
+          <h2 className="text-4xl leading-[1.15] text-foreground">Review job applications</h2>
           <p className="mt-3 max-w-2xl text-sm leading-7 text-foreground-500">
             Choose one of your postings to load its applications and review applicants.
           </p>

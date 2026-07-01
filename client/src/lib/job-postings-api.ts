@@ -9,6 +9,9 @@ export type JobPostingStatus =
   | 'Closed'
   | 'Expired';
 
+export type JobPostingWorkLocation = 'Remote' | 'OnSite' | 'Hybrid';
+export type JobPostingEmploymentType = 'FullTime' | 'PartTime' | 'Contract' | 'Internship' | 'Temporary' | 'Other';
+
 export type JobPostingCompany = {
   id: number;
   name: string;
@@ -28,6 +31,9 @@ export type JobPostingListItem = {
   id: number;
   title: string | null;
   shortDescription?: string | null;
+  workLocation?: JobPostingWorkLocation | string | null;
+  employmentType?: JobPostingEmploymentType | string | null;
+  salaryRange?: string | null;
   status: JobPostingStatus | string;
   expiresAt?: string | null;
   createdAt: string;
@@ -50,6 +56,9 @@ export type JobPostingCreatePayload = {
   title: string;
   shortDescription?: string;
   description?: string;
+  workLocation?: JobPostingWorkLocation;
+  employmentType?: JobPostingEmploymentType;
+  salaryRange?: string;
   status: JobPostingStatus | 'Draft' | 'PendingApproval';
   expiresAt?: string;
   skills?: {
@@ -62,6 +71,9 @@ export type JobPostingUpdatePayload = {
   title?: string;
   shortDescription?: string;
   description?: string;
+  workLocation?: JobPostingWorkLocation;
+  employmentType?: JobPostingEmploymentType;
+  salaryRange?: string;
   status?: JobPostingStatus | 'Draft' | 'PendingApproval' | 'Active' | 'Paused' | 'Closed';
   expiresAt?: string;
   skills?: {

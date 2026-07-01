@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button, Input, ListBox, Modal, Select, toast, useOverlayState } from '@heroui/react';
-import { BriefcaseBusiness, Building2, CalendarDays, ChevronRight, Filter, Heart, Search, X } from 'lucide-react';
+import { BriefcaseBusiness, Building2, CalendarDays, ChevronLeft, ChevronRight, Filter, Heart, Search, X } from 'lucide-react';
 import { getActiveJobPostings, type JobPostingListItem } from '../lib/job-postings-api';
 import { applyToJobPosting } from '../lib/job-applications-api';
 import { useSetAtom } from 'jotai';
@@ -370,20 +370,24 @@ export const CandidateJobsPage = () => {
             </span>
             <div className="flex items-center gap-2">
               <Button
+                isIconOnly
+                aria-label="Previous page"
                 type="button"
                 variant="secondary"
                 isDisabled={pagination.currentPage <= 1}
                 onPress={() => setCurrentPage((page) => Math.max(1, page - 1))}
               >
-                Previous
+                <ChevronLeft className="h-4 w-4" />
               </Button>
               <Button
+                isIconOnly
+                aria-label="Next page"
                 type="button"
                 variant="secondary"
                 isDisabled={pagination.currentPage >= pagination.totalPages}
                 onPress={() => setCurrentPage((page) => Math.min(pagination.totalPages, page + 1))}
               >
-                Next
+                <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
           </div>

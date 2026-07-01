@@ -179,8 +179,8 @@ export const AdminCompanyDetailPage = () => {
           {error || 'Company approval not found.'}
         </div>
         <div className="mt-4 flex flex-wrap gap-3">
-          <Link className="rounded-lg border border-divider bg-content1 px-4 py-2 text-sm font-medium text-foreground" to="/panel/admin/companies">
-            Back to companies
+          <Link className="rounded-lg border border-divider bg-content1 px-4 py-2 text-sm font-medium text-foreground" to="/panel/admin/company-approvals">
+            Back to approvals
           </Link>
           <Button type="button" variant="primary" onPress={() => void loadRequest()}>
             Retry
@@ -222,9 +222,9 @@ export const AdminCompanyDetailPage = () => {
           <div className="flex flex-wrap gap-3">
             <Link
               className="rounded-lg border border-divider bg-content1 px-4 py-2 text-sm font-medium text-foreground"
-              to="/panel/admin/companies"
+              to="/panel/admin/company-approvals"
             >
-              Back to companies
+              Back to approvals
             </Link>
             <Button
               variant="primary"

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import { Button, Chip } from '@heroui/react';
-import { ArrowLeft, BriefcaseBusiness, Building2, CalendarDays, ExternalLink, Globe2, MapPin, Star, UsersRound } from 'lucide-react';
+import { Link, useLocation, useParams } from 'react-router-dom';
+import { Avatar, Button, Chip } from '@heroui/react';
+import { ArrowLeft, BriefcaseBusiness, Building2, CalendarDays, ChevronLeft, ChevronRight, ExternalLink, Globe2, MapPin, Star, UsersRound } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import {
@@ -43,6 +43,7 @@ const Rating = ({ value }: { value: number }) => (
 
 export const CompanyProfilePage = () => {
   const { id } = useParams();
+  const location = useLocation();
   const companyId = Number(id);
   const [company, setCompany] = useState<PublicCompany | null>(null);
   const [jobs, setJobs] = useState<JobPostingListItem[]>([]);
@@ -54,6 +55,16 @@ export const CompanyProfilePage = () => {
   const [error, setError] = useState<string | null>(null);
 
   const logoUrl = useMemo(() => resolveAssetUrl(company?.logoUrl), [company?.logoUrl]);
+  const backPath = useMemo(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const backTo = searchParams.get('backTo');
+
+    if (backTo?.startsWith('/') && !backTo.startsWith('//')) {
+      return backTo;
+    }
+
+    return '/';
+  }, [location.search]);
 
   const loadCompany = async () => {
     if (!Number.isFinite(companyId)) {
@@ -128,8 +139,8 @@ export const CompanyProfilePage = () => {
             <Button type="button" variant="primary" onPress={() => void loadCompany()}>
               Retry
             </Button>
-            <Link className="rounded-lg border border-divider bg-content1 px-4 py-2 text-sm font-medium text-foreground" to="/">
-              Back home
+            <Link className="rounded-lg border border-divider bg-content1 px-4 py-2 text-sm font-medium text-foreground" to={backPath}>
+              Back
             </Link>
           </div>
         </section>
@@ -140,27 +151,31 @@ export const CompanyProfilePage = () => {
   return (
     <main className="min-h-screen bg-background px-4 py-8 text-foreground sm:px-8 lg:py-12">
       <div className="mx-auto grid max-w-6xl gap-6">
-        <Link className="inline-flex w-fit items-center gap-2 text-sm font-medium text-foreground-500 hover:text-foreground" to="/">
+        <Link className="inline-flex w-fit items-center gap-2 text-sm font-medium text-foreground-500 hover:text-foreground" to={backPath}>
           <ArrowLeft aria-hidden="true" className="h-4 w-4" />
-          Back home
+          Back
         </Link>
 
         <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
           <div className="flex flex-wrap items-start justify-between gap-6">
-            <div className="flex min-w-0 items-start gap-4">
-              <div className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#181d26] text-white">
-                <Building2 aria-hidden="true" className="h-8 w-8" strokeWidth={1.7} />
+            <div className="flex min-w-0 items-center gap-5">
+              <Avatar className="h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-[#e3d3b8] !bg-[#f5e9d4] !text-[#181d26]">
                 {logoUrl && (
-                  <img
+                  <Avatar.Image
                     alt={`${company?.name} logo`}
-                    className="absolute inset-0 h-full w-full bg-white object-contain p-2"
-                    onError={(event) => {
-                      event.currentTarget.style.display = 'none';
-                    }}
+                    className="h-full w-full bg-white object-contain p-2"
                     src={logoUrl}
                   />
                 )}
-              </div>
+                <Avatar.Fallback className="flex h-full w-full items-center justify-center bg-[#f5e9d4] text-lg font-semibold !text-[#181d26]" delayMs={0}>
+                  {company?.name
+                    .split(' ')
+                    .filter(Boolean)
+                    .slice(0, 2)
+                    .map((part) => part[0]?.toUpperCase())
+                    .join('') || <Building2 aria-hidden="true" className="h-8 w-8" strokeWidth={1.7} />}
+                </Avatar.Fallback>
+              </Avatar>
               <div className="min-w-0">
                 <h1 className="text-4xl leading-[1.1] text-foreground sm:text-5xl">{company?.name}</h1>
                 <p className="mt-3 max-w-3xl text-[15px] leading-7 text-foreground-500">
@@ -318,25 +333,29 @@ export const CompanyProfilePage = () => {
           {reviewPagination && reviewPagination.totalPages > 1 && (
             <div className="mt-6 flex items-center justify-end gap-3">
               <Button
+                isIconOnly
+                aria-label="Previous review page"
                 className="rounded-lg"
                 type="button"
                 variant="secondary"
                 isDisabled={reviewPage <= 1 || reviewsLoading}
                 onPress={() => setReviewPage((page) => Math.max(1, page - 1))}
               >
-                Previous
+                <ChevronLeft className="h-4 w-4" />
               </Button>
               <span className="text-sm text-foreground-500">
                 Page {reviewPagination.currentPage} of {reviewPagination.totalPages}
               </span>
               <Button
+                isIconOnly
+                aria-label="Next review page"
                 className="rounded-lg"
                 type="button"
                 variant="secondary"
                 isDisabled={reviewPage >= reviewPagination.totalPages || reviewsLoading}
                 onPress={() => setReviewPage((page) => page + 1)}
               >
-                Next
+                <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
           )}
