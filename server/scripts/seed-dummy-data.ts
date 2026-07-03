@@ -68,156 +68,260 @@ We aim to provide clear next steps and useful feedback throughout the process.`;
 
 const companies = [
   {
-    name: 'Northstar Digital Labs',
+    name: 'Microsoft',
     taxId: 'RS-104582913',
     approvalStatus: COMPANY_APPROVAL_STATUS.APPROVED,
-    shortDescription: 'Product engineering studio for SaaS teams.',
-    description: `## What we build
+    shortDescription: 'Technology company building cloud, productivity, developer, and AI platforms.',
+    description: `## Technology platforms for work and development
 
-Northstar Digital Labs partners with growing software companies to deliver **customer-facing products**, internal platforms, and integration-heavy systems.
+Microsoft builds software, cloud infrastructure, developer tools, business applications, gaming products, and AI services used by organizations and consumers around the world.
 
-### How we work
+### Product areas
 
-- Small cross-functional product teams
-- Continuous delivery and pragmatic engineering standards
-- Direct collaboration with customers and domain experts
-- Dedicated time for technical discovery and refactoring
+- Azure cloud infrastructure and platform services
+- Microsoft 365 productivity and collaboration tools
+- GitHub and developer workflows
+- Dynamics business applications
+- Windows, Xbox, and consumer services
 
-We value ownership, clear communication, and software that remains easy to change.`,
-    foundingYear: 2017,
-    numberOfEmployees: 84,
-    address: 'Bulevar Mihajla Pupina 10, Belgrade, Serbia',
-    logoUrl: 'https://example.com/logos/northstar-digital-labs.png',
-    websiteUrl: 'https://northstar-digital.example.com',
+The company focuses on helping people and organizations be more productive through integrated software, cloud, and AI capabilities.`,
+    foundingYear: 1975,
+    numberOfEmployees: 221000,
+    address: 'One Microsoft Way, Redmond, WA, USA',
+    logoUrl: null,
+    websiteUrl: 'https://www.microsoft.com',
   },
   {
-    name: 'AstraFin Systems',
+    name: 'Stripe',
     taxId: 'RS-782451006',
     approvalStatus: COMPANY_APPROVAL_STATUS.APPROVED,
-    shortDescription: 'Fintech software and data infrastructure company.',
-    description: `## Financial infrastructure for modern teams
+    shortDescription: 'Financial infrastructure platform for online payments and business operations.',
+    description: `## Financial infrastructure for the internet
 
-AstraFin Systems develops payment workflows, reporting services, and risk analytics products used by regional finance teams.
+Stripe builds payment processing, billing, fraud prevention, tax, issuing, and financial workflow tools for businesses operating online and across platforms.
 
-Our platform processes high-volume transactional data and integrates with banks, payment providers, and compliance systems.
+Its APIs and dashboard help companies accept payments, manage subscriptions, automate revenue operations, and launch marketplace or platform payment flows.
 
-### Engineering priorities
+### Product areas
 
-1. Correctness and auditability
-2. Secure-by-default APIs
-3. Observable distributed systems
-4. Reliable data pipelines`,
-    foundingYear: 2014,
-    numberOfEmployees: 146,
-    address: 'Milutina Milankovica 9, Belgrade, Serbia',
-    logoUrl: 'https://example.com/logos/astrafin-systems.png',
-    websiteUrl: 'https://astrafin.example.com',
+- Payments and checkout
+- Billing and subscriptions
+- Connect platform payments
+- Radar fraud prevention
+- Revenue and tax automation`,
+    foundingYear: 2010,
+    numberOfEmployees: 8500,
+    address: '354 Oyster Point Blvd, South San Francisco, CA, USA',
+    logoUrl: null,
+    websiteUrl: 'https://stripe.com',
   },
   {
-    name: 'GreenGrid Cloud',
+    name: 'Cloudflare',
     taxId: 'RS-639027411',
     approvalStatus: COMPANY_APPROVAL_STATUS.APPROVED,
-    shortDescription: 'Cloud operations and infrastructure automation provider.',
-    description: `## Reliable cloud platforms
+    shortDescription: 'Connectivity cloud company for security, performance, and developer services.',
+    description: `## Connectivity cloud
 
-GreenGrid Cloud helps product companies operate dependable infrastructure through managed Kubernetes, observability, and deployment automation.
+Cloudflare provides a global network that helps organizations make websites, applications, APIs, and networks faster, safer, and more reliable.
 
-### Services
+Its products span content delivery, DDoS protection, zero trust security, application services, developer compute, and network connectivity.
 
-- Cloud architecture and migration
-- Kubernetes platform engineering
-- CI/CD modernization
-- Monitoring, alerting, and incident response
+### Product areas
 
-Our teams optimize for sustainable on-call practices and measurable reliability.`,
-    foundingYear: 2019,
-    numberOfEmployees: 58,
-    address: 'Kneza Milosa 31, Belgrade, Serbia',
-    logoUrl: 'https://example.com/logos/greengrid-cloud.png',
-    websiteUrl: 'https://greengrid.example.com',
+- CDN and application performance
+- Web application and API security
+- Zero trust access
+- Developer platform services
+- Network and infrastructure protection`,
+    foundingYear: 2009,
+    numberOfEmployees: 3600,
+    address: '101 Townsend St, San Francisco, CA, USA',
+    logoUrl: null,
+    websiteUrl: 'https://www.cloudflare.com',
   },
   {
-    name: 'OrbitWorks AI',
+    name: 'Datadog',
     taxId: 'RS-927614358',
     approvalStatus: COMPANY_APPROVAL_STATUS.APPROVED,
-    shortDescription: 'Applied AI company focused on business automation.',
-    description: `## Practical AI for operations
+    shortDescription: 'Observability and security platform for cloud applications.',
+    description: `## Observability for modern systems
 
-OrbitWorks AI creates document processing, workflow automation, and decision-support systems for operations-heavy organizations.
+Datadog provides monitoring, observability, and security products that help engineering and operations teams understand distributed systems in production.
 
-We combine **machine learning**, human review workflows, and measurable product outcomes rather than treating AI as a standalone feature.
+Teams use Datadog to collect metrics, traces, logs, user experience signals, cloud security findings, and application performance data in one platform.
 
-### Product principles
+### Product areas
 
-- Keep humans in control
-- Explain automated decisions
-- Measure accuracy in production
-- Protect customer data`,
-    foundingYear: 2020,
-    numberOfEmployees: 39,
-    address: 'Vojvode Misica 12, Nis, Serbia',
-    logoUrl: 'https://example.com/logos/orbitworks-ai.png',
-    websiteUrl: 'https://orbitworks.example.com',
+- Infrastructure monitoring
+- Application performance monitoring
+- Log management
+- Security monitoring
+- Real user monitoring and synthetic tests`,
+    foundingYear: 2010,
+    numberOfEmployees: 5200,
+    address: '620 8th Ave, New York, NY, USA',
+    logoUrl: null,
+    websiteUrl: 'https://www.datadoghq.com',
   },
   {
-    name: 'BluePeak HealthTech',
+    name: 'Doctolib',
     taxId: 'RS-510936284',
     approvalStatus: COMPANY_APPROVAL_STATUS.PENDING_APPROVAL,
-    shortDescription: 'Healthcare scheduling and patient engagement startup.',
-    description: `## Better clinic operations
+    shortDescription: 'Digital health platform for booking appointments and managing care workflows.',
+    description: `## Digital tools for healthcare access
 
-BluePeak HealthTech is building tools for clinics to manage patient communication, appointment workflows, and operational reporting.
+Doctolib builds products that help patients book healthcare appointments and help healthcare professionals manage schedules, communication, and practice workflows.
 
-The product focuses on:
+The platform focuses on improving access to care and reducing administrative load for medical teams.
 
-- Reducing missed appointments
-- Improving front-desk efficiency
-- Making patient communication accessible
-- Giving clinic managers useful operational insights`,
-    foundingYear: 2021,
-    numberOfEmployees: 27,
-    address: 'Cara Dusana 45, Novi Sad, Serbia',
-    logoUrl: 'https://example.com/logos/bluepeak-healthtech.png',
-    websiteUrl: 'https://bluepeak-health.example.com',
+### Product areas
+
+- Online appointment booking
+- Patient communication
+- Practice management workflows
+- Telehealth and care coordination
+- Tools for healthcare professionals`,
+    foundingYear: 2013,
+    numberOfEmployees: 2800,
+    address: '54 Quai Charles Pasqua, Levallois-Perret, France',
+    logoUrl: null,
+    websiteUrl: 'https://www.doctolib.fr',
   },
   {
-    name: 'Danube Commerce',
+    name: 'Shopify',
     taxId: 'RS-318475920',
     approvalStatus: COMPANY_APPROVAL_STATUS.APPROVED,
-    shortDescription: 'Commerce platform for independent European retailers.',
-    description: `## Commerce infrastructure for independent retail
+    shortDescription: 'Commerce platform for online stores, retail operations, payments, and fulfillment.',
+    description: `## Commerce operating system
 
-Danube Commerce provides catalog, order, inventory, and analytics tools for multi-location retailers.
+Shopify provides software and services that help merchants create online stores, sell across channels, accept payments, manage operations, and grow commerce businesses.
 
-### Current focus
+Its platform supports entrepreneurs, retailers, and large brands across storefronts, point of sale, checkout, payments, marketing, and analytics.
 
-- Real-time inventory synchronization
-- Faster merchant onboarding
-- Accessible back-office workflows
-- Reliable integrations with logistics partners`,
-    foundingYear: 2016,
-    numberOfEmployees: 112,
-    address: 'Bulevar Oslobodjenja 76, Novi Sad, Serbia',
-    logoUrl: 'https://example.com/logos/danube-commerce.png',
-    websiteUrl: 'https://danube-commerce.example.com',
+### Product areas
+
+- Online storefronts and checkout
+- Retail point of sale
+- Payments and financial tools
+- Merchant analytics
+- Developer and partner ecosystem`,
+    foundingYear: 2006,
+    numberOfEmployees: 7600,
+    address: '151 OConnor St, Ottawa, ON, Canada',
+    logoUrl: null,
+    websiteUrl: 'https://www.shopify.com',
   },
   {
-    name: 'SignalForge Security',
+    name: 'GitLab',
     taxId: 'RS-846205731',
     approvalStatus: COMPANY_APPROVAL_STATUS.APPROVED,
-    shortDescription: 'Security monitoring and incident response software.',
-    description: `## Security teams need better signal
+    shortDescription: 'DevSecOps platform for source control, CI/CD, security, and software delivery.',
+    description: `## DevSecOps in one platform
 
-SignalForge Security builds monitoring and incident-response software for engineering teams operating critical services.
+GitLab provides a software delivery platform that brings planning, source code management, CI/CD, security testing, and deployment workflows into one application.
 
-Our platform connects logs, identity events, and infrastructure changes to help responders investigate incidents quickly.
+Engineering teams use GitLab to collaborate on code, automate pipelines, review changes, scan for vulnerabilities, and manage software delivery.
 
-We practice responsible disclosure and build security controls into every delivery stage.`,
-    foundingYear: 2018,
-    numberOfEmployees: 63,
-    address: 'Kralja Petra 22, Belgrade, Serbia',
-    logoUrl: 'https://example.com/logos/signalforge-security.png',
-    websiteUrl: 'https://signalforge.example.com',
+### Product areas
+
+- Source code management
+- Continuous integration and delivery
+- Security scanning
+- Planning and issue tracking
+- Release and deployment workflows`,
+    foundingYear: 2014,
+    numberOfEmployees: 2100,
+    address: '268 Bush St, San Francisco, CA, USA',
+    logoUrl: null,
+    websiteUrl: 'https://about.gitlab.com',
+  },
+  {
+    name: 'Atlassian',
+    taxId: 'RS-740193625',
+    approvalStatus: COMPANY_APPROVAL_STATUS.APPROVED,
+    shortDescription: 'Collaboration software company for planning, service management, and software teams.',
+    description: `## Team collaboration software
+
+Atlassian builds products that help software, IT, and business teams plan work, collaborate, ship releases, and support customers.
+
+### Product areas
+
+- Jira planning and project tracking
+- Confluence knowledge sharing
+- Bitbucket developer workflows
+- Jira Service Management
+- Enterprise administration and analytics`,
+    foundingYear: 2002,
+    numberOfEmployees: 12000,
+    address: '341 George St, Sydney, NSW, Australia',
+    logoUrl: null,
+    websiteUrl: 'https://www.atlassian.com',
+  },
+  {
+    name: 'Figma',
+    taxId: 'RS-693845217',
+    approvalStatus: COMPANY_APPROVAL_STATUS.APPROVED,
+    shortDescription: 'Collaborative design platform for product teams building digital experiences.',
+    description: `## Collaborative product design
+
+Figma builds browser-based design, prototyping, whiteboarding, and developer handoff tools used by product teams.
+
+### Product areas
+
+- Interface design and prototyping
+- Design systems
+- FigJam collaboration
+- Dev Mode handoff
+- Team administration`,
+    foundingYear: 2012,
+    numberOfEmployees: 1600,
+    address: '760 Market St, San Francisco, CA, USA',
+    logoUrl: null,
+    websiteUrl: 'https://www.figma.com',
+  },
+  {
+    name: 'Notion',
+    taxId: 'RS-582014936',
+    approvalStatus: COMPANY_APPROVAL_STATUS.APPROVED,
+    shortDescription: 'Connected workspace for notes, docs, projects, knowledge, and lightweight workflows.',
+    description: `## Connected workspace
+
+Notion builds flexible tools for documentation, project tracking, knowledge management, and collaboration across teams.
+
+### Product areas
+
+- Docs and knowledge bases
+- Project and task management
+- Databases and workflow templates
+- Calendar and team planning
+- AI-assisted writing and search`,
+    foundingYear: 2016,
+    numberOfEmployees: 1200,
+    address: '548 Market St, San Francisco, CA, USA',
+    logoUrl: null,
+    websiteUrl: 'https://www.notion.so',
+  },
+  {
+    name: 'Airbnb',
+    taxId: 'RS-461802735',
+    approvalStatus: COMPANY_APPROVAL_STATUS.APPROVED,
+    shortDescription: 'Travel marketplace connecting guests with hosts and unique stays worldwide.',
+    description: `## Travel marketplace
+
+Airbnb builds products for discovering stays, hosting guests, managing trust and safety, and operating a global marketplace.
+
+### Product areas
+
+- Guest search and booking
+- Host tools
+- Payments and risk systems
+- Trust and safety
+- Mobile travel experiences`,
+    foundingYear: 2008,
+    numberOfEmployees: 6900,
+    address: '888 Brannan St, San Francisco, CA, USA',
+    logoUrl: null,
+    websiteUrl: 'https://www.airbnb.com',
   },
 ] as const;
 
@@ -292,6 +396,46 @@ const users = [
     companyTaxId: 'RS-846205731',
   },
   {
+    key: 'recruiterAtlassian',
+    name: 'Tara Recruiter',
+    email: 'tara.recruiter+seed@careerscope.local',
+    firstName: 'Tara',
+    lastName: 'Recruiter',
+    role: USER_ROLE.RECRUITER,
+    dateOfBirth: '1987-02-22',
+    companyTaxId: 'RS-740193625',
+  },
+  {
+    key: 'recruiterFigma',
+    name: 'Ognjen Recruiter',
+    email: 'ognjen.recruiter+seed@careerscope.local',
+    firstName: 'Ognjen',
+    lastName: 'Recruiter',
+    role: USER_ROLE.RECRUITER,
+    dateOfBirth: '1993-01-17',
+    companyTaxId: 'RS-693845217',
+  },
+  {
+    key: 'recruiterNotion',
+    name: 'Marija Recruiter',
+    email: 'marija.recruiter+seed@careerscope.local',
+    firstName: 'Marija',
+    lastName: 'Recruiter',
+    role: USER_ROLE.RECRUITER,
+    dateOfBirth: '1991-05-26',
+    companyTaxId: 'RS-582014936',
+  },
+  {
+    key: 'recruiterAirbnb',
+    name: 'Filip Recruiter',
+    email: 'filip.recruiter+seed@careerscope.local',
+    firstName: 'Filip',
+    lastName: 'Recruiter',
+    role: USER_ROLE.RECRUITER,
+    dateOfBirth: '1985-07-07',
+    companyTaxId: 'RS-461802735',
+  },
+  {
     key: 'candidatePetar',
     name: 'Petar Candidate',
     email: 'petar.candidate+seed@careerscope.local',
@@ -354,6 +498,42 @@ const users = [
     role: USER_ROLE.CANDIDATE,
     dateOfBirth: '2000-12-05',
   },
+  {
+    key: 'candidateLazar',
+    name: 'Lazar Candidate',
+    email: 'lazar.candidate+seed@careerscope.local',
+    firstName: 'Lazar',
+    lastName: 'Candidate',
+    role: USER_ROLE.CANDIDATE,
+    dateOfBirth: '1993-08-12',
+  },
+  {
+    key: 'candidateMina',
+    name: 'Mina Candidate',
+    email: 'mina.candidate+seed@careerscope.local',
+    firstName: 'Mina',
+    lastName: 'Candidate',
+    role: USER_ROLE.CANDIDATE,
+    dateOfBirth: '1996-10-03',
+  },
+  {
+    key: 'candidateUros',
+    name: 'Uros Candidate',
+    email: 'uros.candidate+seed@careerscope.local',
+    firstName: 'Uros',
+    lastName: 'Candidate',
+    role: USER_ROLE.CANDIDATE,
+    dateOfBirth: '1992-06-21',
+  },
+  {
+    key: 'candidateKatarina',
+    name: 'Katarina Candidate',
+    email: 'katarina.candidate+seed@careerscope.local',
+    firstName: 'Katarina',
+    lastName: 'Candidate',
+    role: USER_ROLE.CANDIDATE,
+    dateOfBirth: '1998-01-28',
+  },
 ] as const;
 
 const candidateSkills = [
@@ -361,10 +541,14 @@ const candidateSkills = [
   { userKey: 'candidatePetar', skillSlug: 'reactjs', yearsOfExperience: 4 },
   { userKey: 'candidatePetar', skillSlug: 'nodejs', yearsOfExperience: 3 },
   { userKey: 'candidatePetar', skillSlug: 'postgresql', yearsOfExperience: 2 },
+  { userKey: 'candidatePetar', skillSlug: 'swift', yearsOfExperience: 1 },
+  { userKey: 'candidatePetar', skillSlug: 'product-management', yearsOfExperience: 2 },
   { userKey: 'candidateAna', skillSlug: 'python', yearsOfExperience: 5 },
   { userKey: 'candidateAna', skillSlug: 'postgresql', yearsOfExperience: 4 },
   { userKey: 'candidateAna', skillSlug: 'docker', yearsOfExperience: 3 },
   { userKey: 'candidateAna', skillSlug: 'aws', yearsOfExperience: 2 },
+  { userKey: 'candidateAna', skillSlug: 'swift', yearsOfExperience: 1 },
+  { userKey: 'candidateAna', skillSlug: 'user-research', yearsOfExperience: 2 },
   { userKey: 'candidateJovana', skillSlug: 'ui-ux-design', yearsOfExperience: 4 },
   { userKey: 'candidateJovana', skillSlug: 'figma', yearsOfExperience: 4 },
   { userKey: 'candidateJovana', skillSlug: 'user-research', yearsOfExperience: 3 },
@@ -374,22 +558,47 @@ const candidateSkills = [
   { userKey: 'candidateNikola', skillSlug: 'microservices-architecture', yearsOfExperience: 3 },
   { userKey: 'candidateNikola', skillSlug: 'apache-kafka', yearsOfExperience: 2 },
   { userKey: 'candidateNikola', skillSlug: 'postgresql', yearsOfExperience: 4 },
+  { userKey: 'candidateNikola', skillSlug: 'product-management', yearsOfExperience: 2 },
+  { userKey: 'candidateNikola', skillSlug: 'user-research', yearsOfExperience: 1 },
   { userKey: 'candidateMilica', skillSlug: 'reactjs', yearsOfExperience: 3 },
   { userKey: 'candidateMilica', skillSlug: 'typescript', yearsOfExperience: 3 },
   { userKey: 'candidateMilica', skillSlug: 'css', yearsOfExperience: 4 },
   { userKey: 'candidateMilica', skillSlug: 'design-systems', yearsOfExperience: 2 },
   { userKey: 'candidateMilica', skillSlug: 'playwright', yearsOfExperience: 2 },
+  { userKey: 'candidateMilica', skillSlug: 'swift', yearsOfExperience: 1 },
   { userKey: 'candidateStefan', skillSlug: 'aws', yearsOfExperience: 5 },
   { userKey: 'candidateStefan', skillSlug: 'kubernetes', yearsOfExperience: 4 },
   { userKey: 'candidateStefan', skillSlug: 'infrastructure-as-code', yearsOfExperience: 3 },
   { userKey: 'candidateStefan', skillSlug: 'observability', yearsOfExperience: 4 },
   { userKey: 'candidateStefan', skillSlug: 'linux', yearsOfExperience: 6 },
+  { userKey: 'candidateStefan', skillSlug: 'user-research', yearsOfExperience: 1 },
   { userKey: 'candidateTeodora', skillSlug: 'python', yearsOfExperience: 3 },
   { userKey: 'candidateTeodora', skillSlug: 'data-analysis', yearsOfExperience: 3 },
   { userKey: 'candidateTeodora', skillSlug: 'sql', yearsOfExperience: 3 },
   { userKey: 'candidateTeodora', skillSlug: 'data-visualization', yearsOfExperience: 2 },
   { userKey: 'candidateTeodora', skillSlug: 'business-intelligence', yearsOfExperience: 2 },
   { userKey: 'candidateTeodora', skillSlug: 'communication', yearsOfExperience: null },
+  { userKey: 'candidateTeodora', skillSlug: 'product-management', yearsOfExperience: 2 },
+  { userKey: 'candidateLazar', skillSlug: 'go', yearsOfExperience: 4 },
+  { userKey: 'candidateLazar', skillSlug: 'distributed-systems', yearsOfExperience: 3 },
+  { userKey: 'candidateLazar', skillSlug: 'apache-kafka', yearsOfExperience: 3 },
+  { userKey: 'candidateLazar', skillSlug: 'postgresql', yearsOfExperience: 4 },
+  { userKey: 'candidateLazar', skillSlug: 'web-security', yearsOfExperience: 2 },
+  { userKey: 'candidateMina', skillSlug: 'product-management', yearsOfExperience: 4 },
+  { userKey: 'candidateMina', skillSlug: 'project-management', yearsOfExperience: 4 },
+  { userKey: 'candidateMina', skillSlug: 'user-research', yearsOfExperience: 3 },
+  { userKey: 'candidateMina', skillSlug: 'communication', yearsOfExperience: null },
+  { userKey: 'candidateMina', skillSlug: 'leadership', yearsOfExperience: 2 },
+  { userKey: 'candidateUros', skillSlug: 'nextjs', yearsOfExperience: 3 },
+  { userKey: 'candidateUros', skillSlug: 'reactjs', yearsOfExperience: 4 },
+  { userKey: 'candidateUros', skillSlug: 'typescript', yearsOfExperience: 4 },
+  { userKey: 'candidateUros', skillSlug: 'graphql-api-development', yearsOfExperience: 2 },
+  { userKey: 'candidateUros', skillSlug: 'websockets', yearsOfExperience: 2 },
+  { userKey: 'candidateKatarina', skillSlug: 'swift', yearsOfExperience: 3 },
+  { userKey: 'candidateKatarina', skillSlug: 'ui-ux-design', yearsOfExperience: 2 },
+  { userKey: 'candidateKatarina', skillSlug: 'figma', yearsOfExperience: 3 },
+  { userKey: 'candidateKatarina', skillSlug: 'prototyping', yearsOfExperience: 2 },
+  { userKey: 'candidateKatarina', skillSlug: 'communication', yearsOfExperience: null },
 ] as const;
 
 const jobs = [
@@ -416,6 +625,9 @@ Join a product engineering team building customer-facing SaaS features, internal
 - Annual learning budget
 - Clear engineering progression
 - Modern TypeScript stack`,
+    workLocation: 'Hybrid',
+    employmentType: 'FullTime',
+    salaryRange: '$120k - $160k',
     status: JOB_POSTING_STATUS.ACTIVE,
     expiresAt: daysFromNow(45),
     skills: [
@@ -443,6 +655,9 @@ Work on high-volume backend services for payment workflows, reporting, risk chec
 - Participate in architecture reviews
 
 Experience with regulated systems is useful but not required.`,
+    workLocation: 'Remote',
+    employmentType: 'FullTime',
+    salaryRange: '$110k - $150k',
     status: JOB_POSTING_STATUS.ACTIVE,
     expiresAt: daysFromNow(30),
     skills: [
@@ -468,6 +683,9 @@ Create research-backed product flows, prototypes, and UI systems for document pr
 - Maintain reusable patterns in the design system
 - Partner with engineers during implementation
 - Validate releases with usability testing`,
+    workLocation: 'Hybrid',
+    employmentType: 'FullTime',
+    salaryRange: '$85k - $115k',
     status: JOB_POSTING_STATUS.PENDING_APPROVAL,
     expiresAt: daysFromNow(60),
     skills: [
@@ -491,6 +709,9 @@ Help engineering teams operate reliable cloud platforms with deployment automati
 - Build actionable dashboards and alerts
 - Automate infrastructure changes
 - Lead blameless incident reviews`,
+    workLocation: 'Remote',
+    employmentType: 'Contract',
+    salaryRange: '$90k - $130k',
     status: JOB_POSTING_STATUS.ACTIVE,
     expiresAt: daysFromNow(50),
     skills: [
@@ -507,7 +728,7 @@ Help engineering teams operate reliable cloud platforms with deployment automati
     shortDescription: 'Build the component platform used across merchant and operations products.',
     description: `## Build the frontend foundation
 
-Danube Commerce is creating a shared frontend platform for merchant, inventory, and operations products.
+Shopify is creating a shared frontend platform for merchant, inventory, and operations products.
 
 ### What you will own
 
@@ -517,6 +738,9 @@ Danube Commerce is creating a shared frontend platform for merchant, inventory, 
 - Documentation and migration guidance
 
 You will work closely with product designers and feature teams.`,
+    workLocation: 'Hybrid',
+    employmentType: 'FullTime',
+    salaryRange: '$100k - $140k',
     status: JOB_POSTING_STATUS.ACTIVE,
     expiresAt: daysFromNow(40),
     skills: [
@@ -543,6 +767,9 @@ You will develop backend services and investigation workflows that turn infrastr
 - Improve detection quality with production feedback
 - Partner with security researchers
 - Document threat models and operational runbooks`,
+    workLocation: 'Remote',
+    employmentType: 'FullTime',
+    salaryRange: '$115k - $155k',
     status: JOB_POSTING_STATUS.ACTIVE,
     expiresAt: daysFromNow(55),
     skills: [
@@ -569,6 +796,9 @@ Partner with product, finance, and operations teams to define metrics and build 
 - Investigate inventory and fulfillment trends
 - Define metric ownership and documentation
 - Present findings to non-technical stakeholders`,
+    workLocation: 'OnSite',
+    employmentType: 'FullTime',
+    salaryRange: '$70k - $95k',
     status: JOB_POSTING_STATUS.ACTIVE,
     expiresAt: daysFromNow(35),
     skills: [
@@ -595,6 +825,9 @@ Lead the evolution of transaction processing services from tightly coupled modul
 - Improve database performance and resilience
 - Coach engineers through complex migrations
 - Contribute to architecture standards`,
+    workLocation: 'Hybrid',
+    employmentType: 'FullTime',
+    salaryRange: '$115k - $150k',
     status: JOB_POSTING_STATUS.PAUSED,
     expiresAt: daysFromNow(70),
     skills: [
@@ -621,6 +854,9 @@ Build training, evaluation, and serving workflows for document classification an
 - Model monitoring and drift detection
 - Human review feedback loops
 - Privacy-aware data handling`,
+    workLocation: 'Remote',
+    employmentType: 'FullTime',
+    salaryRange: '$120k - $165k',
     status: JOB_POSTING_STATUS.PENDING_APPROVAL,
     expiresAt: daysFromNow(65),
     skills: [
@@ -647,6 +883,9 @@ Create practical automation that catches regressions early and helps teams under
 - Improve CI feedback and flaky-test diagnostics
 - Define test data strategies
 - Coach teams on testable product design`,
+    workLocation: 'Hybrid',
+    employmentType: 'FullTime',
+    salaryRange: '$75k - $105k',
     status: JOB_POSTING_STATUS.ACTIVE,
     expiresAt: daysFromNow(28),
     skills: [
@@ -673,6 +912,9 @@ Work with platform and application teams to make reliability measurable and oper
 - Automate repetitive operational work
 - Review capacity and failure modes
 - Facilitate incident learning`,
+    workLocation: 'Remote',
+    employmentType: 'FullTime',
+    salaryRange: '$115k - $155k',
     status: JOB_POSTING_STATUS.CLOSED,
     expiresAt: daysAgo(5),
     skills: [
@@ -698,6 +940,9 @@ Support research, wireframing, prototyping, and design-system work for clinic op
 - Can explain design decisions clearly
 - Values accessibility and inclusive research
 - Wants close collaboration with engineering`,
+    workLocation: 'Hybrid',
+    employmentType: 'Internship',
+    salaryRange: '$45k - $60k',
     status: JOB_POSTING_STATUS.DRAFT,
     expiresAt: daysFromNow(90),
     skills: [
@@ -708,21 +953,238 @@ Support research, wireframing, prototyping, and design-system work for clinic op
       { slug: 'user-research', yoe: 1 },
     ],
   },
-] as const;
+  {
+    title: 'Product Manager, Collaboration',
+    companyTaxId: 'RS-740193625',
+    createdByUserKey: 'recruiterAtlassian',
+    shortDescription: 'Shape roadmap, discovery, and launch plans for collaboration products.',
+    description: `## Lead collaboration product discovery
 
-const seededJobLogistics = [
-  { workLocation: 'Hybrid', employmentType: 'FullTime', salaryRange: '$120k - $160k' },
-  { workLocation: 'Remote', employmentType: 'FullTime', salaryRange: '$110k - $150k' },
-  { workLocation: 'Hybrid', employmentType: 'FullTime', salaryRange: '$85k - $115k' },
-  { workLocation: 'Remote', employmentType: 'Contract', salaryRange: '$90k - $130k' },
-  { workLocation: 'Hybrid', employmentType: 'FullTime', salaryRange: '$100k - $140k' },
-  { workLocation: 'Remote', employmentType: 'FullTime', salaryRange: '$115k - $155k' },
-  { workLocation: 'OnSite', employmentType: 'FullTime', salaryRange: '$70k - $95k' },
-  { workLocation: 'Hybrid', employmentType: 'FullTime', salaryRange: '$115k - $150k' },
-  { workLocation: 'Remote', employmentType: 'FullTime', salaryRange: '$120k - $165k' },
-  { workLocation: 'Hybrid', employmentType: 'FullTime', salaryRange: '$75k - $105k' },
-  { workLocation: 'Remote', employmentType: 'FullTime', salaryRange: '$115k - $155k' },
-  { workLocation: 'Hybrid', employmentType: 'Internship', salaryRange: '$45k - $60k' },
+Own product discovery and delivery for tools used by distributed teams to plan work, document decisions, and coordinate launches.
+
+### You will
+
+- Define product strategy with design and engineering
+- Run customer discovery and opportunity sizing
+- Prioritize roadmap tradeoffs
+- Partner with go-to-market teams
+- Measure adoption, retention, and team productivity outcomes`,
+    workLocation: 'Hybrid',
+    employmentType: 'FullTime',
+    salaryRange: '$125k - $170k',
+    status: JOB_POSTING_STATUS.ACTIVE,
+    expiresAt: daysFromNow(48),
+    skills: [
+      { slug: 'product-management', yoe: 4 },
+      { slug: 'project-management', yoe: 3 },
+      { slug: 'user-research', yoe: 2 },
+      { slug: 'communication', yoe: 3 },
+      { slug: 'leadership', yoe: 2 },
+    ],
+  },
+  {
+    title: 'Design Systems Engineer',
+    companyTaxId: 'RS-693845217',
+    createdByUserKey: 'recruiterFigma',
+    shortDescription: 'Build design-system infrastructure for product designers and frontend teams.',
+    description: `## Build systems for design at scale
+
+Work on component architecture, token workflows, accessibility tooling, and documentation for product teams using shared design systems.
+
+### You will
+
+- Build React components and design token pipelines
+- Improve accessibility and interaction patterns
+- Partner with designers on component APIs
+- Document migration paths and usage guidelines
+- Measure adoption across product surfaces`,
+    workLocation: 'Remote',
+    employmentType: 'FullTime',
+    salaryRange: '$130k - $175k',
+    status: JOB_POSTING_STATUS.ACTIVE,
+    expiresAt: daysFromNow(52),
+    skills: [
+      { slug: 'reactjs', yoe: 4 },
+      { slug: 'typescript', yoe: 4 },
+      { slug: 'design-systems', yoe: 3 },
+      { slug: 'css', yoe: 3 },
+      { slug: 'figma', yoe: 2 },
+    ],
+  },
+  {
+    title: 'Workspace Backend Engineer',
+    companyTaxId: 'RS-582014936',
+    createdByUserKey: 'recruiterNotion',
+    shortDescription: 'Build APIs, permissions, and sync systems for collaborative workspaces.',
+    description: `## Build collaborative workspace infrastructure
+
+Design backend services for content permissions, database views, notifications, and real-time collaboration.
+
+### You will
+
+- Design APIs for flexible workspace objects
+- Improve data modeling and permissions
+- Build real-time collaboration services
+- Optimize PostgreSQL query paths
+- Improve reliability for high-traffic teams`,
+    workLocation: 'Hybrid',
+    employmentType: 'FullTime',
+    salaryRange: '$135k - $180k',
+    status: JOB_POSTING_STATUS.ACTIVE,
+    expiresAt: daysFromNow(62),
+    skills: [
+      { slug: 'nodejs', yoe: 4 },
+      { slug: 'typescript', yoe: 4 },
+      { slug: 'postgresql', yoe: 4 },
+      { slug: 'websockets', yoe: 2 },
+      { slug: 'system-design', yoe: 3 },
+    ],
+  },
+  {
+    title: 'iOS Product Engineer',
+    companyTaxId: 'RS-461802735',
+    createdByUserKey: 'recruiterAirbnb',
+    shortDescription: 'Build mobile booking and host workflows for travelers and hosts.',
+    description: `## Create mobile travel experiences
+
+Build iOS product experiences across search, booking, guest messaging, and host operations.
+
+### You will
+
+- Ship Swift features across core travel flows
+- Partner with design on polished interactions
+- Improve experimentation and instrumentation
+- Support accessibility and localization
+- Collaborate with backend teams on APIs`,
+    workLocation: 'Hybrid',
+    employmentType: 'FullTime',
+    salaryRange: '$125k - $165k',
+    status: JOB_POSTING_STATUS.ACTIVE,
+    expiresAt: daysFromNow(44),
+    skills: [
+      { slug: 'swift', yoe: 3 },
+      { slug: 'api-design', yoe: 2 },
+      { slug: 'ui-ux-design', yoe: 2 },
+      { slug: 'unit-testing', yoe: 2 },
+      { slug: 'communication', yoe: 2 },
+    ],
+  },
+  {
+    title: 'Cloud Security Engineer',
+    companyTaxId: 'RS-639027411',
+    createdByUserKey: 'recruiterGreengrid',
+    shortDescription: 'Protect cloud infrastructure through controls, detection, and secure automation.',
+    description: `## Secure cloud platforms
+
+Build guardrails, detection logic, and response workflows for cloud infrastructure used by product teams.
+
+### You will
+
+- Harden AWS and Kubernetes environments
+- Improve identity and authorization controls
+- Write detection rules for suspicious activity
+- Automate remediation workflows
+- Partner with platform engineers on threat modeling`,
+    workLocation: 'Remote',
+    employmentType: 'FullTime',
+    salaryRange: '$125k - $170k',
+    status: JOB_POSTING_STATUS.ACTIVE,
+    expiresAt: daysFromNow(58),
+    skills: [
+      { slug: 'aws', yoe: 4 },
+      { slug: 'kubernetes', yoe: 3 },
+      { slug: 'web-security', yoe: 3 },
+      { slug: 'authorization', yoe: 2 },
+      { slug: 'infrastructure-as-code', yoe: 3 },
+    ],
+  },
+  {
+    title: 'Revenue Data Engineer',
+    companyTaxId: 'RS-782451006',
+    createdByUserKey: 'recruiterAstra',
+    shortDescription: 'Build reliable models and pipelines for revenue and payments analytics.',
+    description: `## Model revenue data
+
+Create trustworthy datasets for payments, billing, subscriptions, and financial reporting.
+
+### You will
+
+- Build data models and transformation pipelines
+- Improve data quality monitoring
+- Partner with finance and operations teams
+- Document metric ownership
+- Optimize warehouse query performance`,
+    workLocation: 'Remote',
+    employmentType: 'FullTime',
+    salaryRange: '$105k - $145k',
+    status: JOB_POSTING_STATUS.ACTIVE,
+    expiresAt: daysFromNow(38),
+    skills: [
+      { slug: 'sql', yoe: 4 },
+      { slug: 'data-modeling', yoe: 3 },
+      { slug: 'python', yoe: 3 },
+      { slug: 'data-analysis', yoe: 3 },
+      { slug: 'business-intelligence', yoe: 2 },
+    ],
+  },
+  {
+    title: 'Developer Experience Engineer',
+    companyTaxId: 'RS-104582913',
+    createdByUserKey: 'recruiterNorthstar',
+    shortDescription: 'Improve SDKs, documentation, and workflows for cloud platform developers.',
+    description: `## Improve developer experience
+
+Build tools, examples, documentation, and CI workflows that help developers adopt platform APIs faster.
+
+### You will
+
+- Improve TypeScript SDK ergonomics
+- Write practical guides and examples
+- Build developer workflow tooling
+- Measure friction in onboarding
+- Collaborate with product and support teams`,
+    workLocation: 'Hybrid',
+    employmentType: 'FullTime',
+    salaryRange: '$110k - $150k',
+    status: JOB_POSTING_STATUS.ACTIVE,
+    expiresAt: daysFromNow(33),
+    skills: [
+      { slug: 'typescript', yoe: 4 },
+      { slug: 'api-design', yoe: 3 },
+      { slug: 'technical-documentation', yoe: 3 },
+      { slug: 'nodejs', yoe: 3 },
+      { slug: 'communication', yoe: 2 },
+    ],
+  },
+  {
+    title: 'Frontend Performance Engineer',
+    companyTaxId: 'RS-318475920',
+    createdByUserKey: 'recruiterDanube',
+    shortDescription: 'Make storefront and checkout experiences faster across devices and regions.',
+    description: `## Make commerce experiences faster
+
+Improve frontend performance for high-traffic storefront, checkout, and merchant surfaces.
+
+### You will
+
+- Profile React rendering and bundle size
+- Improve Core Web Vitals
+- Build performance budgets into CI
+- Partner with platform and product teams
+- Document patterns for faster feature delivery`,
+    workLocation: 'Remote',
+    employmentType: 'Contract',
+    salaryRange: '$95k - $135k',
+    status: JOB_POSTING_STATUS.ACTIVE,
+    expiresAt: daysFromNow(26),
+    skills: [
+      { slug: 'reactjs', yoe: 4 },
+      { slug: 'typescript', yoe: 3 },
+      { slug: 'frontend-development', yoe: 4 },
+      { slug: 'playwright', yoe: 2 },
+      { slug: 'debugging', yoe: 3 },
+    ],
+  },
 ] as const;
 
 const applications = [
@@ -814,6 +1276,26 @@ const applications = [
     jobTitle: 'Security Software Engineer',
     status: JOB_APPLICATION_STATUS.UNDER_REVIEW,
   },
+  { userKey: 'candidateLazar', jobTitle: 'Security Software Engineer', status: JOB_APPLICATION_STATUS.ACCEPTED },
+  { userKey: 'candidateLazar', jobTitle: 'Cloud Security Engineer', status: JOB_APPLICATION_STATUS.UNDER_REVIEW },
+  { userKey: 'candidateLazar', jobTitle: 'Workspace Backend Engineer', status: JOB_APPLICATION_STATUS.SUBMITTED },
+  { userKey: 'candidateMina', jobTitle: 'Product Manager, Collaboration', status: JOB_APPLICATION_STATUS.UNDER_REVIEW },
+  { userKey: 'candidateMina', jobTitle: 'Data Analyst', status: JOB_APPLICATION_STATUS.REJECTED },
+  { userKey: 'candidateMina', jobTitle: 'Developer Experience Engineer', status: JOB_APPLICATION_STATUS.SUBMITTED },
+  { userKey: 'candidateUros', jobTitle: 'Design Systems Engineer', status: JOB_APPLICATION_STATUS.UNDER_REVIEW },
+  { userKey: 'candidateUros', jobTitle: 'Workspace Backend Engineer', status: JOB_APPLICATION_STATUS.ACCEPTED },
+  { userKey: 'candidateUros', jobTitle: 'Frontend Performance Engineer', status: JOB_APPLICATION_STATUS.SUBMITTED },
+  { userKey: 'candidateKatarina', jobTitle: 'iOS Product Engineer', status: JOB_APPLICATION_STATUS.UNDER_REVIEW },
+  { userKey: 'candidateKatarina', jobTitle: 'Junior Product Designer', status: JOB_APPLICATION_STATUS.SUBMITTED },
+  { userKey: 'candidateKatarina', jobTitle: 'Design Systems Engineer', status: JOB_APPLICATION_STATUS.REJECTED },
+  { userKey: 'candidateAna', jobTitle: 'Revenue Data Engineer', status: JOB_APPLICATION_STATUS.UNDER_REVIEW },
+  { userKey: 'candidateTeodora', jobTitle: 'Revenue Data Engineer', status: JOB_APPLICATION_STATUS.ACCEPTED },
+  { userKey: 'candidatePetar', jobTitle: 'Developer Experience Engineer', status: JOB_APPLICATION_STATUS.UNDER_REVIEW },
+  { userKey: 'candidateMilica', jobTitle: 'Design Systems Engineer', status: JOB_APPLICATION_STATUS.SUBMITTED },
+  { userKey: 'candidateStefan', jobTitle: 'Cloud Security Engineer', status: JOB_APPLICATION_STATUS.ACCEPTED },
+  { userKey: 'candidateJovana', jobTitle: 'Product Manager, Collaboration', status: JOB_APPLICATION_STATUS.SUBMITTED },
+  { userKey: 'candidateNikola', jobTitle: 'Workspace Backend Engineer', status: JOB_APPLICATION_STATUS.UNDER_REVIEW },
+  { userKey: 'candidateTeodora', jobTitle: 'Product Manager, Collaboration', status: JOB_APPLICATION_STATUS.WITHDRAWN },
 ] as const;
 
 const applicationReviews = [
@@ -944,6 +1426,13 @@ type ApplicationSeedRecord = {
 };
 
 type UserKey = (typeof users)[number]['key'];
+
+const applicationCreatedDaysAgo = [
+  57, 57, 56, 54, 54, 54, 51, 49, 49, 45,
+  45, 45, 45, 42, 39, 39, 36, 36, 36, 34,
+  31, 31, 29, 25, 25, 25, 25, 25, 21, 18,
+  18, 18, 15, 12, 12, 8, 8, 8, 5, 2,
+] as const;
 
 const getBySlug = async () => {
   const rows = await db.select({ id: skill.id, slug: skill.slug }).from(skill);
@@ -1158,7 +1647,6 @@ const seedJobs = async (userByKey: Map<UserKey, string>) => {
 
   for (const [jobIndex, item] of jobs.entries()) {
     const companyId = requireMapValue(companiesByTaxId, item.companyTaxId, 'company tax id');
-    const logistics = seededJobLogistics[jobIndex % seededJobLogistics.length];
     const createdAt = daysAgo(70 - jobIndex * 3);
     const [createdJob] = await db
       .insert(jobPosting)
@@ -1167,9 +1655,9 @@ const seedJobs = async (userByKey: Map<UserKey, string>) => {
         title: item.title,
         shortDescription: item.shortDescription,
         description: expandJobDescription(item.description),
-        workLocation: logistics.workLocation,
-        employmentType: logistics.employmentType,
-        salaryRange: logistics.salaryRange,
+        workLocation: item.workLocation,
+        employmentType: item.employmentType,
+        salaryRange: item.salaryRange,
         status: item.status,
         expiresAt: item.expiresAt,
         createdBy: requireMapValue(userByKey, item.createdByUserKey, 'seed user key'),
@@ -1208,6 +1696,8 @@ const seedApplications = async (jobByTitle: Map<string, number>, userByKey: Map<
 
   for (const [applicationIndex, item] of applications.entries()) {
     const jobSeed = jobs.find((job) => job.title === item.jobTitle);
+    const createdDaysAgo = applicationCreatedDaysAgo[applicationIndex % applicationCreatedDaysAgo.length];
+    const statusUpdatedDaysAgo = Math.max(1, createdDaysAgo - (applicationIndex % 4 === 0 ? 7 : applicationIndex % 3));
 
     if (!jobSeed) {
       throw new Error(`Missing seed job definition for application "${item.jobTitle}".`);
@@ -1219,8 +1709,8 @@ const seedApplications = async (jobByTitle: Map<string, number>, userByKey: Map<
         userId: requireMapValue(userByKey, item.userKey, 'seed user key'),
         jobPostingId: requireMapValue(jobByTitle, item.jobTitle, 'seed job title'),
         status: item.status,
-        createdAt: daysAgo(35 - (applicationIndex % 24)),
-        updatedAt: daysAgo(Math.max(1, 15 - (applicationIndex % 12))),
+        createdAt: daysAgo(createdDaysAgo),
+        updatedAt: daysAgo(statusUpdatedDaysAgo),
       })
       .returning({ id: jobApplication.id });
 
@@ -1239,7 +1729,7 @@ const seedApplications = async (jobByTitle: Map<string, number>, userByKey: Map<
         jobApplicationId: createdApplication.id,
         status,
         reason: statusIndex === 0 ? 'Application submitted.' : `Application moved to ${status}.`,
-        createdAt: daysAgo(Math.max(0, 35 - (applicationIndex % 24) - statusIndex * 3)),
+        createdAt: daysAgo(Math.max(0, createdDaysAgo - statusIndex * 3)),
       })),
     );
   }

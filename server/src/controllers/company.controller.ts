@@ -13,6 +13,17 @@ export class CompanyController {
   ) {}
 
   /**
+   * Returns approved public companies with the number of active open positions.
+   *
+   * @param req Express request containing public list query parameters.
+   * @param res Express response returning paginated public companies.
+   */
+  async getCompanies(req: Request, res: Response) {
+    const result = await this.companyService.getCompanies(req.query);
+    res.status(200).send(successResponse(result.data, undefined, result.pagination));
+  }
+
+  /**
    * Returns public job postings for one company.
    *
    * The service validates the company id and query parameters, then returns

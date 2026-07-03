@@ -89,7 +89,7 @@ export class AnalyticsRepository {
     };
   }
 
-  async getRecruiterOverview(companyId: number, range: DateRange) {
+  async getRecruiterOverview(companyId: number, range: DateRange, view: 'overview' | 'postings' = 'overview') {
     const postingConditions = [
       eq(jobPosting.companyId, companyId),
       eq(jobPosting.isDeleted, false),
@@ -108,7 +108,7 @@ export class AnalyticsRepository {
       postingsByStatus,
       applicationsByStatus,
       applicationsOverTime,
-      topPostings,
+      postingPerformance,
     ] = await Promise.all([
       this.db
         .select({
@@ -155,21 +155,31 @@ export class AnalyticsRepository {
         .where(and(...applicationConditions))
         .groupBy(dayExpression(jobApplication.createdAt))
         .orderBy(dayExpression(jobApplication.createdAt)),
-      this.db
-        .select({
-          id: jobPosting.id,
-          title: jobPosting.title,
-          applications: sql<number>`count(${jobApplication.id})::int`,
-        })
-        .from(jobPosting)
-        .leftJoin(
-          jobApplication,
-          and(eq(jobApplication.jobPostingId, jobPosting.id), eq(jobApplication.isDeleted, false)),
-        )
-        .where(and(eq(jobPosting.companyId, companyId), eq(jobPosting.isDeleted, false)))
-        .groupBy(jobPosting.id, jobPosting.title)
-        .orderBy(desc(sql<number>`count(${jobApplication.id})`))
-        .limit(5),
+      view === 'postings'
+        ? this.db
+          .select({
+            id: jobPosting.id,
+            title: jobPosting.title,
+            status: jobPosting.status,
+            expiresAt: sql<string | null>`to_char(${jobPosting.expiresAt}, 'YYYY-MM-DD')`,
+            applications: sql<number>`count(${jobApplication.id})::int`,
+            underReview: sql<number>`count(${jobApplication.id}) filter (where ${jobApplication.status} = ${JOB_APPLICATION_STATUS.UNDER_REVIEW})::int`,
+            accepted: sql<number>`count(${jobApplication.id}) filter (where ${jobApplication.status} = ${JOB_APPLICATION_STATUS.ACCEPTED})::int`,
+            rejected: sql<number>`count(${jobApplication.id}) filter (where ${jobApplication.status} = ${JOB_APPLICATION_STATUS.REJECTED})::int`,
+          })
+          .from(jobPosting)
+          .leftJoin(
+            jobApplication,
+            and(
+              eq(jobApplication.jobPostingId, jobPosting.id),
+              eq(jobApplication.isDeleted, false),
+              ...this.getRangeConditions(jobApplication.createdAt, range),
+            ),
+          )
+          .where(and(eq(jobPosting.companyId, companyId), eq(jobPosting.isDeleted, false)))
+          .groupBy(jobPosting.id, jobPosting.title, jobPosting.status, jobPosting.expiresAt)
+          .orderBy(desc(sql<number>`count(${jobApplication.id})`), desc(jobPosting.createdAt))
+        : Promise.resolve([]),
     ]);
 
     return {
@@ -184,12 +194,112 @@ export class AnalyticsRepository {
         postingsByStatus,
         applicationsByStatus,
         applicationsOverTime,
-        topPostings,
+        postingPerformance,
+      },
+    };
+  }
+
+  async getRecruiterJobPostingOverview(companyId: number, jobPostingId: number, range: DateRange) {
+    const [posting] = await this.db
+      .select({
+        id: jobPosting.id,
+        title: jobPosting.title,
+        status: jobPosting.status,
+        workLocation: jobPosting.workLocation,
+        employmentType: jobPosting.employmentType,
+        salaryRange: jobPosting.salaryRange,
+        expiresAt: sql<string | null>`to_char(${jobPosting.expiresAt}, 'YYYY-MM-DD')`,
+      })
+      .from(jobPosting)
+      .where(and(
+        eq(jobPosting.id, jobPostingId),
+        eq(jobPosting.companyId, companyId),
+        eq(jobPosting.isDeleted, false),
+      ));
+
+    if (!posting) {
+      return null;
+    }
+
+    const applicationConditions = [
+      eq(jobApplication.jobPostingId, jobPostingId),
+      eq(jobApplication.isDeleted, false),
+      ...this.getRangeConditions(jobApplication.createdAt, range),
+    ];
+
+    const [[applicationStats], applicationsByStatus, applicationsOverTime, requiredSkills] = await Promise.all([
+      this.db
+        .select({
+          totalApplications: sql<number>`count(*)::int`,
+          underReviewApplications: sql<number>`count(*) filter (where ${jobApplication.status} = ${JOB_APPLICATION_STATUS.UNDER_REVIEW})::int`,
+          acceptedApplications: sql<number>`count(*) filter (where ${jobApplication.status} = ${JOB_APPLICATION_STATUS.ACCEPTED})::int`,
+          rejectedApplications: sql<number>`count(*) filter (where ${jobApplication.status} = ${JOB_APPLICATION_STATUS.REJECTED})::int`,
+        })
+        .from(jobApplication)
+        .where(and(...applicationConditions)),
+      this.db
+        .select({
+          status: jobApplication.status,
+          value: sql<number>`count(*)::int`,
+        })
+        .from(jobApplication)
+        .where(and(...applicationConditions))
+        .groupBy(jobApplication.status)
+        .orderBy(jobApplication.status),
+      this.db
+        .select({
+          date: dayExpression(jobApplication.createdAt),
+          applications: sql<number>`count(*)::int`,
+        })
+        .from(jobApplication)
+        .where(and(...applicationConditions))
+        .groupBy(dayExpression(jobApplication.createdAt))
+        .orderBy(dayExpression(jobApplication.createdAt)),
+      this.db
+        .select({
+          skill: skill.name,
+          yoe: jobPostingSkill.yoe,
+          value: sql<number>`coalesce(${jobPostingSkill.yoe}, 0)::int`,
+        })
+        .from(jobPostingSkill)
+        .innerJoin(skill, eq(skill.id, jobPostingSkill.skillId))
+        .where(eq(jobPostingSkill.jobPostingId, jobPostingId))
+        .orderBy(skill.name),
+    ]);
+
+    return {
+      jobPosting: posting,
+      stats: [
+        { key: 'applications', label: 'Applications', value: applicationStats?.totalApplications ?? 0 },
+        { key: 'underReview', label: 'Under review', value: applicationStats?.underReviewApplications ?? 0 },
+        { key: 'accepted', label: 'Accepted', value: applicationStats?.acceptedApplications ?? 0 },
+        { key: 'rejected', label: 'Rejected', value: applicationStats?.rejectedApplications ?? 0 },
+      ],
+      charts: {
+        applicationsByStatus,
+        applicationsOverTime,
+        requiredSkills,
       },
     };
   }
 
   async getAdminOverview(range: DateRange) {
+    const reviewDays = sql<number>`extract(epoch from (${jobApplication.updatedAt} - ${jobApplication.createdAt})) / 86400`;
+    const reviewSpeedBucket = sql<string>`case
+      when ${reviewDays} < 1 then 'Same day'
+      when ${reviewDays} < 4 then '1-3 days'
+      when ${reviewDays} < 8 then '4-7 days'
+      else '8+ days'
+    end`;
+    const reviewSpeedSort = sql<number>`case
+      when ${reviewDays} < 1 then 1
+      when ${reviewDays} < 4 then 2
+      when ${reviewDays} < 8 then 3
+      else 4
+    end`;
+    const skillDemand = sql<number>`count(distinct ${jobPosting.id})`;
+    const skillSupply = sql<number>`count(distinct ${user.id})`;
+
     const [
       [companyStats],
       [postingStats],
@@ -201,6 +311,10 @@ export class AnalyticsRepository {
       usersByRole,
       topSkillsByPostingDemand,
       topSkillsByCandidateSupply,
+      applicationsPerCompany,
+      applicationReviewSpeed,
+      skillDemandSupplyGap,
+      activeJobsByWorkLocation,
     ] = await Promise.all([
       this.db
         .select({
@@ -291,6 +405,77 @@ export class AnalyticsRepository {
         .groupBy(skill.id, skill.name)
         .orderBy(desc(sql<number>`count(${userSkill.id})`))
         .limit(10),
+      this.db
+        .select({
+          company: company.name,
+          value: sql<number>`count(${jobApplication.id})::int`,
+        })
+        .from(jobApplication)
+        .innerJoin(jobPosting, eq(jobPosting.id, jobApplication.jobPostingId))
+        .innerJoin(company, eq(company.id, jobPosting.companyId))
+        .where(and(
+          eq(jobApplication.isDeleted, false),
+          eq(jobPosting.isDeleted, false),
+          eq(company.isDeleted, false),
+          ...this.getRangeConditions(jobApplication.createdAt, range),
+        ))
+        .groupBy(company.id, company.name)
+        .orderBy(desc(sql<number>`count(${jobApplication.id})`))
+        .limit(10),
+      this.db
+        .select({
+          bucket: reviewSpeedBucket,
+          sort: reviewSpeedSort,
+          value: sql<number>`count(${jobApplication.id})::int`,
+        })
+        .from(jobApplication)
+        .where(and(
+          eq(jobApplication.isDeleted, false),
+          sql`${jobApplication.status} <> ${JOB_APPLICATION_STATUS.SUBMITTED}`,
+          ...this.getRangeConditions(jobApplication.createdAt, range),
+        ))
+        .groupBy(reviewSpeedBucket, reviewSpeedSort)
+        .orderBy(reviewSpeedSort),
+      this.db
+        .select({
+          skill: skill.name,
+          demand: sql<number>`${skillDemand}::int`,
+          supply: sql<number>`${skillSupply}::int`,
+          value: sql<number>`(${skillSupply} - ${skillDemand})::int`,
+        })
+        .from(skill)
+        .leftJoin(jobPostingSkill, eq(jobPostingSkill.skillId, skill.id))
+        .leftJoin(
+          jobPosting,
+          and(
+            eq(jobPosting.id, jobPostingSkill.jobPostingId),
+            eq(jobPosting.isDeleted, false),
+          ),
+        )
+        .leftJoin(userSkill, eq(userSkill.skillId, skill.id))
+        .leftJoin(
+          user,
+          and(
+            eq(user.id, userSkill.userId),
+            eq(user.isDeleted, false),
+            eq(user.role, USER_ROLE.CANDIDATE),
+          ),
+        )
+        .groupBy(skill.id, skill.name)
+        .orderBy(desc(sql<number>`abs(${skillSupply} - ${skillDemand})`))
+        .limit(20),
+      this.db
+        .select({
+          location: jobPosting.workLocation,
+          value: sql<number>`count(*)::int`,
+        })
+        .from(jobPosting)
+        .where(and(
+          eq(jobPosting.isDeleted, false),
+          eq(jobPosting.status, JOB_POSTING_STATUS.ACTIVE),
+        ))
+        .groupBy(jobPosting.workLocation)
+        .orderBy(desc(sql<number>`count(*)`)),
     ]);
 
     return {
@@ -316,6 +501,10 @@ export class AnalyticsRepository {
         usersByRole,
         topSkillsByPostingDemand,
         topSkillsByCandidateSupply,
+        applicationsPerCompany,
+        applicationReviewSpeed,
+        skillDemandSupplyGap,
+        activeJobsByWorkLocation,
       },
     };
   }

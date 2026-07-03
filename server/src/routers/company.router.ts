@@ -7,6 +7,8 @@ export const getCompanyRouter = () => {
   const router = express.Router();
   const companyController = container.resolve<CompanyController>(TOKENS.companyController);
 
+  router.get('/', companyController.getCompanies.bind(companyController));
+
   router.get('/:id/job-postings', companyController.getPublicJobPostings.bind(companyController));
 
   router.get('/:id/reviews', companyController.getCompanyReviews.bind(companyController));

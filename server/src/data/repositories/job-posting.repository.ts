@@ -40,6 +40,7 @@ export type JobPostingListItem = Omit<JobPosting, 'companyId' | 'description' | 
     id: number;
     name: string;
     logo: string | null;
+    websiteUrl: string | null;
   };
 };
 
@@ -160,6 +161,7 @@ export class JobPostingRepository extends GenericRepository<JobPosting, JobPosti
             id: company.id,
             name: company.name,
             logo: company.logoUrl,
+            websiteUrl: company.websiteUrl,
           },
         }
       : jobPostingSelectColumns;

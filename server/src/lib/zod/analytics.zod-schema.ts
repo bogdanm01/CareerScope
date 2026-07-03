@@ -6,6 +6,7 @@ export const AnalyticsOverviewRequestSchema = z
   .object({
     from: IsoDateSchema.optional(),
     to: IsoDateSchema.optional(),
+    view: z.enum(['overview', 'postings']).optional(),
   })
   .refine(
     (value) => {

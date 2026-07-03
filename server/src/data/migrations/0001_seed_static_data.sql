@@ -179,3 +179,241 @@ FROM (
 ) AS skill_data(name, description, slug, category_slug)
 JOIN "skill_category" ON "skill_category"."slug" = skill_data.category_slug
 ON CONFLICT ("slug") DO NOTHING;
+
+-- Keep skill YOE requirement flags aligned with the current model.
+UPDATE "skill"
+SET "requires_years_of_experience" = false
+WHERE "category_id" IN (
+  SELECT "id"
+  FROM "skill_category"
+  WHERE "slug" IN ('soft_skill')
+);
+
+-- Seed static companies used by local development and demo data.
+INSERT INTO "company" (
+  "name",
+  "is_approved",
+  "approval_status",
+  "approval_rejection_reason",
+  "approved_at",
+  "tax_id",
+  "short_description",
+  "description",
+  "founding_year",
+  "number_of_employees",
+  "address",
+  "logo_url",
+  "website_url",
+  "is_deleted"
+)
+VALUES
+  (
+    'Microsoft',
+    true,
+    'Approved',
+    NULL,
+    NOW(),
+    'RS-104582913',
+    'Technology company building cloud, productivity, developer, and AI platforms.',
+    $$## Technology platforms for work and development
+
+Microsoft builds software, cloud infrastructure, developer tools, business applications, gaming products, and AI services used by organizations and consumers around the world.
+
+### Product areas
+
+- Azure cloud infrastructure and platform services
+- Microsoft 365 productivity and collaboration tools
+- GitHub and developer workflows
+- Dynamics business applications
+- Windows, Xbox, and consumer services
+
+The company focuses on helping people and organizations be more productive through integrated software, cloud, and AI capabilities.$$,
+    1975,
+    221000,
+    'One Microsoft Way, Redmond, WA, USA',
+    NULL,
+    'https://www.microsoft.com',
+    false
+  ),
+  (
+    'Stripe',
+    true,
+    'Approved',
+    NULL,
+    NOW(),
+    'RS-782451006',
+    'Financial infrastructure platform for online payments and business operations.',
+    $$## Financial infrastructure for the internet
+
+Stripe builds payment processing, billing, fraud prevention, tax, issuing, and financial workflow tools for businesses operating online and across platforms.
+
+Its APIs and dashboard help companies accept payments, manage subscriptions, automate revenue operations, and launch marketplace or platform payment flows.
+
+### Product areas
+
+- Payments and checkout
+- Billing and subscriptions
+- Connect platform payments
+- Radar fraud prevention
+- Revenue and tax automation$$,
+    2010,
+    8500,
+    '354 Oyster Point Blvd, South San Francisco, CA, USA',
+    NULL,
+    'https://stripe.com',
+    false
+  ),
+  (
+    'Cloudflare',
+    true,
+    'Approved',
+    NULL,
+    NOW(),
+    'RS-639027411',
+    'Connectivity cloud company for security, performance, and developer services.',
+    $$## Connectivity cloud
+
+Cloudflare provides a global network that helps organizations make websites, applications, APIs, and networks faster, safer, and more reliable.
+
+Its products span content delivery, DDoS protection, zero trust security, application services, developer compute, and network connectivity.
+
+### Product areas
+
+- CDN and application performance
+- Web application and API security
+- Zero trust access
+- Developer platform services
+- Network and infrastructure protection$$,
+    2009,
+    3600,
+    '101 Townsend St, San Francisco, CA, USA',
+    NULL,
+    'https://www.cloudflare.com',
+    false
+  ),
+  (
+    'Datadog',
+    true,
+    'Approved',
+    NULL,
+    NOW(),
+    'RS-927614358',
+    'Observability and security platform for cloud applications.',
+    $$## Observability for modern systems
+
+Datadog provides monitoring, observability, and security products that help engineering and operations teams understand distributed systems in production.
+
+Teams use Datadog to collect metrics, traces, logs, user experience signals, cloud security findings, and application performance data in one platform.
+
+### Product areas
+
+- Infrastructure monitoring
+- Application performance monitoring
+- Log management
+- Security monitoring
+- Real user monitoring and synthetic tests$$,
+    2010,
+    5200,
+    '620 8th Ave, New York, NY, USA',
+    NULL,
+    'https://www.datadoghq.com',
+    false
+  ),
+  (
+    'Doctolib',
+    false,
+    'PendingApproval',
+    NULL,
+    NULL,
+    'RS-510936284',
+    'Digital health platform for booking appointments and managing care workflows.',
+    $$## Digital tools for healthcare access
+
+Doctolib builds products that help patients book healthcare appointments and help healthcare professionals manage schedules, communication, and practice workflows.
+
+The platform focuses on improving access to care and reducing administrative load for medical teams.
+
+### Product areas
+
+- Online appointment booking
+- Patient communication
+- Practice management workflows
+- Telehealth and care coordination
+- Tools for healthcare professionals$$,
+    2013,
+    2800,
+    '54 Quai Charles Pasqua, Levallois-Perret, France',
+    NULL,
+    'https://www.doctolib.fr',
+    false
+  ),
+  (
+    'Shopify',
+    true,
+    'Approved',
+    NULL,
+    NOW(),
+    'RS-318475920',
+    'Commerce platform for online stores, retail operations, payments, and fulfillment.',
+    $$## Commerce operating system
+
+Shopify provides software and services that help merchants create online stores, sell across channels, accept payments, manage operations, and grow commerce businesses.
+
+Its platform supports entrepreneurs, retailers, and large brands across storefronts, point of sale, checkout, payments, marketing, and analytics.
+
+### Product areas
+
+- Online storefronts and checkout
+- Retail point of sale
+- Payments and financial tools
+- Merchant analytics
+- Developer and partner ecosystem$$,
+    2006,
+    7600,
+    '151 OConnor St, Ottawa, ON, Canada',
+    NULL,
+    'https://www.shopify.com',
+    false
+  ),
+  (
+    'GitLab',
+    true,
+    'Approved',
+    NULL,
+    NOW(),
+    'RS-846205731',
+    'DevSecOps platform for source control, CI/CD, security, and software delivery.',
+    $$## DevSecOps in one platform
+
+GitLab provides a software delivery platform that brings planning, source code management, CI/CD, security testing, and deployment workflows into one application.
+
+Engineering teams use GitLab to collaborate on code, automate pipelines, review changes, scan for vulnerabilities, and manage software delivery.
+
+### Product areas
+
+- Source code management
+- Continuous integration and delivery
+- Security scanning
+- Planning and issue tracking
+- Release and deployment workflows$$,
+    2014,
+    2100,
+    '268 Bush St, San Francisco, CA, USA',
+    NULL,
+    'https://about.gitlab.com',
+    false
+  )
+ON CONFLICT ("tax_id") DO UPDATE SET
+  "name" = EXCLUDED."name",
+  "is_approved" = EXCLUDED."is_approved",
+  "approval_status" = EXCLUDED."approval_status",
+  "approval_rejection_reason" = EXCLUDED."approval_rejection_reason",
+  "approved_at" = EXCLUDED."approved_at",
+  "short_description" = EXCLUDED."short_description",
+  "description" = EXCLUDED."description",
+  "founding_year" = EXCLUDED."founding_year",
+  "number_of_employees" = EXCLUDED."number_of_employees",
+  "address" = EXCLUDED."address",
+  "logo_url" = EXCLUDED."logo_url",
+  "website_url" = EXCLUDED."website_url",
+  "is_deleted" = EXCLUDED."is_deleted";

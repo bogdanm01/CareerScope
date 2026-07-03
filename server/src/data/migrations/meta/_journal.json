@@ -5,50 +5,15 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1778958611280,
-      "tag": "0000_initial_migration",
+      "when": 1782995371598,
+      "tag": "0000_initial_schema",
       "breakpoints": true
     },
     {
       "idx": 1,
       "version": "7",
-      "when": 1778958624498,
-      "tag": "0001_seed_skills",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1778958625063,
-      "tag": "0002_seed_companies",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1779019872916,
-      "tag": "0003_add_tax_id_unqiue",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1779138547177,
-      "tag": "0004_add_company_approval_fields",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1782525600000,
-      "tag": "0005_add_skill_yoe_requirement",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1782894553307,
-      "tag": "0006_magenta_blockbuster",
+      "when": 1782995371599,
+      "tag": "0001_seed_static_data",
       "breakpoints": true
     }
   ]

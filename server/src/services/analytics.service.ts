@@ -3,16 +3,15 @@ import { TOKENS } from '../config/dependency-tokens.ts';
 import { AnalyticsRepository } from '../data/repositories/analytics.repository.ts';
 import { USER_ROLE, type UserRole } from '../data/util/constants.ts';
 import { AnalyticsOverviewRequestSchema } from '../lib/zod/analytics.zod-schema.ts';
+import { IntegerIdSchema } from '../lib/zod/integer-id.zod-schema.ts';
 import { ZodValidationError } from '../lib/zod-validation-error.ts';
-import { ForbiddenError } from '../lib/app-error.ts';
+import { ForbiddenError, NotFoundError } from '../lib/app-error.ts';
 
 type AnalyticsUser = {
   id: string;
   role: string;
   companyId?: number | null;
 };
-
-const DAY_IN_MS = 24 * 60 * 60 * 1000;
 
 const toStartOfDay = (value: string) => {
   const date = new Date(`${value}T00:00:00.000Z`);
@@ -26,11 +25,14 @@ const toEndOfDay = (value: string) => {
 
 const formatDateOnly = (date: Date) => date.toISOString().slice(0, 10);
 
+const getDefaultFromDate = (today: Date) =>
+  new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() - 3, 1));
+
 @injectable()
 export class AnalyticsService {
   constructor(@inject(TOKENS.analyticsRepository) private analyticsRepository: AnalyticsRepository) {}
 
-  async getOverview(payload: unknown, user: AnalyticsUser) {
+  private getRange(payload: unknown) {
     const validationResult = AnalyticsOverviewRequestSchema.safeParse(payload);
 
     if (!validationResult.success) {
@@ -38,10 +40,15 @@ export class AnalyticsService {
     }
 
     const today = new Date();
-    const defaultFrom = new Date(today.getTime() - 29 * DAY_IN_MS);
+    const defaultFrom = getDefaultFromDate(today);
     const from = validationResult.data.from ? toStartOfDay(validationResult.data.from) : toStartOfDay(formatDateOnly(defaultFrom));
     const to = validationResult.data.to ? toEndOfDay(validationResult.data.to) : toEndOfDay(formatDateOnly(today));
-    const range = { from, to };
+    return { from, to, view: validationResult.data.view };
+  }
+
+  async getOverview(payload: unknown, user: AnalyticsUser) {
+    const { view, ...range } = this.getRange(payload);
+    const { from, to } = range;
     const role = user.role as UserRole;
 
     if (role === USER_ROLE.CANDIDATE) {
@@ -60,7 +67,11 @@ export class AnalyticsService {
         throw new ForbiddenError('Recruiter is not assigned to a company.');
       }
 
-      const overview = await this.analyticsRepository.getRecruiterOverview(user.companyId, range);
+      const overview = await this.analyticsRepository.getRecruiterOverview(
+        user.companyId,
+        range,
+        view ?? 'overview',
+      );
       return {
         data: {
           role,
@@ -82,5 +93,38 @@ export class AnalyticsService {
     }
 
     throw new ForbiddenError();
+  }
+
+  async getRecruiterJobPostingOverview(params: unknown, payload: unknown, user: AnalyticsUser) {
+    const idValidationResult = IntegerIdSchema.safeParse(params);
+
+    if (!idValidationResult.success) {
+      throw new ZodValidationError(idValidationResult.error);
+    }
+
+    if (user.role !== USER_ROLE.RECRUITER || !user.companyId) {
+      throw new ForbiddenError();
+    }
+
+    const rangeWithView = this.getRange(payload);
+    const range = { from: rangeWithView.from, to: rangeWithView.to };
+    const { from, to } = range;
+    const overview = await this.analyticsRepository.getRecruiterJobPostingOverview(
+      user.companyId,
+      idValidationResult.data.id,
+      range,
+    );
+
+    if (!overview) {
+      throw new NotFoundError('Job posting not found.');
+    }
+
+    return {
+      data: {
+        role: USER_ROLE.RECRUITER,
+        range: { from: formatDateOnly(from), to: formatDateOnly(to) },
+        ...overview,
+      },
+    };
   }
 }

@@ -79,6 +79,8 @@ CREATE TABLE "company" (
 	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "company_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"name" text NOT NULL,
 	"is_approved" boolean DEFAULT false NOT NULL,
+	"approval_status" text DEFAULT 'PendingApproval' NOT NULL,
+	"approval_rejection_reason" text,
 	"approved_at" timestamp with time zone,
 	"tax_id" text NOT NULL,
 	"short_description" text,
@@ -88,7 +90,8 @@ CREATE TABLE "company" (
 	"address" text NOT NULL,
 	"logo_url" text,
 	"website_url" text,
-	"is_deleted" boolean DEFAULT false NOT NULL
+	"is_deleted" boolean DEFAULT false NOT NULL,
+	CONSTRAINT "company_tax_id_unique" UNIQUE("tax_id")
 );
 --> statement-breakpoint
 CREATE TABLE "job_application" (
@@ -125,13 +128,18 @@ CREATE TABLE "job_posting" (
 	"title" text,
 	"short_description" text,
 	"description" text,
+	"work_location" text,
+	"employment_type" text,
+	"salary_range" text,
 	"status" text NOT NULL,
 	"expires_at" timestamp with time zone,
 	"created_by" text NOT NULL,
 	"is_deleted" boolean DEFAULT false NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now(),
 	"updated_at" timestamp with time zone,
-	CONSTRAINT "status_check" CHECK ("job_posting"."status" IN ('Draft', 'PendingApproval', 'Rejected', 'Active', 'Paused', 'Closed', 'Expired'))
+	CONSTRAINT "status_check" CHECK ("job_posting"."status" IN ('Draft', 'PendingApproval', 'Rejected', 'Active', 'Paused', 'Closed', 'Expired')),
+	CONSTRAINT "work_location_check" CHECK ("job_posting"."work_location" IN ('Remote', 'OnSite', 'Hybrid')),
+	CONSTRAINT "employment_type_check" CHECK ("job_posting"."employment_type" IN ('FullTime', 'PartTime', 'Contract', 'Internship', 'Temporary', 'Other'))
 );
 --> statement-breakpoint
 CREATE TABLE "notification" (
@@ -159,6 +167,7 @@ CREATE TABLE "skill" (
 	"name" text NOT NULL,
 	"description" text NOT NULL,
 	"slug" text NOT NULL,
+	"requires_years_of_experience" boolean DEFAULT true NOT NULL,
 	"category_id" integer NOT NULL,
 	"search_vector" "tsvector" GENERATED ALWAYS AS (to_tsvector('english', coalesce("name", '') || ' ' || coalesce("description", ''))) STORED,
 	"created_at" timestamp with time zone DEFAULT now(),
@@ -170,7 +179,7 @@ CREATE TABLE "user_skill" (
 	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "user_skill_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
 	"user_id" text NOT NULL,
 	"skill_id" integer NOT NULL,
-	"years_of_experience" integer NOT NULL,
+	"years_of_experience" integer,
 	"created_at" timestamp with time zone DEFAULT now(),
 	"updated_at" timestamp with time zone,
 	CONSTRAINT "user_id_skill_id_unq" UNIQUE("user_id","skill_id")

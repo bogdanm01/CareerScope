@@ -1,1 +1,0 @@
-ALTER TABLE "company" ADD CONSTRAINT "company_tax_id_unique" UNIQUE("tax_id");

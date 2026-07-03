@@ -12,4 +12,9 @@ export class AnalyticsController {
     const result = await this.analyticsService.getOverview(req.query, req.user);
     res.status(200).send(successResponse(result.data));
   }
+
+  async getRecruiterJobPostingOverview(req: Request, res: Response) {
+    const result = await this.analyticsService.getRecruiterJobPostingOverview(req.params, req.query, req.user);
+    res.status(200).send(successResponse(result.data));
+  }
 }

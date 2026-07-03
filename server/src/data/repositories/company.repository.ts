@@ -4,12 +4,13 @@ import { inject, injectable } from 'tsyringe';
 import { TOKENS } from '../../config/dependency-tokens.ts';
 import { DbClient } from '../../config/db-client.ts';
 import { company } from '../schema/company.schema.ts';
-import { and, asc, count, desc, eq, ilike, or, SQL, sql } from 'drizzle-orm';
+import { and, asc, count, desc, eq, gte, ilike, or, SQL, sql } from 'drizzle-orm';
 import { user } from '../schema/auth.schema.ts';
-import { COMPANY_APPROVAL_STATUS, ONBOARDING_STATUS, USER_ROLE } from '../util/constants.ts';
+import { COMPANY_APPROVAL_STATUS, JOB_POSTING_STATUS, ONBOARDING_STATUS, USER_ROLE } from '../util/constants.ts';
 import { applicationReview } from '../schema/application-review.schema.ts';
 import { jobApplication } from '../schema/job-application.schema.ts';
 import type { AdminCompanyListRequest } from '../../lib/zod/admin-company.zod-schema.ts';
+import { jobPosting } from '../schema/job-posting.schema.ts';
 
 export type PendingRecruiterOnboardingRequest = {
   company: {
@@ -78,6 +79,11 @@ type FindCompanyReviewsPagination = {
   pageSize?: number;
 };
 
+type FindPublicCompaniesPagination = {
+  page?: number;
+  pageSize?: number;
+};
+
 type FindAdminCompaniesFilters = Pick<
   AdminCompanyListRequest,
   'search' | 'approvalStatus' | 'isApproved' | 'isDeleted' | 'sort' | 'orderBy'
@@ -104,6 +110,18 @@ export type AdminCompanyListItem = {
   approvalRejectionReason: string | null;
   approvedAt: Date | null;
   isDeleted: boolean;
+};
+
+export type PublicCompanyListItem = {
+  id: number;
+  name: string;
+  shortDescription: string | null;
+  foundingYear: number | null;
+  numberOfEmployees: number | null;
+  address: string;
+  logoUrl: string | null;
+  websiteUrl: string | null;
+  openPositionsCount: number;
 };
 
 export type CompanyReviewListItem = {
@@ -225,6 +243,64 @@ export class CompanyRepository extends GenericRepository<Company, CompanyInsert,
       .limit(1);
 
     return record ?? null;
+  }
+
+  async findPublicCompanies(
+    filters: { search?: string } = {},
+    pagination: FindPublicCompaniesPagination = {},
+  ): Promise<{ data: PublicCompanyListItem[]; totalItems: number }> {
+    const { page = 1, pageSize = 50 } = pagination;
+    const offset = (page - 1) * pageSize;
+    const conditions: SQL[] = [eq(company.isApproved, true), eq(company.isDeleted, false)];
+    const activeJobJoinCondition = and(
+      eq(jobPosting.companyId, company.id),
+      eq(jobPosting.status, JOB_POSTING_STATUS.ACTIVE),
+      eq(jobPosting.isDeleted, false),
+      gte(jobPosting.expiresAt, new Date()),
+    );
+
+    if (filters.search) {
+      const pattern = `%${filters.search}%`;
+      conditions.push(or(ilike(company.name, pattern), ilike(company.shortDescription, pattern)) as SQL);
+    }
+
+    const recordsQuery = this.db
+      .select({
+        id: company.id,
+        name: company.name,
+        shortDescription: company.shortDescription,
+        foundingYear: company.foundingYear,
+        numberOfEmployees: company.numberOfEmployees,
+        address: company.address,
+        logoUrl: company.logoUrl,
+        websiteUrl: company.websiteUrl,
+        openPositionsCount: sql<number>`cast(count(${jobPosting.id}) as int)`,
+      })
+      .from(company)
+      .leftJoin(jobPosting, activeJobJoinCondition)
+      .where(and(...conditions))
+      .groupBy(
+        company.id,
+        company.name,
+        company.shortDescription,
+        company.foundingYear,
+        company.numberOfEmployees,
+        company.address,
+        company.logoUrl,
+        company.websiteUrl,
+      )
+      .orderBy(asc(company.name))
+      .limit(pageSize)
+      .offset(offset);
+
+    const countQuery = this.db.select({ totalItems: count() }).from(company).where(and(...conditions));
+
+    const [records, [countResult]] = await Promise.all([recordsQuery, countQuery]);
+
+    return {
+      data: records,
+      totalItems: countResult?.totalItems ?? 0,
+    };
   }
 
   async findCompanyReviews(

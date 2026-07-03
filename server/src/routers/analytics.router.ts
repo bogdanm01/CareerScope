@@ -14,6 +14,11 @@ export const getAnalyticsRouter = () => {
     authGuard([USER_ROLE.CANDIDATE, USER_ROLE.RECRUITER, USER_ROLE.ADMIN]),
     analyticsController.getOverview.bind(analyticsController),
   );
+  router.get(
+    '/recruiter/job-postings/:id',
+    authGuard([USER_ROLE.RECRUITER]),
+    analyticsController.getRecruiterJobPostingOverview.bind(analyticsController),
+  );
 
   return router;
 };
