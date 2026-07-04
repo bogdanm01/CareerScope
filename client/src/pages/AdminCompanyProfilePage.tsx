@@ -85,6 +85,7 @@ export const AdminCompanyProfilePage = () => {
   const [actioning, setActioning] = useState(false);
   const logoUrl = useMemo(() => resolveAssetUrl(company?.logoUrl), [company?.logoUrl]);
   const canReviewCompany = company?.approvalStatus === 'PendingApproval' && !company.isDeleted;
+  const isProfileUpdateRequest = Boolean(company?.isApproved && company.pendingChangeRequest);
 
   const loadCompany = async () => {
     if (!Number.isFinite(companyId)) {
@@ -108,7 +109,8 @@ export const AdminCompanyProfilePage = () => {
   };
 
   useEffect(() => {
-    void loadCompany();
+    const timeoutId = window.setTimeout(() => void loadCompany(), 0);
+    return () => window.clearTimeout(timeoutId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [companyId]);
 
@@ -122,7 +124,7 @@ export const AdminCompanyProfilePage = () => {
 
     try {
       await approveRecruiterOnboarding(company.id);
-      toast.success('Company approved successfully.');
+      toast.success(isProfileUpdateRequest ? 'Company update approved' : 'Company approved successfully.');
       setApprovalDialogOpen(false);
       await loadCompany();
     } catch (approveError) {
@@ -152,7 +154,7 @@ export const AdminCompanyProfilePage = () => {
 
     try {
       await rejectRecruiterOnboarding(company.id, reason);
-      toast.success('Company rejected successfully.');
+      toast.success(isProfileUpdateRequest ? 'Company update rejected' : 'Company rejected successfully.');
       setRejectDialogOpen(false);
       setRejectionReason('');
       await loadCompany();
@@ -195,8 +197,12 @@ export const AdminCompanyProfilePage = () => {
     <div className="grid gap-8">
       <ConfirmDialog
         open={approvalDialogOpen}
-        title="Approve company?"
-        description="This will approve the company and complete the recruiter onboarding request."
+        title={isProfileUpdateRequest ? 'Approve company update?' : 'Approve company?'}
+        description={
+          isProfileUpdateRequest
+            ? 'This will apply the proposed company profile changes to the public company record.'
+            : 'This will approve the company and complete the recruiter onboarding request.'
+        }
         confirmLabel="Approve"
         loading={actioning}
         onCancel={() => setApprovalDialogOpen(false)}
@@ -218,9 +224,9 @@ export const AdminCompanyProfilePage = () => {
               role="dialog"
               className="relative z-10 w-full max-w-lg rounded-xl border border-divider bg-content1 p-6 shadow-2xl outline-none"
             >
-              <h2 className="text-2xl text-foreground">Reject company?</h2>
+              <h2 className="text-2xl text-foreground">{isProfileUpdateRequest ? 'Reject company update?' : 'Reject company?'}</h2>
               <p className="mt-3 text-sm leading-6 text-foreground-500">
-                Add a rejection reason. The backend stores this reason on the company record.
+                Add a rejection reason. The backend stores this reason so the recruiter can review it.
               </p>
 
               <label className="mt-5 grid gap-2 text-sm font-medium text-foreground">
@@ -284,6 +290,11 @@ export const AdminCompanyProfilePage = () => {
                   <Chip className="rounded-md" color={getApprovalColor(company.approvalStatus)} size="sm" variant="soft">
                     {formatApprovalStatus(company.approvalStatus)}
                   </Chip>
+                  {isProfileUpdateRequest && (
+                    <Chip className="rounded-md" color="accent" size="sm" variant="soft">
+                      Profile update
+                    </Chip>
+                  )}
                   {company.isDeleted && (
                     <Chip className="rounded-md" color="danger" size="sm" variant="soft">
                       Deleted
@@ -400,6 +411,64 @@ export const AdminCompanyProfilePage = () => {
           )}
         </section>
       </section>
+
+      {company.pendingChangeRequest && (
+        <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
+          <h3 className="text-2xl text-foreground">Proposed company changes</h3>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-foreground-500">
+            Current approved values remain public until this request is approved.
+          </p>
+
+          <div className="mt-6 overflow-hidden rounded-xl border border-divider">
+            <table className="w-full border-collapse text-left text-sm">
+              <thead className="bg-content2 text-foreground-500">
+                <tr>
+                  <th className="px-4 py-3 font-medium">Field</th>
+                  <th className="px-4 py-3 font-medium">Current</th>
+                  <th className="px-4 py-3 font-medium">Proposed</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-divider">
+                {[
+                  ['Name', company.name, company.pendingChangeRequest.name],
+                  ['Tax ID', company.taxId, company.pendingChangeRequest.taxId],
+                  ['Website', company.websiteUrl || 'Not provided', company.pendingChangeRequest.websiteUrl || 'Not provided'],
+                  ['Logo URL', company.logoUrl || 'Not provided', company.pendingChangeRequest.logoUrl || 'Not provided'],
+                  ['Founded year', company.foundingYear ?? 'Not provided', company.pendingChangeRequest.foundingYear ?? 'Not provided'],
+                  ['Employees', company.numberOfEmployees ?? 'Not provided', company.pendingChangeRequest.numberOfEmployees ?? 'Not provided'],
+                  ['Address', company.address || 'Not provided', company.pendingChangeRequest.address || 'Not provided'],
+                  ['Short description', company.shortDescription || 'Not provided', company.pendingChangeRequest.shortDescription || 'Not provided'],
+                ].map(([label, current, proposed]) => (
+                  <tr key={String(label)} className={current !== proposed ? 'bg-warning/5' : undefined}>
+                    <td className="w-48 px-4 py-3 font-medium text-foreground">{label}</td>
+                    <td className="px-4 py-3 text-foreground-500">{String(current)}</td>
+                    <td className="px-4 py-3 text-foreground">{String(proposed)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="mt-6 grid gap-4 lg:grid-cols-2">
+            <div>
+              <h4 className="text-sm font-medium text-foreground">Current description</h4>
+              <div className="job-description-markdown mt-2 rounded-lg border border-divider bg-content2 p-4 text-sm">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {company.description || 'No company description provided.'}
+                </ReactMarkdown>
+              </div>
+            </div>
+            <div>
+              <h4 className="text-sm font-medium text-foreground">Proposed description</h4>
+              <div className="job-description-markdown mt-2 rounded-lg border border-divider bg-content2 p-4 text-sm">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {company.pendingChangeRequest.description || 'No company description provided.'}
+                </ReactMarkdown>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
         <h3 className="text-2xl text-foreground">Description</h3>

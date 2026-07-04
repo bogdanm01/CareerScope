@@ -1,4 +1,4 @@
-import { boolean, integer, pgTable, text, unique } from 'drizzle-orm/pg-core';
+import { boolean, integer, pgTable, text, timestamp, unique } from 'drizzle-orm/pg-core';
 import { enumCheckConstraint, timestamps } from '../util/utils.ts';
 import { jobPosting } from './job-posting.schema.ts';
 
@@ -17,6 +17,7 @@ export const jobApplication = pgTable(
       .notNull(),
     status: text('status').notNull(),
     isDeleted: boolean('is_deleted').default(false).notNull(),
+    candidateDeletedAt: timestamp('candidate_deleted_at', { withTimezone: true }),
     ...timestamps,
   },
   (table) => [

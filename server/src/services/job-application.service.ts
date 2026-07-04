@@ -2,6 +2,7 @@ import { inject, injectable } from 'tsyringe';
 import { TOKENS } from '../config/dependency-tokens.ts';
 import {
   CandidateJobApplicationListItem,
+  CandidateApplicationSort,
   JobApplicationDetail,
   JobApplicationListItem,
   JobApplicationRepository,
@@ -10,6 +11,8 @@ import { IntegerIdSchema } from '../lib/zod/integer-id.zod-schema.ts';
 import { ZodValidationError } from '../lib/zod-validation-error.ts';
 import {
   ApplicationReviewCreateRequestSchema,
+  CandidateJobApplicationListRequestSchema,
+  CandidateJobApplicationUpdateRequestSchema,
   JobApplicationCreateRequestSchema,
   JobApplicationListRequestSchema,
   JobApplicationUpdateRequest,
@@ -36,6 +39,11 @@ const DUPLICATE_JOB_APPLICATION_CONSTRAINT = 'user_id_job_posting_id_unq';
 const VALID_REVIEW_TRANSITIONS: Partial<Record<string, string[]>> = {
   [JOB_APPLICATION_STATUS.SUBMITTED]: [JOB_APPLICATION_STATUS.UNDER_REVIEW, JOB_APPLICATION_STATUS.REJECTED],
   [JOB_APPLICATION_STATUS.UNDER_REVIEW]: [JOB_APPLICATION_STATUS.ACCEPTED, JOB_APPLICATION_STATUS.REJECTED],
+};
+
+const VALID_CANDIDATE_TRANSITIONS: Partial<Record<string, string[]>> = {
+  [JOB_APPLICATION_STATUS.SUBMITTED]: [JOB_APPLICATION_STATUS.WITHDRAWN],
+  [JOB_APPLICATION_STATUS.UNDER_REVIEW]: [JOB_APPLICATION_STATUS.WITHDRAWN],
 };
 
 @injectable()
@@ -330,7 +338,7 @@ export class JobApplicationService {
     payload: unknown,
     user: AuthenticatedUser,
   ): Promise<PaginatedResult<CandidateJobApplicationListItem>> {
-    const validationResult = JobApplicationListRequestSchema.safeParse(payload);
+    const validationResult = CandidateJobApplicationListRequestSchema.safeParse(payload);
 
     if (!validationResult.success) {
       throw new ZodValidationError(validationResult.error);
@@ -340,6 +348,10 @@ export class JobApplicationService {
     const result = await this.jobApplicationRepository.findByUserId(user.id, {
       page: query.page,
       pageSize: query.limit,
+    }, {
+      search: query.search,
+      status: query.status,
+      sort: query.sort as CandidateApplicationSort[],
     });
 
     return {
@@ -375,6 +387,64 @@ export class JobApplicationService {
     };
   }
 
+  async updateMyJobApplication(
+    jobApplicationId: unknown,
+    payload: unknown,
+    user: AuthenticatedUser,
+  ): Promise<SingleResult<JobApplication>> {
+    const idValidationResult = IntegerIdSchema.safeParse({ id: jobApplicationId });
+
+    if (!idValidationResult.success) {
+      throw new ZodValidationError(idValidationResult.error);
+    }
+
+    const validationResult = CandidateJobApplicationUpdateRequestSchema.safeParse(payload);
+
+    if (!validationResult.success) {
+      throw new ZodValidationError(validationResult.error);
+    }
+
+    const validId = idValidationResult.data.id;
+    const existingJobApplication = await this.jobApplicationRepository.findCandidateActionTarget(validId, user.id);
+
+    if (!existingJobApplication) {
+      throw new NotFoundError(`No job application found with provided id.`);
+    }
+
+    this.validateCandidateTransition(existingJobApplication.status, validationResult.data.status);
+
+    const updatedJobApplication = await this.jobApplicationRepository.updateStatusWithHistory(
+      validId,
+      validationResult.data.status,
+      'Withdrawn by candidate.',
+    );
+
+    return {
+      data: updatedJobApplication,
+    };
+  }
+
+  async hideMyJobApplication(
+    jobApplicationId: unknown,
+    user: AuthenticatedUser,
+  ): Promise<SingleResult<{ id: number }>> {
+    const idValidationResult = IntegerIdSchema.safeParse({ id: jobApplicationId });
+
+    if (!idValidationResult.success) {
+      throw new ZodValidationError(idValidationResult.error);
+    }
+
+    const result = await this.jobApplicationRepository.hideFromCandidate(idValidationResult.data.id, user.id);
+
+    if (!result) {
+      throw new NotFoundError(`No job application found with provided id.`);
+    }
+
+    return {
+      data: result,
+    };
+  }
+
   private isDuplicateJobApplicationError(error: unknown): boolean {
     const cause = error instanceof Error ? error.cause : undefined;
 
@@ -386,5 +456,17 @@ export class JobApplicationService {
       'constraint' in cause &&
       cause.constraint === DUPLICATE_JOB_APPLICATION_CONSTRAINT
     );
+  }
+
+  private validateCandidateTransition(currentStatus: string, nextStatus: string): void {
+    if (currentStatus === nextStatus) {
+      throw new BadRequestError(`Job application is already in ${nextStatus} status.`);
+    }
+
+    const allowedNextStatuses = VALID_CANDIDATE_TRANSITIONS[currentStatus] ?? [];
+
+    if (!allowedNextStatuses.includes(nextStatus)) {
+      throw new BadRequestError(`Invalid job application status transition from ${currentStatus} to ${nextStatus}.`);
+    }
   }
 }

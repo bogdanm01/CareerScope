@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import {
+  JOB_APPLICATION_ACTIVITY_STATUS,
   JOB_POSTING_EMPLOYMENT_TYPE,
   JOB_POSTING_STATUS,
   JOB_POSTING_WORK_LOCATION,
@@ -28,6 +29,24 @@ const JobPostingSkillSchema = z.object({
   skillId: z.number().int().positive(),
   yoe: z.number().int().nonnegative().optional(),
 });
+
+export const InterviewActivityTemplateInputSchema = z.object({
+  title: z.string().trim().min(2).max(120),
+  description: z.string().trim().max(1000).nullable().optional(),
+  orderIndex: z.number().int().nonnegative().optional(),
+  isRequired: z.boolean().default(true),
+});
+
+export const InterviewActivityTemplateListSchema = z
+  .array(InterviewActivityTemplateInputSchema)
+  .max(20)
+  .transform((activities) =>
+    activities.map((activity, index) => ({
+      ...activity,
+      orderIndex: activity.orderIndex ?? index,
+      description: activity.description?.trim() || null,
+    })),
+  );
 
 const JobPostingWorkLocationSchema = z.enum(Object.values(JOB_POSTING_WORK_LOCATION));
 const JobPostingEmploymentTypeSchema = z.enum(Object.values(JOB_POSTING_EMPLOYMENT_TYPE));
@@ -62,6 +81,7 @@ const JobPostingUpdateBaseRequestSchema = z.object({
   salaryRange: z.string().trim().max(80).optional(),
   expiresAt: z.coerce.date().optional(),
   skills: z.array(JobPostingSkillSchema).optional(),
+  interviewActivities: InterviewActivityTemplateListSchema.optional(),
 });
 
 export const RecruiterJobPostingUpdateRequestSchema = JobPostingUpdateBaseRequestSchema.extend({
@@ -152,6 +172,7 @@ export const JobPostingInsertRequestSchema = z
     }),
     expiresAt: z.coerce.date().optional(),
     skills: z.array(JobPostingSkillSchema).optional(),
+    interviewActivities: InterviewActivityTemplateListSchema.optional(),
   })
   .superRefine((data, ctx) => {
     if (data.status !== JOB_POSTING_STATUS.PENDING_APPROVAL) {
@@ -229,6 +250,27 @@ export const JobPostingDetailRequestSchema = z.object({
     .pipe(z.array(z.enum(JOB_POSTING_DETAIL_INCLUDE))),
 });
 
+export const JobPostingInterviewActivitiesUpdateRequestSchema = z.object({
+  interviewActivities: InterviewActivityTemplateListSchema,
+});
+
+export const JobApplicationActivityCreateRequestSchema = z
+  .object({
+    title: z.string().trim().min(2).max(120),
+    description: z.string().trim().max(1000).nullable().optional(),
+    orderIndex: z.number().int().nonnegative().optional(),
+    status: z.enum(Object.values(JOB_APPLICATION_ACTIVITY_STATUS)).optional(),
+    scheduledAt: z.coerce.date().nullable().optional(),
+    completedAt: z.coerce.date().nullable().optional(),
+    internalNote: z.string().trim().max(2000).nullable().optional(),
+  })
+  .strict();
+
+export const JobApplicationActivityUpdateRequestSchema = JobApplicationActivityCreateRequestSchema.partial()
+  .refine((data) => Object.keys(data).length > 0, {
+    message: 'At least one field must be provided.',
+  });
+
 export type JobPostingListRequest = z.infer<typeof JobPostingListRequestSchema>;
 export type JobPostingInsertRequest = z.infer<typeof JobPostingInsertRequestSchema>;
 export type RecruiterJobPostingUpdateRequest = z.infer<typeof RecruiterJobPostingUpdateRequestSchema>;
@@ -237,3 +279,6 @@ export type JobPostingUpdateRequest = z.infer<typeof JobPostingUpdateRequestSche
 export type JobPostingReadyForApproval = z.infer<typeof JobPostingReadyForApprovalSchema>;
 export type JobPostingDetailInclude = (typeof JOB_POSTING_DETAIL_INCLUDE)[number];
 export type JobPostingDetailRequest = z.infer<typeof JobPostingDetailRequestSchema>;
+export type InterviewActivityTemplateInput = z.infer<typeof InterviewActivityTemplateInputSchema>;
+export type JobApplicationActivityCreateRequest = z.infer<typeof JobApplicationActivityCreateRequestSchema>;
+export type JobApplicationActivityUpdateRequest = z.infer<typeof JobApplicationActivityUpdateRequestSchema>;

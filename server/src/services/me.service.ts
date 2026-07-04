@@ -7,10 +7,12 @@ import { TOKENS } from '../config/dependency-tokens.ts';
 import { SingleResult } from '../lib/api-response.ts';
 import { UserSkill } from '../data/schema/user-skill.schema.ts';
 import { SkillRepository } from '../data/repositories/skill.repository.ts';
-import { BadRequestError, NotFoundError } from '../lib/app-error.ts';
+import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from '../lib/app-error.ts';
 import { ONBOARDING_STATUS } from '../data/util/constants.ts';
 import { deleteCvFile, resolveCvFilePath, toCvUrl } from '../middleware/cv-upload.middleware.ts';
 import { deleteProfileImageFile, toProfileImageUrl } from '../middleware/profile-image-upload.middleware.ts';
+import { CompanyRepository, CompanyChangeRequestView, RecruiterCompanyProfile } from '../data/repositories/company.repository.ts';
+import { CompanyChangeRequestSchema } from '../lib/zod/company.zod-schema.ts';
 
 type CandidateCvUploadPlaceholder = {
   fileName: string;
@@ -42,6 +44,7 @@ export class MeService {
   constructor(
     @inject(TOKENS.userRepository) private readonly userRepository: UserRepository,
     @inject(TOKENS.skillRepository) private readonly skillRepository: SkillRepository,
+    @inject(TOKENS.companyRepository) private readonly companyRepository: CompanyRepository,
   ) {}
 
   async getMe(user: AuthenticatedUser): Promise<SingleResult<MeUserDetails>> {
@@ -205,5 +208,66 @@ export class MeService {
       filePath,
       fileName: 'candidate-cv.pdf',
     };
+  }
+
+  async getRecruiterCompany(user: AuthenticatedUser): Promise<SingleResult<RecruiterCompanyProfile>> {
+    const companyId = this.getRecruiterCompanyId(user);
+    const record = await this.companyRepository.findRecruiterCompanyProfile(companyId);
+
+    if (!record) {
+      throw new NotFoundError('Company not found.');
+    }
+
+    return {
+      data: record,
+    };
+  }
+
+  async createRecruiterCompanyChangeRequest(
+    payload: unknown,
+    user: AuthenticatedUser,
+  ): Promise<SingleResult<CompanyChangeRequestView>> {
+    const companyId = this.getRecruiterCompanyId(user);
+    const validationResult = CompanyChangeRequestSchema.safeParse(payload);
+
+    if (!validationResult.success) {
+      throw new ZodValidationError(validationResult.error);
+    }
+
+    const currentCompany = await this.companyRepository.findRecruiterCompanyProfile(companyId);
+
+    if (!currentCompany) {
+      throw new NotFoundError('Company not found.');
+    }
+
+    if (!currentCompany.isApproved) {
+      throw new BadRequestError('Company must be approved before profile updates can be submitted for review.');
+    }
+
+    if (validationResult.data.taxId !== currentCompany.taxId) {
+      const existingCompany = await this.companyRepository.findByTaxId(validationResult.data.taxId);
+
+      if (existingCompany && existingCompany.id !== companyId) {
+        throw new ConflictError('A company with this tax id already exists.');
+      }
+    }
+
+    const createdRequest = await this.companyRepository.createCompanyChangeRequest(
+      companyId,
+      user.id,
+      validationResult.data,
+    );
+
+    return {
+      data: createdRequest,
+    };
+  }
+
+  private getRecruiterCompanyId(user: AuthenticatedUser): number {
+    if (user.role !== 'Recruiter' || !user.companyId) {
+      throw new ForbiddenError('User is not assigned to a recruiter company.');
+    }
+
+    return user.companyId;
   }
 }

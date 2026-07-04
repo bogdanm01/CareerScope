@@ -101,4 +101,14 @@ export class JobApplicationController {
     const result = await this.jobApplicationService.getMyJobApplicationById(req.params.id, req.user);
     res.status(200).json(successResponse<JobApplicationDetail>(result.data));
   }
+
+  async updateMyJobApplication(req: Request, res: Response) {
+    const result = await this.jobApplicationService.updateMyJobApplication(req.params.id, req.body, req.user);
+    res.status(200).json(successResponse<JobApplication>(result.data, 'Job application updated'));
+  }
+
+  async hideMyJobApplication(req: Request, res: Response) {
+    const result = await this.jobApplicationService.hideMyJobApplication(req.params.id, req.user);
+    res.status(200).json(successResponse(result.data, 'Job application deleted'));
+  }
 }

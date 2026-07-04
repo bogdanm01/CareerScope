@@ -6,11 +6,13 @@ import { authGuard } from '../middleware/auth-guard.ts';
 import { USER_ROLE } from '../data/util/constants.ts';
 import { optionalAuth } from '../middleware/optional-auth.ts';
 import { JobApplicationController } from '../controllers/job-application.controller.ts';
+import { InterviewActivityController } from '../controllers/interview-activity.controller.ts';
 
 export const getJobPostingRouter = () => {
   const router = express.Router();
   const jobPostingController = container.resolve<JobPostingController>(TOKENS.jobPostingController);
   const jobApplicationController = container.resolve<JobApplicationController>(TOKENS.jobApplicationController);
+  const interviewActivityController = container.resolve<InterviewActivityController>(TOKENS.interviewActivityController);
 
   router.get('/active', jobPostingController.getPublicJobPostings.bind(jobPostingController));
 
@@ -30,6 +32,18 @@ export const getJobPostingRouter = () => {
     '/:id/applications',
     authGuard([USER_ROLE.RECRUITER, USER_ROLE.ADMIN]),
     jobApplicationController.getJobApplications.bind(jobApplicationController),
+  );
+
+  router.get(
+    '/:id/interview-activities',
+    authGuard([USER_ROLE.RECRUITER, USER_ROLE.ADMIN]),
+    interviewActivityController.getPostingActivities.bind(interviewActivityController),
+  );
+
+  router.put(
+    '/:id/interview-activities',
+    authGuard([USER_ROLE.RECRUITER, USER_ROLE.ADMIN]),
+    interviewActivityController.replacePostingActivities.bind(interviewActivityController),
   );
 
   router.post(

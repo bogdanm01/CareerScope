@@ -9,6 +9,9 @@ import { JobPostingRepository } from '../data/repositories/job-posting.repositor
 import { JobApplicationController } from '../controllers/job-application.controller.ts';
 import { JobApplicationService } from '../services/job-application.service.ts';
 import { JobApplicationRepository } from '../data/repositories/job-application.repository.ts';
+import { InterviewActivityController } from '../controllers/interview-activity.controller.ts';
+import { InterviewActivityService } from '../services/interview-activity.service.ts';
+import { InterviewActivityRepository } from '../data/repositories/interview-activity.repository.ts';
 import { CompanyController } from '../controllers/company.controller.ts';
 import { CompanyService } from '../services/company.service.ts';
 import { CompanyRepository } from '../data/repositories/company.repository.ts';
@@ -46,6 +49,9 @@ export const registerDependencies = async () => {
   container.register<JobApplicationController>(TOKENS.jobApplicationController, { useClass: JobApplicationController });
   container.register<JobApplicationService>(TOKENS.jobApplicationService, { useClass: JobApplicationService });
   container.register<JobApplicationRepository>(TOKENS.jobApplicationRepository, { useClass: JobApplicationRepository });
+  container.register<InterviewActivityController>(TOKENS.interviewActivityController, { useClass: InterviewActivityController });
+  container.register<InterviewActivityService>(TOKENS.interviewActivityService, { useClass: InterviewActivityService });
+  container.register<InterviewActivityRepository>(TOKENS.interviewActivityRepository, { useClass: InterviewActivityRepository });
 
   container.register<CompanyController>(TOKENS.companyController, { useClass: CompanyController });
   container.register<CompanyService>(TOKENS.companyService, { useClass: CompanyService });

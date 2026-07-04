@@ -33,6 +33,54 @@ export type MeUserResponse = {
   skills: MeUserSkill[];
 };
 
+export type CompanyChangeRequest = {
+  id: number;
+  status: string;
+  rejectionReason: string | null;
+  name: string;
+  taxId: string;
+  shortDescription: string | null;
+  description: string | null;
+  foundingYear: number | null;
+  numberOfEmployees: number | null;
+  address: string;
+  logoUrl: string | null;
+  websiteUrl: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type RecruiterCompanyProfile = {
+  id: number;
+  name: string;
+  taxId: string;
+  shortDescription: string | null;
+  description: string | null;
+  foundingYear: number | null;
+  numberOfEmployees: number | null;
+  address: string;
+  logoUrl: string | null;
+  websiteUrl: string | null;
+  isApproved: boolean;
+  approvalStatus: string;
+  approvalRejectionReason: string | null;
+  approvedAt: string | null;
+  isDeleted: boolean;
+  pendingChangeRequest: CompanyChangeRequest | null;
+};
+
+export type CompanyChangeRequestPayload = {
+  name: string;
+  taxId: string;
+  shortDescription?: string | null;
+  description?: string | null;
+  foundingYear?: number | null;
+  numberOfEmployees?: number | null;
+  address: string;
+  logoUrl?: string | null;
+  websiteUrl?: string | null;
+};
+
 export type CandidateSkillPayload = {
   skills: {
     id: number;
@@ -62,6 +110,11 @@ export type ProfileUpdateResponse = {
 };
 
 export const getMe = async () => apiGet<MeUserResponse>('/api/me');
+
+export const getMyCompany = async () => apiGet<RecruiterCompanyProfile>('/api/me/company');
+
+export const submitCompanyChangeRequest = async (payload: CompanyChangeRequestPayload) =>
+  apiPatch<CompanyChangeRequest>('/api/me/company-change-request', payload);
 
 export const getOnboardingStatus = async () => apiGet<CandidateOnboardingStatusResponse>('/api/me/onboarding-status');
 

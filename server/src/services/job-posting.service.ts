@@ -27,6 +27,7 @@ import { jobApplication } from '../data/schema/job-application.schema.ts';
 import { and, eq } from 'drizzle-orm';
 import { AuthenticatedUser } from '../data/util/utils.ts';
 import { CompanyRepository } from '../data/repositories/company.repository.ts';
+import { InterviewActivityRepository } from '../data/repositories/interview-activity.repository.ts';
 
 type JobPostingSkillState = {
   skillId: number;
@@ -69,6 +70,7 @@ export class JobPostingService {
     @inject(TOKENS.jobPostingRepository) private jobPostingRepository: JobPostingRepository,
     @inject(TOKENS.jobApplicationRepository) private jobApplicationRepository: JobApplicationRepository,
     @inject(TOKENS.companyRepository) private companyRepository: CompanyRepository,
+    @inject(TOKENS.interviewActivityRepository) private interviewActivityRepository: InterviewActivityRepository,
   ) {}
 
   async createJobPosting(payload: unknown, user: AuthenticatedUser): Promise<JobPosting> {
@@ -90,7 +92,7 @@ export class JobPostingService {
 
     const newJobPosting = validationResult.data;
 
-    return await this.jobPostingRepository.insertWithSkills({
+    const createdJobPosting = await this.jobPostingRepository.insertWithSkills({
       companyId: user.companyId,
       title: newJobPosting.title,
       shortDescription: newJobPosting.shortDescription,
@@ -103,6 +105,15 @@ export class JobPostingService {
       expiresAt: newJobPosting.expiresAt ? toEndOfDayUtc(newJobPosting.expiresAt) : undefined,
       skills: newJobPosting.skills,
     });
+
+    if (newJobPosting.interviewActivities !== undefined) {
+      await this.interviewActivityRepository.insertPostingTemplates(
+        createdJobPosting.id,
+        newJobPosting.interviewActivities,
+      );
+    }
+
+    return createdJobPosting;
   }
 
   async getJobPostings(payload: unknown, user: AuthenticatedUser): Promise<PaginatedResult<JobPostingListItem>> {
@@ -310,7 +321,7 @@ export class JobPostingService {
       }
     }
 
-    return await this.jobPostingRepository.updateWithSkillsAndStatusHistory(
+    const updatedJobPosting = await this.jobPostingRepository.updateWithSkillsAndStatusHistory(
       id,
       {
         title: updatePayload.title,
@@ -330,6 +341,12 @@ export class JobPostingService {
       },
       existingJobPosting.status as JobPostingStatus,
     );
+
+    if (updatePayload.interviewActivities !== undefined) {
+      await this.interviewActivityRepository.replacePostingTemplates(id, updatePayload.interviewActivities);
+    }
+
+    return updatedJobPosting;
   }
 
   private async updateJobPostingAsAdmin(id: number, payload: unknown): Promise<JobPosting> {

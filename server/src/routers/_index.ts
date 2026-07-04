@@ -7,12 +7,14 @@ import { getOnboardingRouter } from './onboarding.router.ts';
 import { getSkillRouter } from './skill.router.ts';
 import { getAdminRouter } from './admin.router.ts';
 import { getAnalyticsRouter } from './analytics.router.ts';
+import { getJobApplicationActivityRouter } from './job-application-activity.router.ts';
 
 export const getApiRouter = () => {
   const apiRouter = express.Router();
 
   apiRouter.use('/job-postings', getJobPostingRouter());
   apiRouter.use('/job-applications', getJobApplicationRouter());
+  apiRouter.use('/job-application-activities', getJobApplicationActivityRouter());
   apiRouter.use('/me', getMeRouter());
   apiRouter.use('/companies', getCompanyRouter());
   apiRouter.use('/onboarding', getOnboardingRouter());

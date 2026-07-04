@@ -4,7 +4,7 @@ import { inject, injectable } from 'tsyringe';
 import { TOKENS } from '../../config/dependency-tokens.ts';
 import { DbClient } from '../../config/db-client.ts';
 import { applicationStatusHistory } from '../schema/application-status-history.schema.ts';
-import { and, asc, count, desc, eq, SQL, sql } from 'drizzle-orm';
+import { and, asc, count, desc, eq, ilike, isNull, or, SQL, sql } from 'drizzle-orm';
 import { user } from '../schema/auth.schema.ts';
 import { jobPosting } from '../schema/job-posting.schema.ts';
 import { userSkill } from '../schema/user-skill.schema.ts';
@@ -17,10 +17,24 @@ import {
   ApplicationReview,
   ApplicationReviewInsert,
 } from '../schema/application-review.schema.ts';
+import { jobPostingActivityTemplate } from '../schema/job-posting-activity-template.schema.ts';
+import { jobApplicationActivity } from '../schema/job-application-activity.schema.ts';
+import { JOB_APPLICATION_ACTIVITY_STATUS } from '../util/constants.ts';
 
 type FindByJobPostingPagination = {
   page?: number;
   pageSize?: number;
+};
+
+export type CandidateApplicationSort = {
+  field: 'createdAt' | 'updatedAt' | 'status' | 'title' | 'company' | 'expiresAt';
+  direction: 'asc' | 'desc';
+};
+
+type FindByUserFilters = {
+  search?: string;
+  status?: JobApplicationStatus;
+  sort?: CandidateApplicationSort[];
 };
 
 type FindByJobPostingResult = {
@@ -127,6 +141,30 @@ export class JobApplicationRepository extends GenericRepository<JobApplication, 
         status: createdJobApplication.status,
       });
 
+      const activityTemplates = await tx
+        .select()
+        .from(jobPostingActivityTemplate)
+        .where(
+          and(
+            eq(jobPostingActivityTemplate.jobPostingId, createdJobApplication.jobPostingId),
+            eq(jobPostingActivityTemplate.isDeleted, false),
+          ),
+        )
+        .orderBy(asc(jobPostingActivityTemplate.orderIndex), asc(jobPostingActivityTemplate.id));
+
+      if (activityTemplates.length > 0) {
+        await tx.insert(jobApplicationActivity).values(
+          activityTemplates.map((template) => ({
+            jobApplicationId: createdJobApplication.id,
+            templateActivityId: template.id,
+            title: template.title,
+            description: template.description,
+            orderIndex: template.orderIndex,
+            status: JOB_APPLICATION_ACTIVITY_STATUS.PENDING,
+          })),
+        );
+      }
+
       return createdJobApplication;
     });
   }
@@ -153,6 +191,7 @@ export class JobApplicationRepository extends GenericRepository<JobApplication, 
         jobPostingId: jobApplication.jobPostingId,
         status: jobApplication.status,
         isDeleted: jobApplication.isDeleted,
+        candidateDeletedAt: jobApplication.candidateDeletedAt,
         createdAt: jobApplication.createdAt,
         updatedAt: jobApplication.updatedAt,
         companyId: jobPosting.companyId,
@@ -219,6 +258,40 @@ export class JobApplicationRepository extends GenericRepository<JobApplication, 
     });
   }
 
+  async findCandidateActionTarget(jobApplicationId: number, userId: string): Promise<JobApplication | null> {
+    const [record] = await this.db
+      .select()
+      .from(jobApplication)
+      .where(
+        and(
+          eq(jobApplication.id, jobApplicationId),
+          eq(jobApplication.userId, userId),
+          eq(jobApplication.isDeleted, false),
+          isNull(jobApplication.candidateDeletedAt),
+        ),
+      )
+      .limit(1);
+
+    return record ?? null;
+  }
+
+  async hideFromCandidate(jobApplicationId: number, userId: string): Promise<{ id: number } | null> {
+    const [record] = await this.db
+      .update(jobApplication)
+      .set({ candidateDeletedAt: new Date() })
+      .where(
+        and(
+          eq(jobApplication.id, jobApplicationId),
+          eq(jobApplication.userId, userId),
+          eq(jobApplication.isDeleted, false),
+          isNull(jobApplication.candidateDeletedAt),
+        ),
+      )
+      .returning({ id: jobApplication.id });
+
+    return record ?? null;
+  }
+
   async findApplicationReviewTarget(jobApplicationId: number, userId: string): Promise<ApplicationReviewTarget | null> {
     const [record] = await this.db
       .select({
@@ -277,6 +350,7 @@ export class JobApplicationRepository extends GenericRepository<JobApplication, 
         jobPostingId: jobApplication.jobPostingId,
         status: jobApplication.status,
         isDeleted: jobApplication.isDeleted,
+        candidateDeletedAt: jobApplication.candidateDeletedAt,
         createdAt: jobApplication.createdAt,
         updatedAt: jobApplication.updatedAt,
         user: {
@@ -304,27 +378,44 @@ export class JobApplicationRepository extends GenericRepository<JobApplication, 
     };
   }
 
-  async findByUserId(userId: string, pagination: FindByJobPostingPagination = {}): Promise<{
+  async findByUserId(
+    userId: string,
+    pagination: FindByJobPostingPagination = {},
+    filters: FindByUserFilters = {},
+  ): Promise<{
     data: CandidateJobApplicationListItem[];
     totalItems: number;
   }> {
     const page = pagination.page ?? 1;
     const pageSize = pagination.pageSize ?? 50;
     const offset = (page - 1) * pageSize;
-    const filters = and(
+    const conditions: SQL[] = [
       eq(jobApplication.userId, userId),
       eq(jobApplication.isDeleted, false),
+      isNull(jobApplication.candidateDeletedAt),
       eq(jobPosting.isDeleted, false),
       eq(company.isDeleted, false),
-    );
+    ];
 
-    const query = this.db
+    if (filters.status) {
+      conditions.push(eq(jobApplication.status, filters.status));
+    }
+
+    if (filters.search) {
+      const pattern = `%${filters.search}%`;
+      conditions.push(or(ilike(jobPosting.title, pattern), ilike(company.name, pattern)) as SQL);
+    }
+
+    const whereClause = and(...conditions);
+
+    let query = this.db
       .select({
         id: jobApplication.id,
         userId: jobApplication.userId,
         jobPostingId: jobApplication.jobPostingId,
         status: jobApplication.status,
         isDeleted: jobApplication.isDeleted,
+        candidateDeletedAt: jobApplication.candidateDeletedAt,
         createdAt: jobApplication.createdAt,
         updatedAt: jobApplication.updatedAt,
         jobPostingTitle: jobPosting.title,
@@ -337,17 +428,18 @@ export class JobApplicationRepository extends GenericRepository<JobApplication, 
       .from(jobApplication)
       .innerJoin(jobPosting, eq(jobApplication.jobPostingId, jobPosting.id))
       .innerJoin(company, eq(jobPosting.companyId, company.id))
-      .where(filters)
-      .orderBy(desc(jobApplication.createdAt))
-      .limit(pageSize)
-      .offset(offset);
+      .where(whereClause)
+      .$dynamic();
+
+    const orderExpressions = this.getCandidateApplicationOrderExpressions(filters.sort);
+    query = query.orderBy(...orderExpressions).limit(pageSize).offset(offset);
 
     const countQuery = this.db
       .select({ totalItems: count() })
       .from(jobApplication)
       .innerJoin(jobPosting, eq(jobApplication.jobPostingId, jobPosting.id))
       .innerJoin(company, eq(jobPosting.companyId, company.id))
-      .where(filters);
+      .where(whereClause);
 
     const [data, [countResult]] = await Promise.all([query, countQuery]);
 
@@ -358,6 +450,7 @@ export class JobApplicationRepository extends GenericRepository<JobApplication, 
         jobPostingId: record.jobPostingId,
         status: record.status,
         isDeleted: record.isDeleted,
+        candidateDeletedAt: record.candidateDeletedAt,
         createdAt: record.createdAt,
         updatedAt: record.updatedAt,
         jobPosting: {
@@ -394,6 +487,7 @@ export class JobApplicationRepository extends GenericRepository<JobApplication, 
 
     if (scope.userId !== undefined) {
       baseFilters.push(eq(jobApplication.userId, scope.userId));
+      baseFilters.push(isNull(jobApplication.candidateDeletedAt));
     }
 
     const [record] = await this.db
@@ -455,6 +549,23 @@ export class JobApplicationRepository extends GenericRepository<JobApplication, 
         skills: requiredSkills,
       },
     };
+  }
+
+  private getCandidateApplicationOrderExpressions(sort: CandidateApplicationSort[] = []) {
+    const sortEntries = sort.length > 0 ? sort : [{ field: 'createdAt', direction: 'desc' }] as CandidateApplicationSort[];
+
+    return sortEntries.map((entry) => {
+      const column = {
+        createdAt: jobApplication.createdAt,
+        updatedAt: jobApplication.updatedAt,
+        status: jobApplication.status,
+        title: jobPosting.title,
+        company: company.name,
+        expiresAt: jobPosting.expiresAt,
+      }[entry.field];
+
+      return entry.direction === 'asc' ? asc(column) : desc(column);
+    });
   }
 
   private async findCandidateSkills(userId: string): Promise<CandidateSkillDetail[]> {

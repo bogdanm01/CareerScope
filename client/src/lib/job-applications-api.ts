@@ -1,13 +1,26 @@
-import { apiGet, apiPatch, apiPost } from './panel-api';
+import { apiDelete, apiGet, apiPatch, apiPost } from './panel-api';
 import { getApiBaseUrl, getSafeErrorMessage, HttpError } from './http';
 
 export type JobApplicationStatus = string;
 
 export type JobApplicationReviewStatus = 'UnderReview' | 'Accepted' | 'Rejected';
+export type JobApplicationActivityStatus = 'Pending' | 'Scheduled' | 'Completed' | 'Skipped' | 'Cancelled';
 
 export type JobApplicationUpdatePayload = {
   status: JobApplicationReviewStatus;
   reason?: string;
+};
+
+export type CandidateJobApplicationUpdatePayload = {
+  status: 'Withdrawn';
+};
+
+export type CandidateJobApplicationsQuery = {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: string;
+  sort?: string;
 };
 
 export type ApplicationReviewCreatePayload = {
@@ -24,6 +37,32 @@ export type ApplicationReview = {
   isDeleted: boolean;
   createdAt: string;
   updatedAt: string;
+};
+
+export type JobApplicationActivity = {
+  id: number;
+  jobApplicationId: number;
+  templateActivityId: number | null;
+  title: string;
+  description: string | null;
+  orderIndex: number;
+  status: JobApplicationActivityStatus;
+  scheduledAt: string | null;
+  completedAt: string | null;
+  internalNote?: string | null;
+  isDeleted: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type JobApplicationActivityPayload = {
+  title?: string;
+  description?: string | null;
+  orderIndex?: number;
+  status?: JobApplicationActivityStatus;
+  scheduledAt?: string | null;
+  completedAt?: string | null;
+  internalNote?: string | null;
 };
 
 export type RecruiterJobApplicationListItem = {
@@ -103,10 +142,38 @@ export const getRecruiterJobApplications = async (jobPostingId: number) =>
 export const getJobApplicationDetail = async (jobApplicationId: number) =>
   apiGet<JobApplicationDetail>(`/api/job-applications/${jobApplicationId}`);
 
-export const getMyJobApplications = async () => apiGet<CandidateJobApplicationListItem[]>('/api/me/applications');
+export const getJobApplicationActivities = async (jobApplicationId: number) =>
+  apiGet<JobApplicationActivity[]>(`/api/job-applications/${jobApplicationId}/activities`);
+
+export const createJobApplicationActivity = async (
+  jobApplicationId: number,
+  payload: JobApplicationActivityPayload,
+) => apiPost<JobApplicationActivity>(`/api/job-applications/${jobApplicationId}/activities`, payload);
+
+export const updateJobApplicationActivity = async (
+  activityId: number,
+  payload: JobApplicationActivityPayload,
+) => apiPatch<JobApplicationActivity>(`/api/job-application-activities/${activityId}`, payload);
+
+export const deleteJobApplicationActivity = async (activityId: number) =>
+  apiDelete<{ id: number }>(`/api/job-application-activities/${activityId}`);
+
+export const getMyJobApplications = async (query?: CandidateJobApplicationsQuery) =>
+  apiGet<CandidateJobApplicationListItem[]>('/api/me/applications', { query });
 
 export const getMyJobApplication = async (jobApplicationId: number) =>
   apiGet<JobApplicationDetail>(`/api/me/applications/${jobApplicationId}`);
+
+export const getMyJobApplicationActivities = async (jobApplicationId: number) =>
+  apiGet<JobApplicationActivity[]>(`/api/me/applications/${jobApplicationId}/activities`);
+
+export const updateMyJobApplication = async (
+  jobApplicationId: number,
+  payload: CandidateJobApplicationUpdatePayload,
+) => apiPatch(`/api/me/applications/${jobApplicationId}`, payload);
+
+export const deleteMyJobApplication = async (jobApplicationId: number) =>
+  apiDelete<{ id: number }>(`/api/me/applications/${jobApplicationId}`);
 
 export const applyToJobPosting = async (jobPostingId: number) =>
   apiPost(`/api/job-postings/${jobPostingId}/applications`, {});

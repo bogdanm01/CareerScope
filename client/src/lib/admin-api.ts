@@ -76,6 +76,22 @@ export type AdminCompanyListItem = {
   isDeleted: boolean;
   createdAt?: string;
   updatedAt?: string;
+  pendingChangeRequest?: {
+    id: number;
+    status: string;
+    rejectionReason: string | null;
+    name: string;
+    taxId: string;
+    shortDescription: string | null;
+    description: string | null;
+    foundingYear: number | null;
+    numberOfEmployees: number | null;
+    address: string;
+    logoUrl: string | null;
+    websiteUrl: string | null;
+    createdAt: string;
+    updatedAt: string;
+  } | null;
 };
 
 export const getAdminCompanies = async (query?: Record<string, string | number | boolean | null | undefined>) =>

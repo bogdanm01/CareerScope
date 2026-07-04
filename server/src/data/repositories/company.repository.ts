@@ -11,6 +11,8 @@ import { applicationReview } from '../schema/application-review.schema.ts';
 import { jobApplication } from '../schema/job-application.schema.ts';
 import type { AdminCompanyListRequest } from '../../lib/zod/admin-company.zod-schema.ts';
 import { jobPosting } from '../schema/job-posting.schema.ts';
+import { companyChangeRequest } from '../schema/company-change-request.schema.ts';
+import type { CompanyChangeRequestPayload } from '../../lib/zod/company.zod-schema.ts';
 
 export type PendingRecruiterOnboardingRequest = {
   company: {
@@ -110,6 +112,28 @@ export type AdminCompanyListItem = {
   approvalRejectionReason: string | null;
   approvedAt: Date | null;
   isDeleted: boolean;
+  pendingChangeRequest?: CompanyChangeRequestView | null;
+};
+
+export type CompanyChangeRequestView = {
+  id: number;
+  status: string;
+  rejectionReason: string | null;
+  name: string;
+  taxId: string;
+  shortDescription: string | null;
+  description: string | null;
+  foundingYear: number | null;
+  numberOfEmployees: number | null;
+  address: string;
+  logoUrl: string | null;
+  websiteUrl: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export type RecruiterCompanyProfile = AdminCompanyListItem & {
+  pendingChangeRequest: CompanyChangeRequestView | null;
 };
 
 export type PublicCompanyListItem = {
@@ -242,7 +266,126 @@ export class CompanyRepository extends GenericRepository<Company, CompanyInsert,
       .where(eq(company.id, companyId))
       .limit(1);
 
+    if (!record) {
+      return null;
+    }
+
+    return {
+      ...record,
+      pendingChangeRequest: await this.findPendingCompanyChangeRequest(companyId),
+    };
+  }
+
+  async findRecruiterCompanyProfile(companyId: number): Promise<RecruiterCompanyProfile | null> {
+    const record = await this.findAdminCompanyById(companyId);
+
+    if (!record || record.isDeleted) {
+      return null;
+    }
+
+    return {
+      ...record,
+      pendingChangeRequest: record.pendingChangeRequest ?? null,
+    };
+  }
+
+  async findPendingCompanyChangeRequest(companyId: number): Promise<CompanyChangeRequestView | null> {
+    const [record] = await this.db
+      .select({
+        id: companyChangeRequest.id,
+        status: companyChangeRequest.status,
+        rejectionReason: companyChangeRequest.rejectionReason,
+        name: companyChangeRequest.name,
+        taxId: companyChangeRequest.taxId,
+        shortDescription: companyChangeRequest.shortDescription,
+        description: companyChangeRequest.description,
+        foundingYear: companyChangeRequest.foundingYear,
+        numberOfEmployees: companyChangeRequest.numberOfEmployees,
+        address: companyChangeRequest.address,
+        logoUrl: companyChangeRequest.logoUrl,
+        websiteUrl: companyChangeRequest.websiteUrl,
+        createdAt: companyChangeRequest.createdAt,
+        updatedAt: companyChangeRequest.updatedAt,
+      })
+      .from(companyChangeRequest)
+      .where(
+        and(
+          eq(companyChangeRequest.companyId, companyId),
+          eq(companyChangeRequest.status, COMPANY_APPROVAL_STATUS.PENDING_APPROVAL),
+        ),
+      )
+      .orderBy(desc(companyChangeRequest.createdAt))
+      .limit(1);
+
     return record ?? null;
+  }
+
+  async createCompanyChangeRequest(
+    companyId: number,
+    createdByUserId: string,
+    payload: CompanyChangeRequestPayload,
+  ): Promise<CompanyChangeRequestView> {
+    return await this.db.transaction(async (tx) => {
+      await tx
+        .update(companyChangeRequest)
+        .set({
+          status: COMPANY_APPROVAL_STATUS.REJECTED,
+          rejectionReason: 'Superseded by a newer company profile update request.',
+        })
+        .where(
+          and(
+            eq(companyChangeRequest.companyId, companyId),
+            eq(companyChangeRequest.status, COMPANY_APPROVAL_STATUS.PENDING_APPROVAL),
+          ),
+        );
+
+      const [createdRequest] = await tx
+        .insert(companyChangeRequest)
+        .values({
+          companyId,
+          createdByUserId,
+          status: COMPANY_APPROVAL_STATUS.PENDING_APPROVAL,
+          name: payload.name,
+          taxId: payload.taxId,
+          shortDescription: payload.shortDescription ?? null,
+          description: payload.description ?? null,
+          foundingYear: payload.foundingYear ?? null,
+          numberOfEmployees: payload.numberOfEmployees ?? null,
+          address: payload.address,
+          logoUrl: payload.logoUrl ?? null,
+          websiteUrl: payload.websiteUrl ?? null,
+        })
+        .returning();
+
+      await tx
+        .update(company)
+        .set({
+          approvalStatus: COMPANY_APPROVAL_STATUS.PENDING_APPROVAL,
+          approvalRejectionReason: null,
+        })
+        .where(eq(company.id, companyId));
+
+      if (!createdRequest) {
+        throw new Error('Failed to create company change request.');
+      }
+
+      return {
+        id: createdRequest.id,
+        status: createdRequest.status,
+        rejectionReason: createdRequest.rejectionReason,
+        name: createdRequest.name,
+        taxId: createdRequest.taxId,
+        shortDescription: createdRequest.shortDescription,
+        description: createdRequest.description,
+        foundingYear: createdRequest.foundingYear,
+        numberOfEmployees: createdRequest.numberOfEmployees,
+        address: createdRequest.address,
+        logoUrl: createdRequest.logoUrl,
+        websiteUrl: createdRequest.websiteUrl,
+        createdAt: createdRequest.createdAt,
+        updatedAt: createdRequest.updatedAt,
+      };
+    });
   }
 
   async findPublicCompanies(
@@ -438,6 +581,91 @@ export class CompanyRepository extends GenericRepository<Company, CompanyInsert,
 
   async approveRecruiterOnboarding(companyId: number): Promise<ApprovedRecruiterOnboardingRequest | null> {
     return await this.db.transaction(async (tx) => {
+      const [pendingChange] = await tx
+        .select({
+          id: companyChangeRequest.id,
+          companyId: companyChangeRequest.companyId,
+          name: companyChangeRequest.name,
+          taxId: companyChangeRequest.taxId,
+          shortDescription: companyChangeRequest.shortDescription,
+          description: companyChangeRequest.description,
+          foundingYear: companyChangeRequest.foundingYear,
+          numberOfEmployees: companyChangeRequest.numberOfEmployees,
+          address: companyChangeRequest.address,
+          logoUrl: companyChangeRequest.logoUrl,
+          websiteUrl: companyChangeRequest.websiteUrl,
+          recruiterId: user.id,
+        })
+        .from(companyChangeRequest)
+        .innerJoin(company, eq(companyChangeRequest.companyId, company.id))
+        .innerJoin(user, eq(user.companyId, company.id))
+        .where(
+          and(
+            eq(companyChangeRequest.companyId, companyId),
+            eq(companyChangeRequest.status, COMPANY_APPROVAL_STATUS.PENDING_APPROVAL),
+            eq(company.isApproved, true),
+            eq(company.isDeleted, false),
+            eq(user.role, USER_ROLE.RECRUITER),
+            eq(user.isDeleted, false),
+          ),
+        )
+        .orderBy(desc(companyChangeRequest.createdAt))
+        .limit(1);
+
+      if (pendingChange) {
+        const [approvedCompany] = await tx
+          .update(company)
+          .set({
+            name: pendingChange.name,
+            taxId: pendingChange.taxId,
+            shortDescription: pendingChange.shortDescription,
+            description: pendingChange.description,
+            foundingYear: pendingChange.foundingYear,
+            numberOfEmployees: pendingChange.numberOfEmployees,
+            address: pendingChange.address,
+            logoUrl: pendingChange.logoUrl,
+            websiteUrl: pendingChange.websiteUrl,
+            isApproved: true,
+            approvalStatus: COMPANY_APPROVAL_STATUS.APPROVED,
+            approvalRejectionReason: null,
+            approvedAt: new Date(),
+          })
+          .where(eq(company.id, pendingChange.companyId))
+          .returning({
+            id: company.id,
+            name: company.name,
+            isApproved: company.isApproved,
+            approvalStatus: company.approvalStatus,
+            approvedAt: company.approvedAt,
+          });
+
+        await tx
+          .update(companyChangeRequest)
+          .set({ status: COMPANY_APPROVAL_STATUS.APPROVED, rejectionReason: null })
+          .where(eq(companyChangeRequest.id, pendingChange.id));
+
+        const [recruiter] = await tx
+          .select({
+            id: user.id,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            onboardingStatus: user.onboardingStatus,
+          })
+          .from(user)
+          .where(eq(user.id, pendingChange.recruiterId))
+          .limit(1);
+
+        if (!approvedCompany || !recruiter) {
+          throw new Error('Failed to approve company profile update request.');
+        }
+
+        return {
+          company: approvedCompany,
+          recruiter,
+        };
+      }
+
       const [pendingRequest] = await tx
         .select({
           companyId: company.id,
@@ -506,6 +734,73 @@ export class CompanyRepository extends GenericRepository<Company, CompanyInsert,
     reason: string,
   ): Promise<RejectedRecruiterOnboardingRequest | null> {
     return await this.db.transaction(async (tx) => {
+      const [pendingChange] = await tx
+        .select({
+          id: companyChangeRequest.id,
+          companyId: companyChangeRequest.companyId,
+          companyName: company.name,
+          recruiterId: user.id,
+        })
+        .from(companyChangeRequest)
+        .innerJoin(company, eq(companyChangeRequest.companyId, company.id))
+        .innerJoin(user, eq(user.companyId, company.id))
+        .where(
+          and(
+            eq(companyChangeRequest.companyId, companyId),
+            eq(companyChangeRequest.status, COMPANY_APPROVAL_STATUS.PENDING_APPROVAL),
+            eq(company.isApproved, true),
+            eq(company.isDeleted, false),
+            eq(user.role, USER_ROLE.RECRUITER),
+            eq(user.isDeleted, false),
+          ),
+        )
+        .orderBy(desc(companyChangeRequest.createdAt))
+        .limit(1);
+
+      if (pendingChange) {
+        const [rejectedCompany] = await tx
+          .update(company)
+          .set({
+            isApproved: true,
+            approvalStatus: COMPANY_APPROVAL_STATUS.APPROVED,
+            approvalRejectionReason: reason,
+          })
+          .where(eq(company.id, pendingChange.companyId))
+          .returning({
+            id: company.id,
+            name: company.name,
+            isApproved: company.isApproved,
+            approvalStatus: company.approvalStatus,
+            approvalRejectionReason: company.approvalRejectionReason,
+          });
+
+        await tx
+          .update(companyChangeRequest)
+          .set({ status: COMPANY_APPROVAL_STATUS.REJECTED, rejectionReason: reason })
+          .where(eq(companyChangeRequest.id, pendingChange.id));
+
+        const [recruiter] = await tx
+          .select({
+            id: user.id,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            onboardingStatus: user.onboardingStatus,
+          })
+          .from(user)
+          .where(eq(user.id, pendingChange.recruiterId))
+          .limit(1);
+
+        if (!rejectedCompany || !recruiter) {
+          throw new Error('Failed to reject company profile update request.');
+        }
+
+        return {
+          company: rejectedCompany,
+          recruiter,
+        };
+      }
+
       const [pendingRequest] = await tx
         .select({
           companyId: company.id,

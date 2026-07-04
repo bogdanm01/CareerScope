@@ -15,6 +15,9 @@ export const TOKENS = {
   jobApplicationController: Symbol('JobApplicationController'),
   jobApplicationService: Symbol('JobApplicationService'),
   jobApplicationRepository: Symbol('JobApplicationRepository'),
+  interviewActivityController: Symbol('InterviewActivityController'),
+  interviewActivityService: Symbol('InterviewActivityService'),
+  interviewActivityRepository: Symbol('InterviewActivityRepository'),
 
   companyController: Symbol('CompanyController'),
   companyService: Symbol('CompanyService'),

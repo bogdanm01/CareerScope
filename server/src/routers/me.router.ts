@@ -7,10 +7,12 @@ import { JobApplicationController } from '../controllers/job-application.control
 import { MeController } from '../controllers/me.controller.ts';
 import { cvUploadMiddleware } from '../middleware/cv-upload.middleware.ts';
 import { profileImageUploadMiddleware } from '../middleware/profile-image-upload.middleware.ts';
+import { InterviewActivityController } from '../controllers/interview-activity.controller.ts';
 
 export const getMeRouter = () => {
   const router = express.Router();
   const jobApplicationController = container.resolve<JobApplicationController>(TOKENS.jobApplicationController);
+  const interviewActivityController = container.resolve<InterviewActivityController>(TOKENS.interviewActivityController);
   const meController = container.resolve<MeController>(TOKENS.meController);
 
   router.get(
@@ -26,6 +28,14 @@ export const getMeRouter = () => {
   );
 
   router.get('/cv', authGuard([USER_ROLE.CANDIDATE]), meController.downloadCandidateCv.bind(meController));
+
+  router.get('/company', authGuard([USER_ROLE.RECRUITER]), meController.getRecruiterCompany.bind(meController));
+
+  router.patch(
+    '/company-change-request',
+    authGuard([USER_ROLE.RECRUITER]),
+    meController.createRecruiterCompanyChangeRequest.bind(meController),
+  );
 
   router.patch(
     '/profile',
@@ -50,6 +60,24 @@ export const getMeRouter = () => {
     '/applications/:id',
     authGuard([USER_ROLE.CANDIDATE]),
     jobApplicationController.getMyJobApplication.bind(jobApplicationController),
+  );
+
+  router.get(
+    '/applications/:id/activities',
+    authGuard([USER_ROLE.CANDIDATE]),
+    interviewActivityController.getApplicationActivities.bind(interviewActivityController),
+  );
+
+  router.patch(
+    '/applications/:id',
+    authGuard([USER_ROLE.CANDIDATE]),
+    jobApplicationController.updateMyJobApplication.bind(jobApplicationController),
+  );
+
+  router.delete(
+    '/applications/:id',
+    authGuard([USER_ROLE.CANDIDATE]),
+    jobApplicationController.hideMyJobApplication.bind(jobApplicationController),
   );
 
   router.put('/skills', authGuard([USER_ROLE.CANDIDATE]), meController.replaceCandidateSkills.bind(meController));

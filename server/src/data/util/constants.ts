@@ -37,6 +37,14 @@ export const JOB_APPLICATION_STATUS = {
   WITHDRAWN: 'Withdrawn',
 } as const;
 
+export const JOB_APPLICATION_ACTIVITY_STATUS = {
+  PENDING: 'Pending',
+  SCHEDULED: 'Scheduled',
+  COMPLETED: 'Completed',
+  SKIPPED: 'Skipped',
+  CANCELLED: 'Cancelled',
+} as const;
+
 export const ONBOARDING_STATUS = {
   PROFILE_CREATED: 'ProfileCreated',
   SKILLS_ADDED: 'SkillsAdded',
@@ -57,5 +65,7 @@ export type JobPostingWorkLocation = (typeof JOB_POSTING_WORK_LOCATION)[keyof ty
 export type JobPostingEmploymentType =
   (typeof JOB_POSTING_EMPLOYMENT_TYPE)[keyof typeof JOB_POSTING_EMPLOYMENT_TYPE];
 export type JobApplicationStatus = (typeof JOB_APPLICATION_STATUS)[keyof typeof JOB_APPLICATION_STATUS];
+export type JobApplicationActivityStatus =
+  (typeof JOB_APPLICATION_ACTIVITY_STATUS)[keyof typeof JOB_APPLICATION_ACTIVITY_STATUS];
 export type OnboardingStatus = (typeof ONBOARDING_STATUS)[keyof typeof ONBOARDING_STATUS];
 export type CompanyApprovalStatus = (typeof COMPANY_APPROVAL_STATUS)[keyof typeof COMPANY_APPROVAL_STATUS];

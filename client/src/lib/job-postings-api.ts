@@ -1,4 +1,4 @@
-import { apiDelete, apiGet, apiPatch, apiPost } from './panel-api';
+import { apiDelete, apiGet, apiPatch, apiPost, apiPut } from './panel-api';
 
 export type JobPostingStatus =
   | 'Draft'
@@ -25,6 +25,25 @@ export type JobPostingSkill = {
   id: number;
   name: string;
   yoe?: number | null;
+};
+
+export type InterviewActivityTemplate = {
+  id: number;
+  jobPostingId: number;
+  title: string;
+  description: string | null;
+  orderIndex: number;
+  isRequired: boolean;
+  isDeleted: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type InterviewActivityTemplatePayload = {
+  title: string;
+  description?: string | null;
+  orderIndex?: number;
+  isRequired?: boolean;
 };
 
 export type JobPostingListItem = {
@@ -65,6 +84,7 @@ export type JobPostingCreatePayload = {
     skillId: number;
     yoe?: number;
   }[];
+  interviewActivities?: InterviewActivityTemplatePayload[];
 };
 
 export type JobPostingUpdatePayload = {
@@ -80,6 +100,7 @@ export type JobPostingUpdatePayload = {
     skillId: number;
     yoe?: number;
   }[];
+  interviewActivities?: InterviewActivityTemplatePayload[];
 };
 
 export const getActiveJobPostings = async (query?: Record<string, string | number | boolean | null | undefined>) =>
@@ -102,6 +123,16 @@ export const updateJobPosting = async (jobPostingId: number, payload: JobPosting
   apiPatch<JobPostingDetail>(`/api/job-postings/${jobPostingId}`, payload);
 
 export const deleteJobPosting = async (jobPostingId: number) => apiDelete<{ id: number }>(`/api/job-postings/${jobPostingId}`);
+
+export const getJobPostingInterviewActivities = async (jobPostingId: number) =>
+  apiGet<InterviewActivityTemplate[]>(`/api/job-postings/${jobPostingId}/interview-activities`);
+
+export const replaceJobPostingInterviewActivities = async (
+  jobPostingId: number,
+  interviewActivities: InterviewActivityTemplatePayload[],
+) => apiPut<InterviewActivityTemplate[]>(`/api/job-postings/${jobPostingId}/interview-activities`, {
+  interviewActivities,
+});
 
 export const getJobPostingApplications = async (
   jobPostingId: number,

@@ -90,4 +90,14 @@ export class MeController {
     const result = await this.meService.getCandidateCv(req.user);
     res.download(result.filePath, result.fileName);
   }
+
+  async getRecruiterCompany(req: Request, res: Response) {
+    const result = await this.meService.getRecruiterCompany(req.user);
+    res.status(200).send(successResponse(result.data));
+  }
+
+  async createRecruiterCompanyChangeRequest(req: Request, res: Response) {
+    const result = await this.meService.createRecruiterCompanyChangeRequest(req.body, req.user);
+    res.status(201).send(successResponse(result.data));
+  }
 }
