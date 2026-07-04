@@ -180,17 +180,13 @@ export const AdminCompaniesPage = () => {
 
   return (
     <div className="grid gap-8">
-      <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h2 className="text-4xl leading-[1.15] text-foreground">
-              Companies
-            </h2>
-            <p className="mt-3 max-w-2xl text-sm leading-7 text-foreground-500">
-              Browse and audit companies registered on the platform.
-            </p>
-          </div>
-        </div>
+      <section className="p-0">
+        <h2 className="text-4xl leading-[1.15] text-foreground">
+          Companies
+        </h2>
+        <p className="mt-3 max-w-2xl text-sm leading-7 text-foreground-500">
+          Browse and audit companies registered on the platform.
+        </p>
 
         <form
           className="mt-7 grid gap-3 lg:grid-cols-[minmax(350px,1.25fr)_220px_180px_auto]"
@@ -297,24 +293,17 @@ export const AdminCompaniesPage = () => {
         )}
       </section>
 
-      <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h3 className="text-2xl text-foreground">Company directory</h3>
-          <span className="text-sm text-foreground-500">
-            Page {currentPage} of {totalPages}
-          </span>
-        </div>
-
+      <section className="overflow-hidden rounded-xl border border-divider bg-content1">
         {loading ? (
-          <div className="mt-5 rounded-xl border border-divider bg-content2 p-6 text-sm text-foreground-500">
+          <div className="p-6 text-sm text-foreground-500">
             Loading companies...
           </div>
         ) : companies.length === 0 ? (
-          <div className="mt-5 rounded-xl border border-dashed border-divider bg-content2 p-6 text-sm text-foreground-500">
+          <div className="m-6 rounded-xl border border-dashed border-divider bg-content2 p-6 text-sm text-foreground-500">
             No companies found.
           </div>
         ) : (
-          <Table className="mt-5" variant="secondary">
+          <Table variant="secondary">
             <Table.ScrollContainer>
               <Table.Content aria-label="Companies">
                 <Table.Header>
@@ -455,32 +444,37 @@ export const AdminCompaniesPage = () => {
           </Table>
         )}
 
-        <div className="mt-5 flex items-center justify-end gap-2">
-          <Button
-            isIconOnly
-            aria-label="Previous page"
-            type="button"
-            variant="outline"
-            size="sm"
-            onPress={() => setCurrentPage((page) => Math.max(1, page - 1))}
-            isDisabled={loading || currentPage <= 1}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Button
-            isIconOnly
-            aria-label="Next page"
-            type="button"
-            variant="outline"
-            size="sm"
-            onPress={() =>
-              setCurrentPage((page) => Math.min(totalPages, page + 1))
-            }
-            isDisabled={loading || currentPage >= totalPages}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
+        {totalPages > 1 && (
+          <div className="flex items-center justify-end gap-3 border-t border-divider p-5">
+            <span className="text-sm text-foreground-500">
+              Page {currentPage} of {totalPages}
+            </span>
+            <Button
+              isIconOnly
+              aria-label="Previous page"
+              type="button"
+              variant="outline"
+              size="sm"
+              onPress={() => setCurrentPage((page) => Math.max(1, page - 1))}
+              isDisabled={loading || currentPage <= 1}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              isIconOnly
+              aria-label="Next page"
+              type="button"
+              variant="outline"
+              size="sm"
+              onPress={() =>
+                setCurrentPage((page) => Math.min(totalPages, page + 1))
+              }
+              isDisabled={loading || currentPage >= totalPages}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
       </section>
     </div>
   );

@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
+import { useAtomValue } from 'jotai';
 import { Avatar, Button, Chip } from '@heroui/react';
 import { ArrowLeft, BriefcaseBusiness, Building2, CalendarDays, ChevronLeft, ChevronRight, ExternalLink, Globe2, MapPin, Star, UsersRound } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
@@ -13,7 +14,9 @@ import {
 } from '../lib/companies-api';
 import type { ApiPagination } from '../lib/panel-api';
 import type { JobPostingListItem } from '../lib/job-postings-api';
+import { getCompanyLogoUrl } from '../lib/company-logo';
 import { getApiBaseUrl } from '../lib/http';
+import { authSessionAtom } from '../store/auth';
 
 const REVIEW_PAGE_SIZE = 5;
 const JOB_PAGE_SIZE = 6;
@@ -21,7 +24,7 @@ const JOB_PAGE_SIZE = 6;
 const getWebsiteHref = (websiteUrl: string) =>
   /^https?:\/\//i.test(websiteUrl) ? websiteUrl : `https://${websiteUrl}`;
 
-const resolveAssetUrl = (assetUrl?: string | null) => {
+const resolveReviewAssetUrl = (assetUrl?: string | null) => {
   if (!assetUrl) {
     return null;
   }
@@ -44,6 +47,7 @@ const Rating = ({ value }: { value: number }) => (
 export const CompanyProfilePage = () => {
   const { id } = useParams();
   const location = useLocation();
+  const session = useAtomValue(authSessionAtom);
   const companyId = Number(id);
   const [company, setCompany] = useState<PublicCompany | null>(null);
   const [jobs, setJobs] = useState<JobPostingListItem[]>([]);
@@ -54,7 +58,7 @@ export const CompanyProfilePage = () => {
   const [reviewsLoading, setReviewsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const logoUrl = useMemo(() => resolveAssetUrl(company?.logoUrl), [company?.logoUrl]);
+  const logoUrl = useMemo(() => getCompanyLogoUrl(company?.logoUrl, company?.websiteUrl, 192), [company?.logoUrl, company?.websiteUrl]);
   const backPath = useMemo(() => {
     const searchParams = new URLSearchParams(location.search);
     const backTo = searchParams.get('backTo');
@@ -63,10 +67,10 @@ export const CompanyProfilePage = () => {
       return backTo;
     }
 
-    return '/';
-  }, [location.search]);
+    return session?.user.role === 'Candidate' ? '/panel/companies' : '/companies';
+  }, [location.search, session?.user.role]);
 
-  const loadCompany = async () => {
+  const loadCompany = useCallback(async () => {
     if (!Number.isFinite(companyId)) {
       setError('Invalid company id.');
       setLoading(false);
@@ -91,9 +95,9 @@ export const CompanyProfilePage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [companyId]);
 
-  const loadReviews = async () => {
+  const loadReviews = useCallback(async () => {
     if (!Number.isFinite(companyId)) {
       return;
     }
@@ -110,20 +114,22 @@ export const CompanyProfilePage = () => {
     } finally {
       setReviewsLoading(false);
     }
-  };
-
-  useEffect(() => {
-    void loadCompany();
-  }, [companyId]);
-
-  useEffect(() => {
-    void loadReviews();
   }, [companyId, reviewPage]);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => void loadCompany(), 0);
+    return () => window.clearTimeout(timeoutId);
+  }, [loadCompany]);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => void loadReviews(), 0);
+    return () => window.clearTimeout(timeoutId);
+  }, [loadReviews]);
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-background px-4 py-8 text-foreground sm:px-8">
-        <section className="mx-auto max-w-6xl rounded-xl border border-divider bg-content1 p-6 text-sm text-foreground-500 sm:p-8">
+      <main className="text-foreground">
+        <section className="rounded-xl border border-divider bg-content1 p-6 text-sm text-foreground-500 sm:p-8">
           Loading company...
         </section>
       </main>
@@ -132,8 +138,8 @@ export const CompanyProfilePage = () => {
 
   if (error && !company) {
     return (
-      <main className="min-h-screen bg-background px-4 py-8 text-foreground sm:px-8">
-        <section className="mx-auto max-w-6xl rounded-xl border border-divider bg-content1 p-6 sm:p-8">
+      <main className="text-foreground">
+        <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
           <div className="rounded-3xl border border-danger/20 bg-danger/10 p-4 text-sm leading-6 text-danger-700">{error}</div>
           <div className="mt-4 flex flex-wrap gap-3">
             <Button type="button" variant="primary" onPress={() => void loadCompany()}>
@@ -149,8 +155,8 @@ export const CompanyProfilePage = () => {
   }
 
   return (
-    <main className="min-h-screen bg-background px-4 py-8 text-foreground sm:px-8 lg:py-12">
-      <div className="mx-auto grid max-w-6xl gap-6">
+    <main className="text-foreground">
+      <div className="grid gap-6">
         <Link className="inline-flex w-fit items-center gap-2 text-sm font-medium text-foreground-500 hover:text-foreground" to={backPath}>
           <ArrowLeft aria-hidden="true" className="h-4 w-4" />
           Back
@@ -159,23 +165,24 @@ export const CompanyProfilePage = () => {
         <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
           <div className="flex flex-wrap items-start justify-between gap-6">
             <div className="flex min-w-0 items-center gap-5">
-              <Avatar className="h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-[#e3d3b8] !bg-[#f5e9d4] !text-[#181d26]">
-                {logoUrl && (
-                  <Avatar.Image
-                    alt={`${company?.name} logo`}
-                    className="h-full w-full bg-white object-contain p-2"
-                    src={logoUrl}
-                  />
-                )}
-                <Avatar.Fallback className="flex h-full w-full items-center justify-center bg-[#f5e9d4] text-lg font-semibold !text-[#181d26]" delayMs={0}>
-                  {company?.name
-                    .split(' ')
-                    .filter(Boolean)
-                    .slice(0, 2)
-                    .map((part) => part[0]?.toUpperCase())
-                    .join('') || <Building2 aria-hidden="true" className="h-8 w-8" strokeWidth={1.7} />}
-                </Avatar.Fallback>
-              </Avatar>
+              {logoUrl ? (
+                <img
+                  alt={`${company?.name} logo`}
+                  className="h-16 w-16 shrink-0 object-contain"
+                  src={logoUrl}
+                />
+              ) : (
+                <Avatar className="h-16 w-16 shrink-0 overflow-hidden rounded-xl !bg-[#f5e9d4] !text-[#181d26]">
+                  <Avatar.Fallback className="flex h-full w-full items-center justify-center bg-[#f5e9d4] text-lg font-semibold !text-[#181d26]" delayMs={0}>
+                    {company?.name
+                      .split(' ')
+                      .filter(Boolean)
+                      .slice(0, 2)
+                      .map((part) => part[0]?.toUpperCase())
+                      .join('') || <Building2 aria-hidden="true" className="h-8 w-8" strokeWidth={1.7} />}
+                  </Avatar.Fallback>
+                </Avatar>
+              )}
               <div className="min-w-0">
                 <h1 className="text-4xl leading-[1.1] text-foreground sm:text-5xl">{company?.name}</h1>
                 <p className="mt-3 max-w-3xl text-[15px] leading-7 text-foreground-500">
@@ -254,7 +261,7 @@ export const CompanyProfilePage = () => {
                 <Link
                   key={job.id}
                   className="group rounded-xl border border-divider bg-content2 p-5 transition-transform hover:-translate-y-0.5 hover:border-foreground/25"
-                  to={`/panel/jobs/${job.id}`}
+                  to={`/jobs/${job.id}`}
                 >
                   <div className="flex items-start gap-3">
                     <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[#181d26] text-white">
@@ -297,7 +304,7 @@ export const CompanyProfilePage = () => {
               </div>
             ) : (
               reviews.map((review) => {
-                const candidateImageUrl = resolveAssetUrl(review.candidate.image);
+                const candidateImageUrl = resolveReviewAssetUrl(review.candidate.image);
                 return (
                   <article key={review.id} className="rounded-xl border border-divider bg-content2 p-5">
                     <div className="flex flex-wrap items-start justify-between gap-4">

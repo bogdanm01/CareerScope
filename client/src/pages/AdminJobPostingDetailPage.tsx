@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useSetAtom } from 'jotai';
-import { Button, TextArea } from '@heroui/react';
+import { Button, TextArea, toast } from '@heroui/react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import {
@@ -29,7 +29,6 @@ export const AdminJobPostingDetailPage = () => {
   const [decisionHistory, setDecisionHistory] = useState<
     { status: string; reason?: string; createdAt: string }[]
   >([]);
-  const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const jobPostingId = Number(id);
@@ -56,7 +55,9 @@ export const AdminJobPostingDetailPage = () => {
   };
 
   useEffect(() => {
-    void loadDetail();
+    const timeoutId = window.setTimeout(() => void loadDetail(), 0);
+    return () => window.clearTimeout(timeoutId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [jobPostingId]);
 
   const handleReject = async (event: FormEvent<HTMLFormElement>) => {
@@ -117,7 +118,6 @@ export const AdminJobPostingDetailPage = () => {
           }
 
           setActioning(true);
-          setMessage(null);
           setError(null);
           setAuthError(null);
           setAuthLoading(true);
@@ -137,7 +137,9 @@ export const AdminJobPostingDetailPage = () => {
                 { status: 'Active', reason: 'Approved by admin.', createdAt: new Date().toISOString() },
                 ...current,
               ]);
-              setMessage('Job posting approved successfully.');
+              toast.success('Job posting approved', {
+                description: 'The posting is now active and visible to candidates.',
+              });
             } else {
               await rejectJobPosting(detail.id, pendingAction.reason);
               setDetail((current) =>
@@ -152,10 +154,13 @@ export const AdminJobPostingDetailPage = () => {
                 { status: 'Rejected', reason: pendingAction.reason, createdAt: new Date().toISOString() },
                 ...current,
               ]);
-              setMessage('Job posting rejected successfully.');
+              toast.success('Job posting rejected', {
+                description: 'The recruiter can review the rejection reason.',
+              });
             }
           } catch (submitError) {
-            setError(submitError instanceof Error ? submitError.message : 'Unable to process job posting decision');
+            const message = submitError instanceof Error ? submitError.message : 'Unable to process job posting decision';
+            toast.danger('Unable to process job posting decision', { description: message });
           } finally {
             setPendingAction(null);
             setActioning(false);
@@ -311,12 +316,6 @@ export const AdminJobPostingDetailPage = () => {
           )}
         </div>
       </section>
-
-      {message && (
-        <section className="rounded-3xl border border-success/20 bg-success/10 p-6 text-sm leading-6 text-success-700 sm:p-8">
-          {message}
-        </section>
-      )}
 
       {error && (
         <section className="rounded-3xl border border-danger/20 bg-danger/10 p-6 text-sm leading-6 text-danger-700 sm:p-8">

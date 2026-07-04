@@ -14,6 +14,18 @@ export type PublicCompany = {
   websiteUrl: string | null;
 };
 
+export type PublicCompanyListItem = {
+  id: number;
+  name: string;
+  shortDescription: string | null;
+  foundingYear: number | null;
+  numberOfEmployees: number | null;
+  address: string | null;
+  logoUrl: string | null;
+  websiteUrl: string | null;
+  openPositionsCount: number;
+};
+
 export type CompanyReviewListItem = {
   id: number;
   rating: number;
@@ -30,6 +42,9 @@ export type CompanyReviewsResponse = {
   data: CompanyReviewListItem[];
   pagination?: ApiPagination;
 };
+
+export const getCompanies = async (query?: Record<string, string | number | boolean | null | undefined>) =>
+  apiGet<PublicCompanyListItem[]>('/api/companies', { query });
 
 export const getCompany = async (companyId: number) => apiGet<PublicCompany>(`/api/companies/${companyId}`);
 

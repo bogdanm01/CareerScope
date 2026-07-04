@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useSetAtom } from 'jotai';
 import { Button, Checkbox, Input } from '@heroui/react';
 import { AuthShell } from '../components/AuthShell';
 import { authErrorAtom, authLoadingAtom, signInAtom } from '../store/auth';
+import { getPostAuthRedirectPath } from '../lib/navigation';
 
 type LoginPageProps = {
   loading: boolean;
@@ -12,6 +13,7 @@ type LoginPageProps = {
 
 export const LoginPage = ({ loading }: LoginPageProps) => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const signIn = useSetAtom(signInAtom);
   const setAuthError = useSetAtom(authErrorAtom);
   const setAuthLoading = useSetAtom(authLoadingAtom);
@@ -20,6 +22,8 @@ export const LoginPage = ({ loading }: LoginPageProps) => {
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const returnTo = searchParams.get('returnTo');
+  const returnToQuery = returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : '';
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -28,7 +32,7 @@ export const LoginPage = ({ loading }: LoginPageProps) => {
 
     try {
       const session = await signIn({ email, password, rememberMe });
-      navigate(session?.user.role === 'Admin' ? '/panel/admin' : '/panel', { replace: true });
+      navigate(getPostAuthRedirectPath(session?.user.role, returnTo), { replace: true });
     } catch (submitError) {
       const message = submitError instanceof Error ? submitError.message : 'Unable to sign in';
       setError(message);
@@ -94,7 +98,7 @@ export const LoginPage = ({ loading }: LoginPageProps) => {
       </form>
 
       <div className="mt-7 border-t border-divider pt-6 text-center text-sm text-foreground-600">
-        New here? <Link className="text-primary hover:underline" to="/register">Create a candidate account</Link>
+        New here? <Link className="text-primary hover:underline" to={`/register${returnToQuery}`}>Create a candidate account</Link>
         {' '}
         <Link className="text-primary hover:underline" to="/register/recruiter">
           or start recruiter onboarding

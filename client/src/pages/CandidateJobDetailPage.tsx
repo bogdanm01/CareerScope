@@ -1,20 +1,66 @@
-import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import { useSetAtom } from 'jotai';
+import { useCallback, useEffect, useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useAtomValue, useSetAtom } from 'jotai';
 import { Button, Chip, toast } from '@heroui/react';
-import { ArrowLeft, Building2, CalendarDays, ExternalLink, Globe2, MapPin } from 'lucide-react';
+import {
+  ArrowLeft,
+  BriefcaseBusiness,
+  Building2,
+  CalendarDays,
+  ExternalLink,
+  Globe2,
+  MapPin,
+  WalletCards,
+} from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { getJobPostingDetail, type JobPostingDetail } from '../lib/job-postings-api';
+import {
+  getJobPostingDetail,
+  type JobPostingDetail,
+  type JobPostingEmploymentType,
+  type JobPostingWorkLocation,
+} from '../lib/job-postings-api';
 import { applyToJobPosting } from '../lib/job-applications-api';
-import { authErrorAtom, authLoadingAtom } from '../store/auth';
+import { authErrorAtom, authLoadingAtom, authSessionAtom } from '../store/auth';
 import { formatDate } from '../lib/date-format';
+import { getCompanyLogoUrl } from '../lib/company-logo';
 
 const getWebsiteHref = (websiteUrl: string) =>
   /^https?:\/\//i.test(websiteUrl) ? websiteUrl : `https://${websiteUrl}`;
 
-export const CandidateJobDetailPage = () => {
+const workLocationLabels: Record<JobPostingWorkLocation, string> = {
+  Remote: 'Remote',
+  OnSite: 'On-site',
+  Hybrid: 'Hybrid',
+};
+
+const employmentTypeLabels: Record<JobPostingEmploymentType, string> = {
+  FullTime: 'Full-time',
+  PartTime: 'Part-time',
+  Contract: 'Contract',
+  Internship: 'Internship',
+  Temporary: 'Temporary',
+  Other: 'Other',
+};
+
+const formatWorkLocation = (value?: string | null) =>
+  value && value in workLocationLabels
+    ? workLocationLabels[value as JobPostingWorkLocation]
+    : value || 'Not specified';
+
+const formatEmploymentType = (value?: string | null) =>
+  value && value in employmentTypeLabels
+    ? employmentTypeLabels[value as JobPostingEmploymentType]
+    : value || 'Not specified';
+
+type CandidateJobDetailPageProps = {
+  isPublic?: boolean;
+};
+
+export const CandidateJobDetailPage = ({ isPublic = false }: CandidateJobDetailPageProps) => {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const session = useAtomValue(authSessionAtom);
   const setAuthError = useSetAtom(authErrorAtom);
   const setAuthLoading = useSetAtom(authLoadingAtom);
   const [detail, setDetail] = useState<JobPostingDetail | null>(null);
@@ -23,8 +69,12 @@ export const CandidateJobDetailPage = () => {
   const [error, setError] = useState<string | null>(null);
 
   const jobPostingId = Number(id);
+  const backPath = isPublic ? '/jobs' : '/panel/jobs';
+  const companyBackPath = `${isPublic ? '/jobs' : '/panel/jobs'}/${jobPostingId}`;
+  const isApplyBlockedByRole = isPublic && !!session && session.user.role !== 'Candidate';
+  const companyLogoUrl = getCompanyLogoUrl(detail?.company?.logo, detail?.company?.websiteUrl);
 
-  const loadDetail = async () => {
+  const loadDetail = useCallback(async () => {
     if (!Number.isFinite(jobPostingId)) {
       setError('Invalid job posting id.');
       setLoading(false);
@@ -43,14 +93,24 @@ export const CandidateJobDetailPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [jobPostingId]);
 
   useEffect(() => {
-    void loadDetail();
-  }, [jobPostingId]);
+    const timeoutId = window.setTimeout(() => void loadDetail(), 0);
+    return () => window.clearTimeout(timeoutId);
+  }, [loadDetail]);
 
   const handleApply = async () => {
     if (!detail) {
+      return;
+    }
+
+    if (isPublic && !session) {
+      navigate(`/register?returnTo=${encodeURIComponent(`/jobs/${detail.id}`)}`);
+      return;
+    }
+
+    if (isPublic && session?.user.role !== 'Candidate') {
       return;
     }
 
@@ -89,7 +149,7 @@ export const CandidateJobDetailPage = () => {
           <Button type="button" variant="primary" onPress={() => void loadDetail()}>
             Retry
           </Button>
-          <Link className="rounded-lg border border-divider bg-content1 px-4 py-2 text-sm font-medium text-foreground" to="/panel/jobs">
+          <Link className="rounded-lg border border-divider bg-content1 px-4 py-2 text-sm font-medium text-foreground" to={backPath}>
             Back to jobs
           </Link>
         </div>
@@ -118,6 +178,36 @@ export const CandidateJobDetailPage = () => {
           <p className="mt-4 max-w-3xl text-[15px] leading-7 text-foreground-500">
             {detail?.shortDescription || 'No summary provided.'}
           </p>
+
+          <div className="mt-6 grid gap-3 sm:grid-cols-3">
+            <div className="rounded-lg border border-divider bg-content2 px-4 py-3">
+              <span className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[0.16em] text-foreground-400">
+                <MapPin aria-hidden="true" className="h-4 w-4" strokeWidth={1.7} />
+                Location
+              </span>
+              <p className="mt-2 text-sm font-medium text-foreground">
+                {formatWorkLocation(detail?.workLocation)}
+              </p>
+            </div>
+            <div className="rounded-lg border border-divider bg-content2 px-4 py-3">
+              <span className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[0.16em] text-foreground-400">
+                <BriefcaseBusiness aria-hidden="true" className="h-4 w-4" strokeWidth={1.7} />
+                Employment
+              </span>
+              <p className="mt-2 text-sm font-medium text-foreground">
+                {formatEmploymentType(detail?.employmentType)}
+              </p>
+            </div>
+            <div className="rounded-lg border border-divider bg-content2 px-4 py-3">
+              <span className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[0.16em] text-foreground-400">
+                <WalletCards aria-hidden="true" className="h-4 w-4" strokeWidth={1.7} />
+                Salary
+              </span>
+              <p className="mt-2 text-sm font-medium text-foreground">
+                {detail?.salaryRange || 'Not specified'}
+              </p>
+            </div>
+          </div>
         </section>
 
         <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
@@ -167,14 +257,25 @@ export const CandidateJobDetailPage = () => {
             className="h-11 w-full rounded-lg"
             type="button"
             variant="primary"
-            isDisabled={applying}
+            isDisabled={applying || isApplyBlockedByRole}
             onPress={() => void handleApply()}
           >
-            {applying ? 'Applying...' : 'Apply now'}
+            {applying
+              ? 'Applying...'
+              : isPublic && !session
+                ? 'Create account to apply'
+                : isApplyBlockedByRole
+                  ? 'Candidate account required'
+                  : 'Apply now'}
           </Button>
+          {isApplyBlockedByRole && (
+            <p className="mt-3 text-sm leading-6 text-foreground-500">
+              Only candidate accounts can apply to public job postings.
+            </p>
+          )}
           <Link
             className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-divider bg-content1 text-sm font-medium text-foreground"
-            to="/panel/jobs"
+            to={backPath}
           >
             <ArrowLeft aria-hidden="true" className="h-4 w-4" />
             Back to jobs
@@ -185,14 +286,14 @@ export const CandidateJobDetailPage = () => {
           <div className="flex items-start gap-3">
             <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-[#181d26] text-white">
               <Building2 aria-hidden="true" className="h-6 w-6" strokeWidth={1.7} />
-              {detail?.company?.logo && (
+              {companyLogoUrl && (
                 <img
-                  alt={`${detail.company.name} logo`}
+                  alt={`${detail?.company?.name || 'Company'} logo`}
                   className="absolute inset-0 h-full w-full bg-white object-contain p-2"
                   onError={(event) => {
                     event.currentTarget.style.display = 'none';
                   }}
-                  src={detail.company.logo}
+                  src={companyLogoUrl}
                 />
               )}
             </div>
@@ -200,7 +301,7 @@ export const CandidateJobDetailPage = () => {
               {detail?.company?.id ? (
                 <Link
                   className="text-lg font-medium text-foreground underline-offset-4 hover:underline"
-                  to={`/companies/${detail.company.id}`}
+                  to={`/companies/${detail.company.id}?backTo=${encodeURIComponent(companyBackPath)}`}
                 >
                   {detail.company.name || 'Unknown company'}
                 </Link>

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { Button, Chip, Dropdown, Table, TextArea } from '@heroui/react';
+import { Button, Chip, Dropdown, Table, TextArea, toast } from '@heroui/react';
 import { CheckCircle2, ChevronLeft, ChevronRight, MoreHorizontal, PanelTopOpen, XCircle } from 'lucide-react';
 import { approveJobPosting, getPendingJobPostings, rejectJobPosting } from '../lib/admin-api';
 import { type JobPostingListItem } from '../lib/job-postings-api';
@@ -46,7 +46,6 @@ export const AdminJobPostingsPage = () => {
   const [confirmPostingId, setConfirmPostingId] = useState<number | null>(null);
   const [rejectPostingId, setRejectPostingId] = useState<number | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
-  const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const pageSize = 5;
 
@@ -68,23 +67,26 @@ export const AdminJobPostingsPage = () => {
   };
 
   useEffect(() => {
-    void loadPostings();
+    const timeoutId = window.setTimeout(() => void loadPostings(), 0);
+    return () => window.clearTimeout(timeoutId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleApprove = async (jobPostingId: number) => {
     setActioningId(jobPostingId);
-    setMessage(null);
     setError(null);
     setAuthError(null);
     setAuthLoading(true);
 
     try {
       await approveJobPosting(jobPostingId);
-      setMessage('Job posting approved successfully.');
+      toast.success('Job posting approved', {
+        description: 'The posting is now active and visible to candidates.',
+      });
       await loadPostings();
     } catch (approveError) {
-      setError(approveError instanceof Error ? approveError.message : 'Unable to approve job posting');
+      const message = approveError instanceof Error ? approveError.message : 'Unable to approve job posting';
+      toast.danger('Unable to approve job posting', { description: message });
     } finally {
       setActioningId(null);
       setAuthLoading(false);
@@ -102,19 +104,21 @@ export const AdminJobPostingsPage = () => {
     }
 
     setActioningId(rejectPostingId);
-    setMessage(null);
     setError(null);
     setAuthError(null);
     setAuthLoading(true);
 
     try {
       await rejectJobPosting(rejectPostingId, rejectionReason.trim());
-      setMessage('Job posting rejected successfully.');
+      toast.success('Job posting rejected', {
+        description: 'The recruiter can review the rejection reason.',
+      });
       setRejectPostingId(null);
       setRejectionReason('');
       await loadPostings();
     } catch (rejectError) {
-      setError(rejectError instanceof Error ? rejectError.message : 'Unable to reject job posting');
+      const message = rejectError instanceof Error ? rejectError.message : 'Unable to reject job posting';
+      toast.danger('Unable to reject job posting', { description: message });
     } finally {
       setActioningId(null);
       setAuthLoading(false);
@@ -198,25 +202,11 @@ export const AdminJobPostingsPage = () => {
           document.body,
         )}
 
-      <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h2 className="text-4xl leading-[1.15] text-foreground">Approve job postings</h2>
-            <p className="mt-3 max-w-2xl text-sm leading-7 text-foreground-500">
-              Review pending postings from recruiters and approve the ones ready to go live.
-            </p>
-          </div>
-
-          <Button type="button" variant="secondary" onPress={() => void loadPostings()} isDisabled={loading}>
-            Refresh
-          </Button>
-        </div>
-
-        {message && (
-          <div className="mt-5 rounded-lg border border-success/20 bg-success/10 px-4 py-3 text-sm leading-6 text-success-700">
-            {message}
-          </div>
-        )}
+      <section className="p-0">
+        <h2 className="text-4xl leading-[1.15] text-foreground">Approve job postings</h2>
+        <p className="mt-3 max-w-2xl text-sm leading-7 text-foreground-500">
+          Review pending postings from recruiters and approve the ones ready to go live.
+        </p>
 
         {error && (
           <div className="mt-5 rounded-lg border border-danger/20 bg-danger/10 px-4 py-3 text-sm leading-6 text-danger-700">
@@ -225,48 +215,17 @@ export const AdminJobPostingsPage = () => {
         )}
       </section>
 
-      <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h3 className="text-2xl text-foreground">Pending postings</h3>
-          <div className="flex items-center gap-2 text-sm text-foreground-500">
-            <Button
-              isIconOnly
-              aria-label="Previous page"
-              type="button"
-              variant="outline"
-              size="sm"
-              onPress={() => void loadPostings(Math.max(1, currentPage - 1))}
-              isDisabled={loading || currentPage <= 1}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <span>
-              Page {currentPage} of {totalPages}
-            </span>
-            <Button
-              isIconOnly
-              aria-label="Next page"
-              type="button"
-              variant="outline"
-              size="sm"
-              onPress={() => void loadPostings(Math.min(totalPages, currentPage + 1))}
-              isDisabled={loading || currentPage >= totalPages}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-
+      <section className="overflow-hidden rounded-xl border border-divider bg-content1">
         {loading ? (
-          <div className="mt-5 rounded-xl border border-divider bg-content2 p-6 text-sm text-foreground-500">
+          <div className="p-6 text-sm text-foreground-500">
             Loading pending postings...
           </div>
         ) : postings.length === 0 ? (
-          <div className="mt-5 rounded-xl border border-dashed border-divider bg-content2 p-6 text-sm text-foreground-500">
+          <div className="m-6 rounded-xl border border-dashed border-divider bg-content2 p-6 text-sm text-foreground-500">
             No pending job postings.
           </div>
         ) : (
-          <Table className="mt-5" variant="secondary">
+          <Table variant="secondary">
             <Table.ScrollContainer>
               <Table.Content aria-label="Pending job postings">
                 <Table.Header>
@@ -367,6 +326,36 @@ export const AdminJobPostingsPage = () => {
               </Table.Content>
             </Table.ScrollContainer>
           </Table>
+        )}
+
+        {totalPages > 1 && (
+          <div className="flex items-center justify-end gap-3 border-t border-divider p-5">
+            <span className="text-sm text-foreground-500">
+              Page {currentPage} of {totalPages}
+            </span>
+            <Button
+              isIconOnly
+              aria-label="Previous page"
+              type="button"
+              variant="outline"
+              size="sm"
+              onPress={() => void loadPostings(Math.max(1, currentPage - 1))}
+              isDisabled={loading || currentPage <= 1}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              isIconOnly
+              aria-label="Next page"
+              type="button"
+              variant="outline"
+              size="sm"
+              onPress={() => void loadPostings(Math.min(totalPages, currentPage + 1))}
+              isDisabled={loading || currentPage >= totalPages}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
         )}
       </section>
     </div>

@@ -1,14 +1,21 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button, Input, ListBox, Modal, Select, toast, useOverlayState } from '@heroui/react';
-import { BriefcaseBusiness, Building2, CalendarDays, ChevronLeft, ChevronRight, Filter, Heart, Search, X } from 'lucide-react';
-import { getActiveJobPostings, type JobPostingListItem } from '../lib/job-postings-api';
+import { BriefcaseBusiness, Building2, CalendarDays, ChevronLeft, ChevronRight, Clock3, Filter, Heart, MapPin, Search, WalletCards, X } from 'lucide-react';
+import {
+  getActiveJobPostings,
+  type JobPostingEmploymentType,
+  type JobPostingListItem,
+  type JobPostingWorkLocation,
+} from '../lib/job-postings-api';
 import { applyToJobPosting } from '../lib/job-applications-api';
-import { useSetAtom } from 'jotai';
-import { authErrorAtom, authLoadingAtom } from '../store/auth';
+import { useAtomValue, useSetAtom } from 'jotai';
+import { authErrorAtom, authLoadingAtom, authSessionAtom } from '../store/auth';
 import { SkillAutocomplete } from '../components/SkillAutocomplete';
 import type { ApiPagination } from '../lib/panel-api';
 import type { Skill } from '../lib/skills-api';
+import { getCompanyLogoUrl } from '../lib/company-logo';
+import { getWishlistStorageKey, readWishlist, writeWishlist } from '../lib/job-wishlist';
 
 type SortValue = 'createdAt-desc' | 'createdAt-asc' | 'expiresAt-asc' | 'expiresAt-desc';
 
@@ -25,9 +32,40 @@ const sortOptions: { value: SortValue; label: string; orderBy: 'createdAt' | 'ex
   { value: 'expiresAt-desc', label: 'Closing latest', orderBy: 'expiresAt', sort: 'desc' },
 ];
 
+const workLocationLabels: Record<JobPostingWorkLocation, string> = {
+  Remote: 'Remote',
+  OnSite: 'On-site',
+  Hybrid: 'Hybrid',
+};
+
+const employmentTypeLabels: Record<JobPostingEmploymentType, string> = {
+  FullTime: 'Full-time',
+  PartTime: 'Part-time',
+  Contract: 'Contract',
+  Internship: 'Internship',
+  Temporary: 'Temporary',
+  Other: 'Other',
+};
+
+const formatWorkLocation = (value?: string | null) =>
+  value && value in workLocationLabels
+    ? workLocationLabels[value as JobPostingWorkLocation]
+    : value || null;
+
+const formatEmploymentType = (value?: string | null) =>
+  value && value in employmentTypeLabels
+    ? employmentTypeLabels[value as JobPostingEmploymentType]
+    : value || null;
+
 const pageSize = 9;
 
-export const CandidateJobsPage = () => {
+type CandidateJobsPageProps = {
+  isPublic?: boolean;
+};
+
+export const CandidateJobsPage = ({ isPublic = false }: CandidateJobsPageProps) => {
+  const navigate = useNavigate();
+  const session = useAtomValue(authSessionAtom);
   const setAuthError = useSetAtom(authErrorAtom);
   const setAuthLoading = useSetAtom(authLoadingAtom);
   const [jobs, setJobs] = useState<JobPostingListItem[]>([]);
@@ -39,10 +77,23 @@ export const CandidateJobsPage = () => {
   const [skillResetKey, setSkillResetKey] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [applyingId, setApplyingId] = useState<number | null>(null);
+  const [wishlistVersion, setWishlistVersion] = useState(0);
   const filterModal = useOverlayState();
   const selectedSort = sortOptions.find((option) => option.value === sortValue) ?? sortOptions[0];
   const selectedSkillIds = useMemo(() => selectedSkills.map((skill) => skill.id), [selectedSkills]);
   const hasFilters = search.trim().length > 0 || selectedSkills.length > 0 || sortValue !== 'createdAt-desc';
+  const detailsBasePath = isPublic ? '/jobs' : '/panel/jobs';
+  const isApplyBlockedByRole = isPublic && !!session && session.user.role !== 'Candidate';
+  const wishlistStorageKey = session?.user.role === 'Candidate'
+    ? getWishlistStorageKey(String(session.user.id))
+    : null;
+  const wishlistJobIds = useMemo(
+    () => {
+      void wishlistVersion;
+      return wishlistStorageKey ? readWishlist(wishlistStorageKey) : new Set<number>();
+    },
+    [wishlistStorageKey, wishlistVersion],
+  );
 
   useEffect(() => {
     let mounted = true;
@@ -108,7 +159,42 @@ export const CandidateJobsPage = () => {
     setCurrentPage(1);
   };
 
+  const toggleWishlist = (job: JobPostingListItem) => {
+    if (!wishlistStorageKey) {
+      return;
+    }
+
+    const next = new Set(wishlistJobIds);
+    const wasSaved = next.has(job.id);
+
+    if (wasSaved) {
+      next.delete(job.id);
+    } else {
+      next.add(job.id);
+    }
+
+    writeWishlist(wishlistStorageKey, next);
+    setWishlistVersion((current) => current + 1);
+    toast.success(wasSaved ? 'Removed from wishlist' : 'Saved to wishlist', {
+      description: wasSaved
+        ? `${job.title || 'This job'} was removed from your wishlist.`
+        : `${job.title || 'This job'} was added to your wishlist.`,
+    });
+  };
+
   const handleApply = async (jobPostingId: number) => {
+    if (isPublic && !session) {
+      navigate(`/register?returnTo=${encodeURIComponent(`/jobs/${jobPostingId}`)}`);
+      return;
+    }
+
+    if (isPublic && session?.user.role !== 'Candidate') {
+      toast.danger('Candidate account required', {
+        description: 'Only candidate accounts can apply to jobs.',
+      });
+      return;
+    }
+
     setApplyingId(jobPostingId);
     setAuthError(null);
     setAuthLoading(true);
@@ -131,11 +217,11 @@ export const CandidateJobsPage = () => {
 
   return (
     <div className="grid gap-8">
-      <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
+      <section className="p-0">
         <div className="mb-6">
           <h2 className="text-4xl leading-[1.15] text-foreground">Browse job postings</h2>
           <p className="mt-3 max-w-2xl text-sm leading-7 text-foreground-500">
-            Review active openings and apply with one click when you are ready.
+            {isPublic ? 'Review active openings, then create an account when you are ready to apply.' : 'Review active openings and apply with one click when you are ready.'}
           </p>
         </div>
 
@@ -297,28 +383,56 @@ export const CandidateJobsPage = () => {
               No active jobs found.
             </div>
           ) : (
-            jobs.map((job) => (
+            jobs.map((job) => {
+              const companyLogoUrl = getCompanyLogoUrl(job.company?.logo, job.company?.websiteUrl);
+              const workLocation = formatWorkLocation(job.workLocation);
+              const employmentType = formatEmploymentType(job.employmentType);
+              const isWishlisted = wishlistJobIds.has(job.id);
+
+              return (
               <article key={job.id} className="flex min-h-80 flex-col rounded-xl border border-divider bg-content1 p-5">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex min-w-0 items-center gap-3">
-                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[#181d26] text-white">
-                      <Building2 aria-hidden="true" className="h-5 w-5" strokeWidth={1.8} />
+                    <span className={`flex h-11 shrink-0 items-center justify-start overflow-hidden rounded-lg text-white ${companyLogoUrl ? 'w-7' : 'w-11'}`}>
+                      {companyLogoUrl ? (
+                        <img
+                          alt={`${job.company?.name || 'Company'} logo`}
+                          className="h-7 w-7 object-contain"
+                          src={companyLogoUrl}
+                          onError={(event) => {
+                            event.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      ) : (
+                        <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-[#181d26]">
+                          <Building2 aria-hidden="true" className="h-5 w-5" strokeWidth={1.8} />
+                        </span>
+                      )}
                     </span>
                     <div className="min-w-0">
                       <p className="truncate text-xs text-foreground-500">{job.company?.name || 'Unknown company'}</p>
                       <h3 className="truncate text-base font-medium text-foreground">{job.title || 'Untitled role'}</h3>
                     </div>
                   </div>
-                  <Button
-                    isIconOnly
-                    aria-label={`Save ${job.title || 'job'}`}
-                    className="shrink-0 border border-[#f2a6a6] bg-content1 text-[#c24141] hover:bg-[#fff1f1]"
-                    size="sm"
-                    type="button"
-                    variant="secondary"
-                  >
-                    <Heart aria-hidden="true" className="h-4 w-4" strokeWidth={1.8} />
-                  </Button>
+                  {!isPublic && (
+                    <Button
+                      isIconOnly
+                      aria-label={`${isWishlisted ? 'Remove' : 'Save'} ${job.title || 'job'}`}
+                      aria-pressed={isWishlisted}
+                      className={[
+                        'shrink-0 border',
+                        isWishlisted
+                          ? 'border-[#c24141] bg-[#fff1f1] text-[#c24141] hover:bg-[#ffe4e4]'
+                          : 'border-[#f2a6a6] bg-content1 text-[#c24141] hover:bg-[#fff1f1]',
+                      ].join(' ')}
+                      size="sm"
+                      type="button"
+                      variant="secondary"
+                      onPress={() => toggleWishlist(job)}
+                    >
+                      <Heart aria-hidden="true" className={`h-4 w-4 ${isWishlisted ? 'fill-current' : ''}`} strokeWidth={1.8} />
+                    </Button>
+                  )}
                 </div>
 
                 <div className="mt-5 flex flex-wrap gap-x-4 gap-y-2 text-xs text-foreground-500">
@@ -336,30 +450,56 @@ export const CandidateJobsPage = () => {
                   {job.shortDescription || 'No description provided.'}
                 </p>
 
+                {(workLocation || employmentType || job.salaryRange) && (
+                  <div className="mt-4 grid gap-2 text-xs text-foreground-500">
+                    {workLocation && (
+                      <span className="inline-flex min-w-0 items-center gap-1.5">
+                        <MapPin aria-hidden="true" className="h-4 w-4 shrink-0" strokeWidth={1.7} />
+                        <span className="truncate">{workLocation}</span>
+                      </span>
+                    )}
+                    {employmentType && (
+                      <span className="inline-flex min-w-0 items-center gap-1.5">
+                        <Clock3 aria-hidden="true" className="h-4 w-4 shrink-0" strokeWidth={1.7} />
+                        <span className="truncate">{employmentType}</span>
+                      </span>
+                    )}
+                    {job.salaryRange && (
+                      <span className="inline-flex min-w-0 items-center gap-1.5">
+                        <WalletCards aria-hidden="true" className="h-4 w-4 shrink-0" strokeWidth={1.7} />
+                        <span className="truncate">{job.salaryRange}</span>
+                      </span>
+                    )}
+                  </div>
+                )}
+
                 <div className="mt-auto pt-6">
                   <div className="border-t border-divider pt-4">
                     <div className="flex items-center justify-between gap-3">
                       <Link
                         className="inline-flex items-center gap-1 text-sm font-medium text-foreground"
-                        to={`/panel/jobs/${job.id}`}
+                        to={`${detailsBasePath}/${job.id}`}
                       >
                         View details
                         <ChevronRight aria-hidden="true" className="h-4 w-4" strokeWidth={1.8} />
                       </Link>
-                      <Button
-                        className="rounded-lg bg-[#19734f] text-white hover:bg-[#145f42]"
-                        type="button"
-                        variant="primary"
-                        isDisabled={applyingId === job.id}
-                        onPress={() => void handleApply(job.id)}
-                      >
-                        {applyingId === job.id ? 'Applying...' : 'Apply now'}
-                      </Button>
+                      {!isPublic && (
+                        <Button
+                          className="rounded-lg bg-[#19734f] text-white hover:bg-[#145f42]"
+                          type="button"
+                          variant="primary"
+                          isDisabled={applyingId === job.id || isApplyBlockedByRole}
+                          onPress={() => void handleApply(job.id)}
+                        >
+                          {applyingId === job.id ? 'Applying...' : 'Apply now'}
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </div>
               </article>
-            ))
+              );
+            })
           )}
         </div>
 

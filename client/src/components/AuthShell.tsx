@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Link, NavLink, useLocation } from "react-router-dom";
 
 type AuthShellProps = {
   eyebrow: string;
@@ -17,9 +18,56 @@ export const AuthShell = ({
   asideTitle,
   asideText,
 }: AuthShellProps) => {
+  const location = useLocation();
+  const authLink =
+    location.pathname === "/login"
+      ? { to: `/register${location.search}`, label: "Create account" }
+      : { to: `/login${location.search}`, label: "Sign in" };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#e0e2e6] px-4 py-6 text-foreground sm:px-8 sm:py-10">
-      <div className="grid w-full max-w-6xl overflow-hidden rounded-2xl border border-[#c9ccd1] bg-white shadow-[0_24px_70px_rgba(24,29,38,0.16)] lg:min-h-[680px] lg:grid-cols-[0.9fr_1.1fr]">
+    <div className="min-h-screen bg-background text-foreground">
+      <header className="border-b border-divider bg-white">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
+          <Link
+            className="text-lg font-medium tracking-[-0.01em] text-foreground"
+            to="/"
+          >
+            CareerScope
+          </Link>
+
+          <nav className="flex items-center gap-1">
+            {[
+              { to: "/jobs", label: "Jobs" },
+              { to: "/companies", label: "Companies" },
+            ].map((item) => (
+              <NavLink
+                key={item.to}
+                className={({ isActive }) =>
+                  [
+                    "rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                    isActive
+                      ? "bg-[#181d26] !text-white"
+                      : "text-foreground-500 hover:bg-content2 hover:text-foreground",
+                  ].join(" ")
+                }
+                to={item.to}
+              >
+                {item.label}
+              </NavLink>
+            ))}
+          </nav>
+
+          <Link
+            className="rounded-lg bg-[#181d26] px-3 py-2 text-sm font-medium !text-white hover:bg-[#252d3a]"
+            to={authLink.to}
+          >
+            {authLink.label}
+          </Link>
+        </div>
+      </header>
+
+      <main className="flex min-h-[calc(100vh-65px)] items-center justify-center px-4 py-6 sm:px-8 sm:py-10">
+        <div className="grid w-full max-w-6xl overflow-hidden rounded-2xl border border-divider bg-content1 shadow-[0_24px_70px_rgba(24,29,38,0.16)] lg:min-h-[680px] lg:grid-cols-[0.9fr_1.1fr]">
         <aside className="relative flex min-h-60 flex-col justify-between overflow-hidden bg-[#181d26] p-6 text-white sm:p-8 lg:min-h-full lg:p-10">
           <div className="relative z-10 text-lg font-medium tracking-[-0.01em]">
             {eyebrow}
@@ -94,7 +142,7 @@ export const AuthShell = ({
           </div>
         </aside>
 
-        <main className="flex items-center justify-center bg-white px-6 py-12 text-[#181d26] sm:px-12 lg:px-16">
+        <section className="flex items-center justify-center bg-content1 px-6 py-12 text-foreground sm:px-12 lg:px-16">
           <div className="w-full max-w-[520px]">
             <div className="mb-10">
               <h1 className="auth-title text-4xl leading-[1.08] text-foreground sm:text-5xl">
@@ -122,8 +170,9 @@ export const AuthShell = ({
 
             {children}
           </div>
-        </main>
+        </section>
       </div>
+      </main>
     </div>
   );
 };

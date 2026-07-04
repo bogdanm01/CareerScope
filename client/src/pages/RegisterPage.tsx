@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useSetAtom } from 'jotai';
 import { Button, Calendar, DateField, DatePicker, Input, Label } from '@heroui/react';
 import { parseDate } from '@internationalized/date';
 import { AuthShell } from '../components/AuthShell';
 import { authErrorAtom, authLoadingAtom, signUpAtom } from '../store/auth';
+import { getPostAuthRedirectPath } from '../lib/navigation';
 
 type RegisterPageProps = {
   loading: boolean;
@@ -13,6 +14,7 @@ type RegisterPageProps = {
 
 export const RegisterPage = ({ loading }: RegisterPageProps) => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const signUp = useSetAtom(signUpAtom);
   const setAuthError = useSetAtom(authErrorAtom);
   const setAuthLoading = useSetAtom(authLoadingAtom);
@@ -24,6 +26,8 @@ export const RegisterPage = ({ loading }: RegisterPageProps) => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const returnTo = searchParams.get('returnTo');
+  const returnToQuery = returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : '';
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -43,7 +47,7 @@ export const RegisterPage = ({ loading }: RegisterPageProps) => {
         email,
         password,
       });
-      navigate(session?.user.role === 'Admin' ? '/panel/admin' : '/panel', { replace: true });
+      navigate(getPostAuthRedirectPath(session?.user.role, returnTo), { replace: true });
     } catch (submitError) {
       const message = submitError instanceof Error ? submitError.message : 'Unable to create account';
       setError(message);
@@ -171,7 +175,7 @@ export const RegisterPage = ({ loading }: RegisterPageProps) => {
       </form>
 
       <div className="mt-7 border-t border-divider pt-6 text-sm text-foreground-600">
-        Already have an account? <Link className="text-primary hover:underline" to="/login">Sign in</Link>
+        Already have an account? <Link className="text-primary hover:underline" to={`/login${returnToQuery}`}>Sign in</Link>
         <br />
         Are you a recruiter?{' '}
         <Link className="text-primary hover:underline" to="/register/recruiter">

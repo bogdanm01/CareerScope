@@ -3,18 +3,23 @@ import type { FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Calendar, Card, DateField, DatePicker, Dropdown, Input, ListBox, Select } from '@heroui/react';
 import { parseDate } from '@internationalized/date';
-import { ArrowLeft, ChevronDown, FilePlus2, Plus, Send, X } from 'lucide-react';
+import { ArrowLeft, BriefcaseBusiness, CalendarDays, ChevronDown, FilePlus2, MapPin, Plus, Send, WalletCards, X } from 'lucide-react';
 import { useSetAtom } from 'jotai';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { RichTextEditor } from '../components/RichTextEditor';
 import { SkillAutocomplete } from '../components/SkillAutocomplete';
 import {
   createJobPosting,
+  type InterviewActivityTemplatePayload,
   type JobPostingCreatePayload,
   type JobPostingEmploymentType,
   type JobPostingWorkLocation,
 } from '../lib/job-postings-api';
 import { getSkillCategories, type Skill, type SkillCategory } from '../lib/skills-api';
+import { formatDate } from '../lib/date-format';
 import { authErrorAtom, authLoadingAtom } from '../store/auth';
+import { InterviewActivityTemplateEditor } from '../components/InterviewActivityTemplateEditor';
 
 type RecruiterJobPostingCreatePageProps = {
   loading: boolean;
@@ -23,10 +28,11 @@ type RecruiterJobPostingCreatePageProps = {
 type SelectedSkill = {
   id: number;
   name: string;
-  yearsOfExperience: number;
+  requiresYearsOfExperience: boolean;
+  yearsOfExperience: number | null;
 };
 
-type CreateStep = 'basic' | 'skills' | 'activities' | 'preview';
+type CreateStep = 'basic' | 'skills' | 'process' | 'preview';
 
 type PostingLogisticsDraft = {
   workLocation: JobPostingWorkLocation | '';
@@ -37,7 +43,7 @@ type PostingLogisticsDraft = {
 const steps: Array<{ key: CreateStep; label: string }> = [
   { key: 'basic', label: 'Basic Info' },
   { key: 'skills', label: 'Required Skills' },
-  { key: 'activities', label: 'Activities' },
+  { key: 'process', label: 'Interview Process' },
   { key: 'preview', label: 'Preview' },
 ];
 
@@ -66,6 +72,11 @@ const employmentTypeOptions: Array<{ key: JobPostingEmploymentType; label: strin
 ];
 
 const todayIso = () => new Date().toISOString().slice(0, 10);
+
+const fallbackText = (value: string | undefined | null, fallback: string) => {
+  const trimmed = value?.trim();
+  return trimmed && trimmed.length > 0 ? trimmed : fallback;
+};
 
 const PostingDatePicker = ({
   value,
@@ -147,6 +158,7 @@ export const RecruiterJobPostingCreatePage = ({ loading }: RecruiterJobPostingCr
   const [selectedSkill, setSelectedSkill] = useState<Skill | null>(null);
   const [selectedYears, setSelectedYears] = useState('1');
   const [selectedSkills, setSelectedSkills] = useState<SelectedSkill[]>([]);
+  const [interviewActivities, setInterviewActivities] = useState<InterviewActivityTemplatePayload[]>([]);
   const [skillResetKey, setSkillResetKey] = useState(0);
   const [activeStep, setActiveStep] = useState<CreateStep>('basic');
   const activeStepIndex = steps.findIndex((step) => step.key === activeStep);
@@ -202,8 +214,10 @@ export const RecruiterJobPostingCreatePage = ({ loading }: RecruiterJobPostingCr
       return;
     }
 
-    const years = Number(selectedYears);
-    if (!Number.isFinite(years) || years < 0) {
+    const requiresYearsOfExperience = skill.requiresYearsOfExperience;
+    const years = requiresYearsOfExperience ? Number(selectedYears) : null;
+
+    if (requiresYearsOfExperience && (!Number.isFinite(Number(selectedYears)) || Number(selectedYears) < 0)) {
       setSkillMessage('Years of experience must be zero or greater.');
       return;
     }
@@ -213,7 +227,15 @@ export const RecruiterJobPostingCreatePage = ({ loading }: RecruiterJobPostingCr
         return current;
       }
 
-      return [...current, { id: skill.id, name: skill.name, yearsOfExperience: years }];
+      return [
+        ...current,
+        {
+          id: skill.id,
+          name: skill.name,
+          requiresYearsOfExperience,
+          yearsOfExperience: years,
+        },
+      ];
     });
     setSkillMessage(null);
     setSelectedSkill(null);
@@ -249,8 +271,16 @@ export const RecruiterJobPostingCreatePage = ({ loading }: RecruiterJobPostingCr
       expiresAt: form.expiresAt || undefined,
       skills: selectedSkills.map((skill) => ({
         skillId: skill.id,
-        yoe: skill.yearsOfExperience,
+        yoe: skill.yearsOfExperience ?? undefined,
       })),
+      interviewActivities: interviewActivities
+        .map((activity, index) => ({
+          title: activity.title.trim(),
+          description: activity.description?.trim() || null,
+          orderIndex: index,
+          isRequired: activity.isRequired ?? true,
+        }))
+        .filter((activity) => activity.title.length > 0),
     };
 
     const response = await createJobPosting(payload);
@@ -585,17 +615,26 @@ export const RecruiterJobPostingCreatePage = ({ loading }: RecruiterJobPostingCr
                     excludeIds={selectedSkills.map((skill) => skill.id)}
                   />
 
-                  <label className="grid gap-3">
-                    <span className="text-sm font-medium text-foreground-700">Years</span>
-                    <Input
-                      type="number"
-                      min="0"
-                      max="60"
-                      step="1"
-                      value={selectedYears}
-                      onChange={(event) => setSelectedYears(event.target.value)}
-                    />
-                  </label>
+                  {selectedSkill?.requiresYearsOfExperience === false ? (
+                    <div className="grid gap-3">
+                      <span className="text-sm font-medium text-foreground-700">Years</span>
+                      <div className="flex h-10 items-center rounded-lg bg-content2 px-3 text-sm text-foreground-500">
+                        Not required
+                      </div>
+                    </div>
+                  ) : (
+                    <label className="grid gap-3">
+                      <span className="text-sm font-medium text-foreground-700">Years</span>
+                      <Input
+                        type="number"
+                        min="0"
+                        max="60"
+                        step="1"
+                        value={selectedYears}
+                        onChange={(event) => setSelectedYears(event.target.value)}
+                      />
+                    </label>
+                  )}
 
                   <div className="grid gap-3">
                     <span aria-hidden="true" className="text-sm font-medium text-transparent">
@@ -634,15 +673,17 @@ export const RecruiterJobPostingCreatePage = ({ loading }: RecruiterJobPostingCr
                       {selectedSkills.map((skill) => (
                         <span
                           key={skill.id}
-                          className="inline-flex max-w-full items-center gap-3 rounded-[12px] bg-content1 px-4 py-2 text-[14px] text-foreground shadow-sm"
+                          className="inline-flex max-w-full items-center gap-3 rounded-[12px] border border-divider bg-content1 px-4 py-2 text-[14px] text-foreground shadow-sm"
                         >
                           <span className="truncate">
                             <span className="font-medium">{skill.name}</span>
-                            <span className="font-medium text-foreground-500"> · {skill.yearsOfExperience} yrs</span>
+                            <span className="font-medium text-foreground-500">
+                              {skill.yearsOfExperience === null ? ' · no YOE' : ` · ${skill.yearsOfExperience} yrs`}
+                            </span>
                           </span>
                           <button
                             type="button"
-                            className="grid h-5 w-5 shrink-0 place-items-center text-foreground-400 transition-colors hover:text-foreground"
+                            className="grid h-5 w-5 shrink-0 cursor-pointer place-items-center text-foreground-400 transition-colors hover:text-foreground"
                             aria-label={`Remove ${skill.name}`}
                             onClick={() => removeSkill(skill.id)}
                           >
@@ -656,16 +697,111 @@ export const RecruiterJobPostingCreatePage = ({ loading }: RecruiterJobPostingCr
               </div>
               )}
 
-              {activeStep === 'activities' && (
-                <div className="grid min-h-64 place-items-center rounded-xl border border-dashed border-divider bg-content2/40 p-6 text-sm text-foreground-500">
-                  Activities will be added here.
+              {activeStep === 'preview' && (
+                <div className="grid gap-5">
+                  <div>
+                    <h3 className="text-2xl text-foreground">Preview</h3>
+                    <p className="mt-2 text-sm leading-6 text-foreground-500">
+                      Review how candidates will see this posting before you save or submit it.
+                    </p>
+                  </div>
+
+                  <div className="rounded-xl border border-divider bg-content1 p-5 sm:p-6">
+                    <div className="flex flex-wrap items-center gap-3 text-sm text-foreground-500">
+                      <span className="rounded-full border border-divider bg-content2 px-3 py-1 text-xs font-medium text-foreground-600">
+                        Preview
+                      </span>
+                      <span className="inline-flex items-center gap-1.5">
+                        <CalendarDays aria-hidden="true" className="h-4 w-4" strokeWidth={1.7} />
+                        {form.expiresAt ? `Closes ${formatDate(form.expiresAt)}` : 'No closing date'}
+                      </span>
+                    </div>
+
+                    <h4 className="mt-5 max-w-3xl text-3xl leading-[1.12] text-foreground sm:text-4xl">
+                      {fallbackText(form.title, 'Untitled role')}
+                    </h4>
+                    <p className="mt-4 max-w-3xl text-sm leading-7 text-foreground-500">
+                      {fallbackText(form.shortDescription, 'No short description provided yet.')}
+                    </p>
+
+                    <div className="mt-6 grid gap-3 sm:grid-cols-3">
+                      <div className="rounded-lg border border-divider bg-content2 px-4 py-3">
+                        <span className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[0.16em] text-foreground-400">
+                          <MapPin className="h-4 w-4" />
+                          Location
+                        </span>
+                        <p className="mt-2 text-sm font-medium text-foreground">
+                          {workLocationOptions.find((option) => option.key === logistics.workLocation)?.label ?? 'Not specified'}
+                        </p>
+                      </div>
+                      <div className="rounded-lg border border-divider bg-content2 px-4 py-3">
+                        <span className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[0.16em] text-foreground-400">
+                          <BriefcaseBusiness className="h-4 w-4" />
+                          Employment
+                        </span>
+                        <p className="mt-2 text-sm font-medium text-foreground">
+                          {employmentTypeOptions.find((option) => option.key === logistics.employmentType)?.label ?? 'Not specified'}
+                        </p>
+                      </div>
+                      <div className="rounded-lg border border-divider bg-content2 px-4 py-3">
+                        <span className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[0.16em] text-foreground-400">
+                          <WalletCards className="h-4 w-4" />
+                          Salary
+                        </span>
+                        <p className="mt-2 text-sm font-medium text-foreground">
+                          {fallbackText(logistics.salaryRange, 'Not specified')}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-divider bg-content1 p-5 sm:p-6">
+                    <h4 className="text-xl text-foreground">Description</h4>
+                    <div className="job-description-markdown mt-4">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {fallbackText(form.description, 'No description provided yet.')}
+                      </ReactMarkdown>
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-divider bg-content1 p-5 sm:p-6">
+                    <div className="flex items-end justify-between gap-4">
+                      <div>
+                        <h4 className="text-xl text-foreground">Required skills</h4>
+                        <p className="mt-1 text-sm text-foreground-500">
+                          Skills and minimum experience requested for this role.
+                        </p>
+                      </div>
+                      <span className="text-sm text-foreground-500">{selectedSkills.length} listed</span>
+                    </div>
+                    <div className="mt-5 flex flex-wrap gap-3">
+                      {selectedSkills.length === 0 ? (
+                        <div className="w-full rounded-lg border border-dashed border-divider bg-content2/50 px-4 py-3 text-sm text-foreground-500">
+                          No skill requirements selected.
+                        </div>
+                      ) : (
+                        selectedSkills.map((skill) => (
+                          <span
+                            key={skill.id}
+                            className="inline-flex items-center rounded-[12px] border border-divider bg-content2 px-4 py-2 text-sm text-foreground"
+                          >
+                            <span className="font-medium">{skill.name}</span>
+                            <span className="ml-2 text-foreground-500">
+                              {skill.yearsOfExperience === null ? '· no YOE' : `· ${skill.yearsOfExperience} yrs`}
+                            </span>
+                          </span>
+                        ))
+                      )}
+                    </div>
+                  </div>
                 </div>
               )}
 
-              {activeStep === 'preview' && (
-                <div className="grid min-h-64 place-items-center rounded-xl border border-dashed border-divider bg-content2/40 p-6 text-sm text-foreground-500">
-                  Preview will be added here.
-                </div>
+              {activeStep === 'process' && (
+                <InterviewActivityTemplateEditor
+                  activities={interviewActivities}
+                  onChange={setInterviewActivities}
+                />
               )}
 
               {(error || loading) && (
@@ -694,8 +830,8 @@ export const RecruiterJobPostingCreatePage = ({ loading }: RecruiterJobPostingCr
                       className="rounded-lg"
                     >
                       {activeStep === 'basic' && 'Next: required skills'}
-                      {activeStep === 'skills' && 'Next: activities'}
-                      {activeStep === 'activities' && 'Next: preview'}
+                      {activeStep === 'skills' && 'Next: interview process'}
+                      {activeStep === 'process' && 'Next: preview'}
                     </Button>
                   )}
                 </div>

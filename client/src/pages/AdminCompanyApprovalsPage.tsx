@@ -63,21 +63,18 @@ export const AdminCompanyApprovalsPage = () => {
   };
 
   useEffect(() => {
-    void loadRequests();
+    const timeoutId = window.setTimeout(() => void loadRequests(), 0);
+    return () => window.clearTimeout(timeoutId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
     <div className="grid gap-8">
-      <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h2 className="text-4xl leading-[1.15] text-foreground">Company approvals</h2>
-            <p className="mt-3 max-w-2xl text-sm leading-7 text-foreground-500">
-              Review pending recruiter companies and approve the ones ready to join the platform.
-            </p>
-          </div>
-        </div>
+      <section className="p-0">
+        <h2 className="text-4xl leading-[1.15] text-foreground">Company approvals</h2>
+        <p className="mt-3 max-w-2xl text-sm leading-7 text-foreground-500">
+          Review pending recruiter companies and approve the ones ready to join the platform.
+        </p>
 
         {error && (
           <div className="mt-5 rounded-lg border border-danger/20 bg-danger/10 px-4 py-3 text-sm leading-6 text-danger-700">
@@ -86,53 +83,23 @@ export const AdminCompanyApprovalsPage = () => {
         )}
       </section>
 
-      <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h3 className="text-2xl text-foreground">Pending companies</h3>
-          <div className="flex items-center gap-2 text-sm text-foreground-500">
-            <Button
-              isIconOnly
-              aria-label="Previous page"
-              type="button"
-              variant="outline"
-              size="sm"
-              onPress={() => void loadRequests(Math.max(1, currentPage - 1))}
-              isDisabled={loading || currentPage <= 1}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <span>
-              Page {currentPage} of {totalPages}
-            </span>
-            <Button
-              isIconOnly
-              aria-label="Next page"
-              type="button"
-              variant="outline"
-              size="sm"
-              onPress={() => void loadRequests(Math.min(totalPages, currentPage + 1))}
-              isDisabled={loading || currentPage >= totalPages}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-
+      <section className="overflow-hidden rounded-xl border border-divider bg-content1">
         {loading ? (
-          <div className="mt-5 rounded-xl border border-divider bg-content2 p-6 text-sm text-foreground-500">
+          <div className="p-6 text-sm text-foreground-500">
             Loading company approvals...
           </div>
         ) : companies.length === 0 ? (
-          <div className="mt-5 rounded-xl border border-dashed border-divider bg-content2 p-6 text-sm text-foreground-500">
+          <div className="m-6 rounded-xl border border-dashed border-divider bg-content2 p-6 text-sm text-foreground-500">
             No pending company approvals.
           </div>
         ) : (
-          <Table className="mt-5" variant="secondary">
+          <Table variant="secondary">
             <Table.ScrollContainer>
               <Table.Content aria-label="Pending company approvals">
                 <Table.Header>
                   <Table.Column isRowHeader>ID</Table.Column>
                   <Table.Column>Company</Table.Column>
+                  <Table.Column>Request</Table.Column>
                   <Table.Column>Tax ID</Table.Column>
                   <Table.Column>Status</Table.Column>
                   <Table.Column>Action</Table.Column>
@@ -142,6 +109,11 @@ export const AdminCompanyApprovalsPage = () => {
                     <Table.Row key={company.id} id={company.id}>
                       <Table.Cell>
                         <span className="whitespace-nowrap font-medium text-foreground">#{company.id}</span>
+                      </Table.Cell>
+                      <Table.Cell>
+                        <Chip className="whitespace-nowrap rounded-md" color={company.isApproved ? 'accent' : 'warning'} size="sm" variant="soft">
+                          {company.isApproved ? 'Profile update' : 'New company'}
+                        </Chip>
                       </Table.Cell>
                       <Table.Cell>
                         <div className="min-w-56">
@@ -190,6 +162,36 @@ export const AdminCompanyApprovalsPage = () => {
               </Table.Content>
             </Table.ScrollContainer>
           </Table>
+        )}
+
+        {totalPages > 1 && (
+          <div className="flex items-center justify-end gap-3 border-t border-divider p-5">
+            <span className="text-sm text-foreground-500">
+              Page {currentPage} of {totalPages}
+            </span>
+            <Button
+              isIconOnly
+              aria-label="Previous page"
+              type="button"
+              variant="outline"
+              size="sm"
+              onPress={() => void loadRequests(Math.max(1, currentPage - 1))}
+              isDisabled={loading || currentPage <= 1}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              isIconOnly
+              aria-label="Next page"
+              type="button"
+              variant="outline"
+              size="sm"
+              onPress={() => void loadRequests(Math.min(totalPages, currentPage + 1))}
+              isDisabled={loading || currentPage >= totalPages}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
         )}
       </section>
     </div>

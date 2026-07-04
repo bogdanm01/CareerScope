@@ -1,6 +1,7 @@
 import { Navigate } from 'react-router-dom';
 import { useAtomValue } from 'jotai';
 import { authHydratedAtom, authSessionAtom } from '../store/auth';
+import { getPanelHomePath } from '../lib/navigation';
 
 export const HomeRedirect = () => {
   const hydrated = useAtomValue(authHydratedAtom);
@@ -10,7 +11,7 @@ export const HomeRedirect = () => {
     return <div className="app-loading">Loading...</div>;
   }
 
-  const target = session?.user.role === 'Admin' ? '/panel/admin' : session ? '/panel' : '/login';
+  const target = session ? getPanelHomePath(session.user.role) : '/jobs';
 
   return <Navigate to={target} replace />;
 };

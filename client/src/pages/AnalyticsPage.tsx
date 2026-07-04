@@ -1,96 +1,56 @@
-import { useEffect, useMemo, useState } from "react";
-import { Button, Calendar, Card, Chip, DateField, DatePicker, Modal, useOverlayState } from "@heroui/react";
-import { parseDate } from "@internationalized/date";
-import {
-  Area,
-  AreaChart,
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Button, Card, Modal, Tabs, useOverlayState } from "@heroui/react";
+import { useAtomValue } from "jotai";
+
 import {
   BarChart3,
   BriefcaseBusiness,
   Building2,
   CalendarDays,
-  CheckCircle2,
-  CircleDot,
   ClipboardCheck,
+  FileText,
+  Globe2,
   RotateCcw,
   RefreshCw,
-  ShieldCheck,
+  Search,
   TrendingUp,
+  Users,
 } from "lucide-react";
 import {
   getAnalyticsOverview,
-  type AnalyticsChartRecord,
+  getRecruiterJobPostingAnalytics,
+  type AnalyticsOverviewQuery,
   type AnalyticsOverview,
-  type AnalyticsStat,
+  type AnalyticsRole,
+  type RecruiterJobPostingAnalytics,
 } from "../lib/analytics-api";
+import { authSessionAtom } from "../store/auth";
 import { formatDate } from "../lib/date-format";
-
-const chartColors = [
-  "#b84a1b",
-  "#1f7a58",
-  "#334155",
-  "#9a650f",
-  "#7353b8",
-  "#bf4343",
-  "#2f6f91",
-  "#6f7f1e",
-  "#9a4b73",
-  "#68758d",
-];
-
-const trendColor = "#b84a1b";
-const trendFill = "#b84a1b";
+import { ApplicationFunnel } from "../components/analytics/ApplicationFunnel";
+import { DashboardSection } from "../components/analytics/DashboardSection";
+import { RangeDatePicker } from "./RangeDatePicker";
+import { SkillGapChart } from "../components/analytics/SkillGapChart";
+import { PieStatusChart } from "../components/analytics/PieStatusChart";
+import { TopList } from "../components/analytics/TopList";
+import { TrendLineChart } from "../components/analytics/TrendLineChart";
+import { ChartCard } from "../components/analytics/ChartCard";
+import { RequiredSkillsList } from "../components/analytics/RequiredSkillsList";
+import { PostingTrendChart } from "../components/analytics/PostingTrendChart";
+import { PostingPerformanceList } from "../components/analytics/PostingPerformanceList";
+import { DailyApplicationsBarChart } from "../components/analytics/DailyApplicationsBarChart";
+import { ApplicationsTreemap } from "../components/analytics/ApplicationsTreemap";
+import { CategoryBarChart } from "../components/analytics/CategoryBarChart";
+import { getRecordNumber, getRecordString, statusLabel } from "../lib/analytics-utils";
+import { CompactStatCard } from "../components/analytics/CompactStatCard";
 
 const todayIso = () => new Date().toISOString().slice(0, 10);
 
-const daysAgoIso = (days: number) => {
-  const date = new Date();
-  date.setDate(date.getDate() - days);
+const threeMonthsAgoMonthStartIso = () => {
+  const now = new Date();
+  const date = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 3, 1),
+  );
   return date.toISOString().slice(0, 10);
-};
-
-const statIconMap: Record<
-  string,
-  { icon: typeof ClipboardCheck; className: string }
-> = {
-  applications: { icon: ClipboardCheck, className: "bg-[#aa2d00] text-white" },
-  underReview: { icon: CircleDot, className: "bg-[#f5e9d4] text-[#8a5a12]" },
-  accepted: { icon: CheckCircle2, className: "bg-[#e8f8f1] text-[#19734f]" },
-  selectedSkills: { icon: BarChart3, className: "bg-content2 text-foreground" },
-  cvUploaded: { icon: ShieldCheck, className: "bg-[#e8f8f1] text-[#19734f]" },
-  profileCompleted: {
-    icon: CheckCircle2,
-    className: "bg-[#e8f8f1] text-[#19734f]",
-  },
-  postings: { icon: BriefcaseBusiness, className: "bg-[#181d26] text-white" },
-  activePostings: {
-    icon: BriefcaseBusiness,
-    className: "bg-[#0a2e0e] text-white",
-  },
-  pendingPostings: {
-    icon: ClipboardCheck,
-    className: "bg-[#f5e9d4] text-[#8a5a12]",
-  },
-  companies: { icon: Building2, className: "bg-[#181d26] text-white" },
-  pendingCompanies: {
-    icon: Building2,
-    className: "bg-[#f5e9d4] text-[#8a5a12]",
-  },
-  approvedCompanies: {
-    icon: ShieldCheck,
-    className: "bg-[#e8f8f1] text-[#19734f]",
-  },
 };
 
 const roleCopy = {
@@ -111,469 +71,454 @@ const roleCopy = {
   },
 } as const;
 
-const statusLabel = (value: string | number | null | undefined) => {
-  if (value === "UnderReview") return "Under Review";
-  if (value === "PendingApproval") return "Pending approval";
-  return value?.toString() ?? "Unknown";
-};
-
-const formatChartDate = (value: string | number | null | undefined) => {
-  if (!value) {
-    return "";
-  }
-
-  const date = new Date(`${value}`);
-
-  if (Number.isNaN(date.getTime())) {
-    return value.toString();
-  }
-
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-  }).format(date);
-};
-
-const getStatDisplayValue = (stat: AnalyticsStat) => {
-  if (stat.key === "cvUploaded" || stat.key === "profileCompleted") {
-    return stat.value > 0 ? "Yes" : "No";
-  }
-
-  return stat.value;
-};
-
-const EmptyChart = ({ label }: { label: string }) => (
-  <div className="flex min-h-56 items-center justify-center rounded-xl border border-dashed border-divider bg-content2/40 px-6 text-center text-sm text-default-500">
-    {label}
-  </div>
+const MetricGrid = ({ children }: { children: React.ReactNode }) => (
+  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{children}</div>
 );
 
-const ChartCard = ({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) => (
-  <Card className="border border-divider shadow-none">
-    <Card.Content className="p-5">
-      <h3 className="text-lg font-medium text-foreground">{title}</h3>
-      <div className="mt-4">{children}</div>
-    </Card.Content>
-  </Card>
-);
-
-const RangeDatePicker = ({
-  label,
-  value,
-  onChange,
-  maxValue,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  maxValue?: string;
-}) => (
-  <div className="grid gap-1.5">
-    <span className="text-xs font-medium text-default-500">{label}</span>
-    <DatePicker
-      className="w-full"
-      aria-label={label}
-      value={value ? parseDate(value) : null}
-      onChange={(dateValue) => onChange(dateValue?.toString() ?? "")}
-      maxValue={maxValue ? parseDate(maxValue) : undefined}
-    >
-      <DateField.Group fullWidth className="min-h-[40px] rounded-lg">
-        <DateField.Input>
-          {(segment) => <DateField.Segment segment={segment} />}
-        </DateField.Input>
-        <DateField.Suffix>
-          <DatePicker.Trigger>
-            <DatePicker.TriggerIndicator />
-          </DatePicker.Trigger>
-        </DateField.Suffix>
-      </DateField.Group>
-      <DatePicker.Popover className="!w-[320px] !min-w-[320px] max-w-[calc(100vw-2rem)]">
-        <Calendar className="!w-[320px] max-w-full">
-          <Calendar.Header>
-            <Calendar.NavButton slot="previous" />
-            <Calendar.YearPickerTrigger>
-              <Calendar.YearPickerTriggerHeading />
-              <Calendar.YearPickerTriggerIndicator />
-            </Calendar.YearPickerTrigger>
-            <Calendar.NavButton slot="next" />
-          </Calendar.Header>
-          <Calendar.Grid>
-            <Calendar.GridHeader>
-              {(day) => <Calendar.HeaderCell>{day}</Calendar.HeaderCell>}
-            </Calendar.GridHeader>
-            <Calendar.GridBody>
-              {(date) => (
-                <Calendar.Cell date={date}>
-                  {({ formattedDate }) => (
-                    <>
-                      {formattedDate}
-                      <Calendar.CellIndicator />
-                    </>
-                  )}
-                </Calendar.Cell>
-              )}
-            </Calendar.GridBody>
-          </Calendar.Grid>
-          <Calendar.YearPickerGrid>
-            <Calendar.YearPickerGridBody>
-              {({ year }) => <Calendar.YearPickerCell year={year} />}
-            </Calendar.YearPickerGridBody>
-          </Calendar.YearPickerGrid>
-        </Calendar>
-      </DatePicker.Popover>
-    </DatePicker>
-  </div>
-);
-
-const StatCard = ({ stat }: { stat: AnalyticsStat }) => {
-  const iconConfig = statIconMap[stat.key] ?? {
-    icon: TrendingUp,
-    className: "bg-content2 text-foreground",
-  };
-  const StatIcon = iconConfig.icon;
-
-  return (
-    <Card className="border border-divider shadow-none">
-      <Card.Content className="!flex min-h-20 !flex-row !items-center !justify-start gap-5 p-3">
-        <span
-          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${iconConfig.className}`}
-        >
-          <StatIcon aria-hidden="true" className="h-5 w-5" strokeWidth={1.8} />
-        </span>
-        <div className="min-w-0">
-          <span className="block truncate text-sm text-default-500">
-            {stat.label}
-          </span>
-          <strong className="mt-1 block text-2xl font-medium leading-none text-foreground">
-            {getStatDisplayValue(stat)}
-          </strong>
-        </div>
-      </Card.Content>
-    </Card>
-  );
-};
-
-const TrendLineChart = ({ data }: { data: AnalyticsChartRecord[] }) => {
-  if (data.length === 0) {
-    return <EmptyChart label="No trend data available for this range." />;
-  }
-
-  const normalizedData = data.map((item) => ({
-    ...item,
-    label: formatChartDate(item.date),
-  }));
-
-  return (
-    <div className="h-76">
-      <ResponsiveContainer width="100%" height="100%">
-        <AreaChart
-          data={normalizedData}
-          margin={{ top: 12, right: 18, left: -6, bottom: 0 }}
-        >
-          <defs>
-            <linearGradient id="applicationsTrendFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor={trendFill} stopOpacity={0.34} />
-              <stop offset="95%" stopColor={trendFill} stopOpacity={0.04} />
-            </linearGradient>
-          </defs>
-          <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="currentColor" className="text-default-200" />
-          <XAxis
-            dataKey="label"
-            tickLine={false}
-            axisLine={false}
-            tickMargin={12}
-            minTickGap={28}
-            className="text-xs text-default-400"
-          />
-          <YAxis
-            allowDecimals={false}
-            tickLine={false}
-            axisLine={false}
-            width={36}
-            className="text-xs text-default-400"
-          />
-          <Tooltip
-            cursor={{ stroke: trendColor, strokeOpacity: 0.18, strokeWidth: 2 }}
-            labelFormatter={(_, payload) => formatChartDate(payload?.[0]?.payload?.date)}
-            formatter={(value) => [value, "Applications"]}
-            contentStyle={{
-              borderRadius: 12,
-              borderColor: "hsl(var(--heroui-divider))",
-              boxShadow: "0 16px 40px rgba(15, 23, 42, 0.12)",
-            }}
-          />
-          <Area
-            type="monotone"
-            dataKey="applications"
-            stroke={trendColor}
-            strokeWidth={3}
-            fill="url(#applicationsTrendFill)"
-            activeDot={{ r: 5, strokeWidth: 3, stroke: "#ffffff", fill: trendColor }}
-            dot={{ r: 3, strokeWidth: 2, stroke: trendColor, fill: "#ffffff" }}
-          />
-        </AreaChart>
-      </ResponsiveContainer>
-    </div>
-  );
-};
-
-const StatusBarChart = ({
-  data,
-  labelKey = "status",
-}: {
-  data: AnalyticsChartRecord[];
-  labelKey?: string;
-}) => {
-  if (data.length === 0) {
-    return <EmptyChart label="No status data available for this range." />;
-  }
-
-  const normalizedData: Array<AnalyticsChartRecord & { label: string }> =
-    data.map((item) => ({
-      ...item,
-      label: statusLabel(item[labelKey]),
-    }));
-
-  return (
-    <div className="h-72">
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={normalizedData} margin={{ top: 12, right: 16, left: -6, bottom: 10 }}>
-          <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="currentColor" className="text-default-200" />
-          <XAxis
-            dataKey="label"
-            interval={0}
-            angle={-28}
-            textAnchor="end"
-            tickLine={false}
-            axisLine={false}
-            height={78}
-            className="text-xs text-default-400"
-          />
-          <YAxis allowDecimals={false} tickLine={false} axisLine={false} width={36} className="text-xs text-default-400" />
-          <Tooltip
-            cursor={{ fill: "rgba(15, 23, 42, 0.04)" }}
-            formatter={(value) => [value, "Postings"]}
-            contentStyle={{
-              borderRadius: 12,
-              borderColor: "hsl(var(--heroui-divider))",
-              boxShadow: "0 16px 40px rgba(15, 23, 42, 0.12)",
-            }}
-          />
-          <Bar dataKey="value" radius={[8, 8, 0, 0]}>
-            {normalizedData.map((_, index) => (
-              <Cell key={`cell-${index}`} fill={chartColors[index % chartColors.length]} />
-            ))}
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
-  );
-};
-
-const PieStatusChart = ({
-  data,
-  labelKey = "status",
-}: {
-  data: AnalyticsChartRecord[];
-  labelKey?: string;
-}) => {
-  if (data.length === 0) {
-    return <EmptyChart label="No breakdown data available yet." />;
-  }
-
-  const normalizedData: Array<AnalyticsChartRecord & { label: string }> =
-    data.map((item) => ({
-      ...item,
-      label: statusLabel(item[labelKey]),
-    }));
-
-  return (
-    <div className="grid gap-4">
-      <div className="mx-auto h-60 w-full max-w-80">
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie
-              data={normalizedData}
-              dataKey="value"
-              nameKey="label"
-              cx="50%"
-              cy="50%"
-              innerRadius="54%"
-              outerRadius="76%"
-              paddingAngle={4}
-              cornerRadius={8}
-            >
-              {normalizedData.map((_, index) => (
-                <Cell
-                  key={`cell-${index}`}
-                  fill={chartColors[index % chartColors.length]}
-                />
-              ))}
-            </Pie>
-            <Tooltip />
-          </PieChart>
-        </ResponsiveContainer>
-      </div>
-      <div className="grid gap-2">
-        {normalizedData.map((item, index) => (
-          <div key={`${item.label}-${index}`} className="flex items-center justify-between gap-3 text-sm">
-            <span className="inline-flex min-w-0 items-center gap-2 text-default-500">
-              <span
-                className="h-2.5 w-2.5 shrink-0 rounded-full"
-                style={{ backgroundColor: chartColors[index % chartColors.length] }}
-              />
-              <span className="truncate">{item.label}</span>
-            </span>
-            <strong className="font-medium text-foreground">{item.value}</strong>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-const TopList = ({
-  data,
-  labelKey,
-}: {
-  data: AnalyticsChartRecord[];
-  labelKey: string;
-}) => {
-  if (data.length === 0) {
-    return <EmptyChart label="No ranked data available yet." />;
-  }
-
-  return (
-    <div className="grid gap-2">
-      {data.map((item, index) => (
-        <div
-          key={`${item[labelKey]}-${index}`}
-          className="flex items-center justify-between gap-4 rounded-xl border border-divider bg-content2/40 px-4 py-3"
-        >
-          <div className="inline-flex min-w-0 items-center gap-2">
-            <span className="shrink-0 text-sm text-default-500">#{index + 1}</span>
-            <span className="truncate text-sm font-medium text-foreground">
-              {statusLabel(item[labelKey])}
-            </span>
-          </div>
-          <Chip className="rounded-lg" variant="secondary">
-            {item.value ?? item.applications ?? 0}
-          </Chip>
-        </div>
-      ))}
-    </div>
-  );
-};
+type RecruiterAnalyticsTab = "overview" | "postings";
 
 const CandidateCharts = ({ overview }: { overview: AnalyticsOverview }) => (
-  <div className="grid gap-4 xl:grid-cols-2">
-    <ChartCard title="Applications by status">
-      <PieStatusChart data={overview.charts.applicationsByStatus ?? []} />
-    </ChartCard>
-    <ChartCard title="Applications over time">
-      <TrendLineChart data={overview.charts.applicationsOverTime ?? []} />
-    </ChartCard>
+  <div className="grid gap-6">
+    <DashboardSection title="Application progress">
+      <div className="grid gap-4 xl:grid-cols-2">
+        <ChartCard
+          title="Applications over time"
+          subtitle="Cumulative applications in the selected range."
+          icon={TrendingUp}
+        >
+          <TrendLineChart data={overview.charts.applicationsOverTime ?? []} />
+        </ChartCard>
+        <ChartCard
+          title="Applications by status"
+          subtitle="Current status mix for your applications."
+          icon={FileText}
+        >
+          <PieStatusChart data={overview.charts.applicationsByStatus ?? []} />
+        </ChartCard>
+      </div>
+    </DashboardSection>
   </div>
 );
 
-const RecruiterCharts = ({ overview }: { overview: AnalyticsOverview }) => (
-  <div className="grid gap-4">
-    <div className="grid gap-4 xl:grid-cols-2">
-      <ChartCard title="Applications by status">
-        <PieStatusChart data={overview.charts.applicationsByStatus ?? []} />
-      </ChartCard>
-      <ChartCard title="Postings by status">
-        <StatusBarChart data={overview.charts.postingsByStatus ?? []} />
-      </ChartCard>
+const RecruiterCharts = ({
+  overview,
+  selectedTab,
+}: {
+  overview: AnalyticsOverview;
+  selectedTab: "overview" | "postings";
+}) => {
+  const postingPerformance = useMemo(
+    () => overview.charts.postingPerformance ?? overview.charts.topPostings ?? [],
+    [overview.charts.postingPerformance, overview.charts.topPostings],
+  );
+  const [selectedPostingId, setSelectedPostingId] = useState<number | null>(
+    null,
+  );
+  const [postingDetail, setPostingDetail] =
+    useState<RecruiterJobPostingAnalytics | null>(null);
+  const [postingLoading, setPostingLoading] = useState(false);
+  const [postingError, setPostingError] = useState<string | null>(null);
+  const [postingSearch, setPostingSearch] = useState("");
+  const filteredPostingPerformance = useMemo(() => {
+    const query = postingSearch.trim().toLowerCase();
+
+    if (!query) {
+      return postingPerformance;
+    }
+
+    return postingPerformance.filter((item) => {
+      const searchableText = [
+        getRecordString(item, "title"),
+        statusLabel(item.status),
+        getRecordString(item, "expiresAt"),
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      return searchableText.includes(query);
+    });
+  }, [postingPerformance, postingSearch]);
+  const effectiveSelectedPostingId = useMemo(() => {
+    if (filteredPostingPerformance.length === 0) {
+      return null;
+    }
+
+    const hasSelectedPosting = filteredPostingPerformance.some(
+      (item) => getRecordNumber(item, "id") === selectedPostingId,
+    );
+
+    return hasSelectedPosting
+      ? selectedPostingId
+      : getRecordNumber(filteredPostingPerformance[0], "id");
+  }, [filteredPostingPerformance, selectedPostingId]);
+
+  useEffect(() => {
+    if (!effectiveSelectedPostingId) {
+      return;
+    }
+
+    let isMounted = true;
+    const timeoutId = window.setTimeout(() => {
+      setPostingLoading(true);
+      setPostingError(null);
+
+      getRecruiterJobPostingAnalytics(
+        effectiveSelectedPostingId,
+        overview.range,
+      )
+        .then((response) => {
+          if (isMounted) {
+            setPostingDetail(response.data);
+          }
+        })
+        .catch((error) => {
+          if (isMounted) {
+            setPostingDetail(null);
+            setPostingError(
+              error instanceof Error
+                ? error.message
+                : "Unable to load posting analytics.",
+            );
+          }
+        })
+        .finally(() => {
+          if (isMounted) {
+            setPostingLoading(false);
+          }
+        });
+    }, 0);
+
+    return () => {
+      isMounted = false;
+      window.clearTimeout(timeoutId);
+    };
+  }, [overview.range, effectiveSelectedPostingId]);
+
+  return (
+    <div className="grid gap-6">
+      {selectedTab === "overview" && (
+        <>
+          <DashboardSection title="Company hiring trends">
+            <div className="grid gap-4 xl:grid-cols-2">
+              <ChartCard
+                title="Applications over time"
+                subtitle="Cumulative candidate applications."
+                icon={TrendingUp}
+              >
+                <TrendLineChart
+                  data={overview.charts.applicationsOverTime ?? []}
+                />
+              </ChartCard>
+              <ChartCard
+                title="Daily applications"
+                subtitle="New applications received each day."
+                icon={BarChart3}
+              >
+                <DailyApplicationsBarChart
+                  data={overview.charts.applicationsOverTime ?? []}
+                />
+              </ChartCard>
+            </div>
+          </DashboardSection>
+          <DashboardSection title="Company breakdowns">
+            <div className="grid gap-4 xl:grid-cols-2">
+              <ChartCard title="Applications by status" icon={FileText}>
+                <PieStatusChart
+                  data={overview.charts.applicationsByStatus ?? []}
+                />
+              </ChartCard>
+              <ChartCard title="Postings by status" icon={BriefcaseBusiness}>
+                <PieStatusChart data={overview.charts.postingsByStatus ?? []} />
+              </ChartCard>
+            </div>
+          </DashboardSection>
+        </>
+      )}
+
+      {selectedTab === "postings" && (
+        <>
+          <section className="grid w-full gap-4 pt-3 first:pt-0">
+            <div className="grid w-full gap-3 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
+              <div className="min-w-0">
+                <h2 className="text-xl font-medium tracking-[-0.01em] text-foreground">
+                  Posting performance
+                </h2>
+                <p className="mt-1 text-sm leading-6 text-default-500">
+                  Select a posting to inspect its application flow and
+                  requirements. Application counts use the selected date range.
+                </p>
+              </div>
+              <div className="relative ml-auto w-80 max-w-full justify-self-end">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-default-400" />
+                <input
+                  aria-label="Search postings"
+                  placeholder="Search postings"
+                  value={postingSearch}
+                  onChange={(event) => setPostingSearch(event.target.value)}
+                  className="h-10 w-full rounded-lg border border-divider bg-content1 pl-9 pr-3 text-sm text-foreground outline-none transition-colors placeholder:text-sm placeholder:text-default-500 hover:border-default-300 focus:border-foreground/30 focus:ring-2 focus:ring-foreground/10"
+                />
+              </div>
+            </div>
+            <PostingPerformanceList
+              data={filteredPostingPerformance}
+              emptyLabel={
+                postingSearch.trim()
+                  ? "No postings match your search."
+                  : "No company postings available yet."
+              }
+              selectedPostingId={effectiveSelectedPostingId}
+              onSelect={setSelectedPostingId}
+            />
+          </section>
+
+          <DashboardSection title="Selected posting analytics">
+            {!effectiveSelectedPostingId && (
+              <Card className="border border-divider shadow-none">
+                <Card.Content className="p-6 text-sm text-default-500">
+                  Create a job posting to see posting-level analytics.
+                </Card.Content>
+              </Card>
+            )}
+            {effectiveSelectedPostingId && postingLoading && !postingDetail && (
+              <Card className="border border-divider shadow-none">
+                <Card.Content className="p-6 text-sm text-default-500">
+                  Loading posting analytics...
+                </Card.Content>
+              </Card>
+            )}
+            {effectiveSelectedPostingId && postingError && !postingLoading && (
+              <Card className="border border-danger-200 bg-danger-50 shadow-none">
+                <Card.Content className="p-6">
+                  <p className="text-sm text-danger-700">{postingError}</p>
+                </Card.Content>
+              </Card>
+            )}
+
+            {effectiveSelectedPostingId &&
+              postingDetail &&
+              !postingError && (
+                <div
+                  className={`grid gap-4 transition-opacity duration-150 ${
+                    postingLoading ? "opacity-75" : "opacity-100"
+                  }`}
+                >
+                  <div className="grid gap-4 xl:grid-cols-2">
+                    <ChartCard
+                      title="Applications over time"
+                      subtitle="Cumulative applications for this posting."
+                      icon={TrendingUp}
+                    >
+                      <PostingTrendChart
+                        data={postingDetail.charts.applicationsOverTime ?? []}
+                        type="trend"
+                      />
+                    </ChartCard>
+                    <ChartCard
+                      title="Daily applications"
+                      subtitle="Daily application volume for this posting."
+                      icon={BarChart3}
+                    >
+                      <PostingTrendChart
+                        data={postingDetail.charts.applicationsOverTime ?? []}
+                        type="daily"
+                      />
+                    </ChartCard>
+                  </div>
+                  <div className="grid gap-4 xl:grid-cols-2">
+                    <ChartCard
+                      title="Application funnel"
+                      subtitle="Current movement through review outcomes."
+                      icon={FileText}
+                    >
+                      <ApplicationFunnel stats={postingDetail.stats} />
+                    </ChartCard>
+                    <ChartCard title="Required skills" icon={BriefcaseBusiness}>
+                      <RequiredSkillsList
+                        data={postingDetail.charts.requiredSkills ?? []}
+                      />
+                    </ChartCard>
+                  </div>
+                </div>
+              )}
+          </DashboardSection>
+        </>
+      )}
     </div>
-    <div className="grid gap-4 xl:grid-cols-2">
-      <ChartCard title="Applications over time">
-        <TrendLineChart data={overview.charts.applicationsOverTime ?? []} />
-      </ChartCard>
-      <ChartCard title="Top postings by applications">
-        <TopList data={overview.charts.topPostings ?? []} labelKey="title" />
-      </ChartCard>
-    </div>
-  </div>
-);
+  );
+};
 
 const AdminCharts = ({ overview }: { overview: AnalyticsOverview }) => (
-  <div className="grid gap-4">
-    <div className="grid gap-4 xl:grid-cols-3">
-      <ChartCard title="Companies by status">
-        <PieStatusChart data={overview.charts.companiesByStatus ?? []} />
-      </ChartCard>
-      <ChartCard title="Applications by status">
-        <PieStatusChart data={overview.charts.applicationsByStatus ?? []} />
-      </ChartCard>
-      <ChartCard title="Users by role">
-        <PieStatusChart data={overview.charts.usersByRole ?? []} labelKey="role" />
-      </ChartCard>
-    </div>
-    <div className="grid gap-4 xl:grid-cols-2">
-      <ChartCard title="Applications over time">
-        <TrendLineChart data={overview.charts.applicationsOverTime ?? []} />
-      </ChartCard>
-      <ChartCard title="Postings by status">
-        <StatusBarChart data={overview.charts.postingsByStatus ?? []} />
-      </ChartCard>
-    </div>
-    <div className="grid gap-4 xl:grid-cols-2">
-      <ChartCard title="Top skills by posting demand">
-        <TopList
-          data={overview.charts.topSkillsByPostingDemand ?? []}
-          labelKey="skill"
-        />
-      </ChartCard>
-      <ChartCard title="Top skills by candidate supply">
-        <TopList
-          data={overview.charts.topSkillsByCandidateSupply ?? []}
-          labelKey="skill"
-        />
-      </ChartCard>
-    </div>
+  <div className="grid gap-6">
+    <DashboardSection
+      title="Application trends"
+      description="Compare cumulative application growth with daily submission volume."
+    >
+      <div className="grid gap-4 xl:grid-cols-2">
+        <ChartCard
+          title="Applications over time"
+          subtitle="Cumulative total over the selected range."
+          icon={TrendingUp}
+        >
+          <TrendLineChart data={overview.charts.applicationsOverTime ?? []} />
+        </ChartCard>
+        <ChartCard
+          title="Daily applications"
+          subtitle="New applications received each day."
+          icon={BarChart3}
+        >
+          <DailyApplicationsBarChart
+            data={overview.charts.applicationsOverTime ?? []}
+          />
+        </ChartCard>
+      </div>
+    </DashboardSection>
+    <DashboardSection
+      title="Application flow"
+      description="See where applications concentrate and how quickly they move past submission."
+    >
+      <div className="grid gap-4 xl:grid-cols-2">
+        <ChartCard
+          title="Applications per company"
+          subtitle="Companies receiving the most applications in this range."
+          icon={Building2}
+        >
+          <ApplicationsTreemap
+            data={overview.charts.applicationsPerCompany ?? []}
+          />
+        </ChartCard>
+        <ChartCard
+          title="Application review speed"
+          subtitle="Time from submission to a reviewed status."
+          icon={ClipboardCheck}
+        >
+          <CategoryBarChart
+            data={overview.charts.applicationReviewSpeed ?? []}
+            labelKey="bucket"
+            emptyLabel="No reviewed applications available for this range."
+            valueLabel="Applications"
+          />
+        </ChartCard>
+      </div>
+    </DashboardSection>
+    <DashboardSection
+      title="Operational breakdown"
+      description="Current platform composition across companies, applications, users, and postings."
+    >
+      <div className="grid gap-4 xl:grid-cols-3">
+        <ChartCard title="Companies by status" icon={Building2}>
+          <PieStatusChart data={overview.charts.companiesByStatus ?? []} />
+        </ChartCard>
+        <ChartCard title="Users by role" icon={Users}>
+          <PieStatusChart
+            data={overview.charts.usersByRole ?? []}
+            labelKey="role"
+          />
+        </ChartCard>
+        <ChartCard title="Active jobs by work location" icon={Globe2}>
+          <PieStatusChart
+            data={overview.charts.activeJobsByWorkLocation ?? []}
+            labelKey="location"
+          />
+        </ChartCard>
+      </div>
+      <div className="grid gap-4 xl:grid-cols-2">
+        <ChartCard title="Applications by status" icon={FileText}>
+          <PieStatusChart data={overview.charts.applicationsByStatus ?? []} />
+        </ChartCard>
+        <ChartCard title="Postings by status" icon={BriefcaseBusiness}>
+          <PieStatusChart data={overview.charts.postingsByStatus ?? []} />
+        </ChartCard>
+      </div>
+    </DashboardSection>
+    <DashboardSection
+      title="Skill demand and supply"
+      description="Compare required skills in postings against candidate profile skills."
+    >
+      <div className="grid gap-4">
+        <ChartCard
+          title="Skill Supply Balance"
+          subtitle="Negative values indicate demand exceeds candidate supply."
+          icon={BarChart3}
+        >
+          <SkillGapChart data={overview.charts.skillDemandSupplyGap ?? []} />
+        </ChartCard>
+      </div>
+      <div className="grid gap-4 xl:grid-cols-2">
+        <ChartCard
+          title="Top skills by posting demand"
+          icon={BriefcaseBusiness}
+        >
+          <TopList
+            data={overview.charts.topSkillsByPostingDemand ?? []}
+            labelKey="skill"
+            columns
+          />
+        </ChartCard>
+        <ChartCard title="Top skills by candidate supply" icon={Users}>
+          <TopList
+            data={overview.charts.topSkillsByCandidateSupply ?? []}
+            labelKey="skill"
+            columns
+          />
+        </ChartCard>
+      </div>
+    </DashboardSection>
   </div>
 );
 
 export const AnalyticsPage = () => {
+  const session = useAtomValue(authSessionAtom);
   const [overview, setOverview] = useState<AnalyticsOverview | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [rangeError, setRangeError] = useState<string | null>(null);
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+  const [selectedRecruiterTab, setSelectedRecruiterTab] =
+    useState<RecruiterAnalyticsTab>("overview");
   const rangeModal = useOverlayState();
+  const sessionRole = session?.user.role as AnalyticsRole | undefined;
 
-  const loadOverview = async (range?: { from?: string; to?: string }) => {
-    setLoading(true);
-    setErrorMessage(null);
+  const loadOverview = useCallback(
+    async (
+      range?: { from?: string; to?: string },
+      view?: RecruiterAnalyticsTab,
+      syncDateInputs = true,
+    ) => {
+      setLoading(true);
+      setErrorMessage(null);
 
-    try {
-      const response = await getAnalyticsOverview(range);
-      setOverview(response.data);
-      setFromDate(response.data.range.from);
-      setToDate(response.data.range.to);
-      return true;
-    } catch (error) {
-      setOverview(null);
-      setErrorMessage(
-        error instanceof Error ? error.message : "Unable to load analytics.",
-      );
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  };
+      try {
+        const query: AnalyticsOverviewQuery = {
+          ...range,
+          ...(sessionRole === "Recruiter" ? { view: view ?? "overview" } : {}),
+        };
+        const response = await getAnalyticsOverview(query);
+        setOverview(response.data);
+
+        if (syncDateInputs) {
+          setFromDate(response.data.range.from);
+          setToDate(response.data.range.to);
+        }
+
+        return true;
+      } catch (error) {
+        setOverview(null);
+        setErrorMessage(
+          error instanceof Error ? error.message : "Unable to load analytics.",
+        );
+        return false;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [sessionRole],
+  );
 
   useEffect(() => {
-    void loadOverview();
-  }, []);
+    const timeoutId = window.setTimeout(() => void loadOverview(), 0);
+    return () => window.clearTimeout(timeoutId);
+  }, [loadOverview]);
 
   const openRangeModal = () => {
     if (overview) {
@@ -598,7 +543,10 @@ export const AnalyticsPage = () => {
       return;
     }
 
-    const success = await loadOverview({ from: fromDate, to: toDate });
+    const success = await loadOverview(
+      { from: fromDate, to: toDate },
+      selectedRecruiterTab,
+    );
 
     if (success) {
       rangeModal.close();
@@ -607,25 +555,35 @@ export const AnalyticsPage = () => {
 
   const resetRange = () => {
     const to = todayIso();
-    const from = daysAgoIso(29);
+    const from = threeMonthsAgoMonthStartIso();
 
     setRangeError(null);
     setFromDate(from);
     setToDate(to);
   };
 
-  const copy = overview ? roleCopy[overview.role] : roleCopy.Candidate;
+  const activeRole = sessionRole ?? overview?.role ?? "Candidate";
+  const copy = roleCopy[activeRole];
   const statRows = useMemo(() => overview?.stats ?? [], [overview]);
 
+  const handleRecruiterTabChange = (key: React.Key) => {
+    const nextTab = key === "postings" ? "postings" : "overview";
+    setSelectedRecruiterTab(nextTab);
+
+    if (overview) {
+      void loadOverview(overview.range, nextTab, false);
+    }
+  };
+
   return (
-    <div className="grid gap-5">
-      <section className="pt-6 sm:pt-10">
+    <div className="grid gap-6">
+      <section>
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="max-w-4xl">
-            <h1 className="text-4xl leading-[1.05] tracking-[-0.04em] text-foreground sm:text-5xl">
+            <h1 className="text-4xl leading-[1.08] tracking-[-0.035em] text-foreground sm:text-5xl">
               {copy.title}
             </h1>
-            <p className="mt-4 max-w-3xl text-base leading-7 text-default-500">
+            <p className="mt-3 max-w-3xl text-sm leading-6 text-default-500 sm:text-base sm:leading-7">
               {copy.description}
             </p>
           </div>
@@ -635,10 +593,12 @@ export const AnalyticsPage = () => {
               variant="secondary"
               className="rounded-lg"
               onPress={openRangeModal}
+              isDisabled={loading && !overview}
             >
               <span className="inline-flex items-center gap-2">
                 <CalendarDays className="h-4 w-4" />
-                {formatDate(overview.range.from)} – {formatDate(overview.range.to)}
+                {formatDate(overview.range.from)} –{" "}
+                {formatDate(overview.range.to)}
               </span>
             </Button>
           )}
@@ -700,7 +660,7 @@ export const AnalyticsPage = () => {
         </Modal.Backdrop>
       </Modal>
 
-      {loading && (
+      {loading && !overview && (
         <Card className="border border-divider shadow-none">
           <Card.Content className="p-6 text-sm text-default-500">
             Loading analytics...
@@ -716,21 +676,67 @@ export const AnalyticsPage = () => {
         </Card>
       )}
 
-      {overview && !loading && (
+      {overview && (
         <>
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            {statRows.map((stat) => (
-              <StatCard key={stat.key} stat={stat} />
-            ))}
-          </div>
+          {activeRole === "Recruiter" && (
+            <Tabs
+              className="w-full"
+              selectedKey={selectedRecruiterTab}
+              onSelectionChange={handleRecruiterTabChange}
+            >
+              <Tabs.ListContainer className="max-w-md">
+                <Tabs.List aria-label="Options">
+                  <Tabs.Tab id="overview">
+                    Overview
+                    <Tabs.Indicator />
+                  </Tabs.Tab>
+                  <Tabs.Tab id="postings">
+                    Postings
+                    <Tabs.Indicator />
+                  </Tabs.Tab>
+                </Tabs.List>
+              </Tabs.ListContainer>
+              <Tabs.Panel id="overview" className="w-full">
+                <div className="grid gap-6 pt-4">
+                  <DashboardSection title="Key metrics">
+                    <MetricGrid>
+                      {statRows.map((stat) => (
+                        <CompactStatCard key={stat.key} stat={stat} />
+                      ))}
+                    </MetricGrid>
+                  </DashboardSection>
+                  <RecruiterCharts
+                    overview={overview}
+                    selectedTab="overview"
+                  />
+                </div>
+              </Tabs.Panel>
+              <Tabs.Panel id="postings" className="w-full">
+                <div className="pt-4">
+                  <RecruiterCharts
+                    overview={overview}
+                    selectedTab="postings"
+                  />
+                </div>
+              </Tabs.Panel>
+            </Tabs>
+          )}
 
-          {overview.role === "Candidate" && (
+          {activeRole !== "Recruiter" && (
+          <DashboardSection title="Key metrics">
+            <MetricGrid>
+              {statRows.map((stat) => (
+                <CompactStatCard key={stat.key} stat={stat} />
+              ))}
+            </MetricGrid>
+          </DashboardSection>
+          )}
+
+          {activeRole === "Candidate" && (
             <CandidateCharts overview={overview} />
           )}
-          {overview.role === "Recruiter" && (
-            <RecruiterCharts overview={overview} />
-          )}
-          {overview.role === "Admin" && <AdminCharts overview={overview} />}
+
+          {activeRole === "Admin" && <AdminCharts overview={overview} />}
         </>
       )}
     </div>

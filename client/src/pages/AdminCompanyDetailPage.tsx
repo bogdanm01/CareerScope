@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import { useSetAtom } from 'jotai';
-import { Button, TextArea } from '@heroui/react';
+import { Button, TextArea, toast } from '@heroui/react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import {
   approveRecruiterOnboarding,
   getPendingRecruiterOnboardingRequests,
@@ -54,7 +56,6 @@ export const AdminCompanyDetailPage = () => {
   const [loading, setLoading] = useState(!request);
   const [actioning, setActioning] = useState(false);
   const [reason, setReason] = useState('');
-  const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const companyId = Number(id);
@@ -87,11 +88,11 @@ export const AdminCompanyDetailPage = () => {
 
   useEffect(() => {
     if (request) {
-      setLoading(false);
       return;
     }
 
-    void loadRequest();
+    const timeoutId = window.setTimeout(() => void loadRequest(), 0);
+    return () => window.clearTimeout(timeoutId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [companyId]);
 
@@ -109,7 +110,6 @@ export const AdminCompanyDetailPage = () => {
 
     setActioning(true);
     setError(null);
-    setMessage(null);
     setAuthError(null);
     setAuthLoading(true);
 
@@ -133,7 +133,9 @@ export const AdminCompanyDetailPage = () => {
             },
           },
         );
-        setMessage('Company approved successfully.');
+        toast.success('Company approved', {
+          description: 'The recruiter onboarding request is now approved.',
+        });
       } else {
         const response = await rejectRecruiterOnboarding(request.company.id, pendingAction.reason);
         const rejected = response.data as RejectedRecruiterOnboardingRequest;
@@ -153,10 +155,13 @@ export const AdminCompanyDetailPage = () => {
             },
           },
         );
-        setMessage('Company rejected successfully.');
+        toast.success('Company rejected', {
+          description: 'The recruiter can review the rejection reason.',
+        });
       }
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : 'Unable to process company approval');
+      const message = submitError instanceof Error ? submitError.message : 'Unable to process company approval';
+      toast.danger('Unable to process company approval', { description: message });
     } finally {
       setPendingAction(null);
       setActioning(false);
@@ -285,7 +290,11 @@ export const AdminCompanyDetailPage = () => {
             </div>
             <div>
               <span className="block text-foreground-500">Description</span>
-              <span className="text-foreground">{request.company.description || 'Not provided'}</span>
+              <div className="job-description-markdown mt-2 text-foreground">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {request.company.description || 'Not provided'}
+                </ReactMarkdown>
+              </div>
             </div>
           </div>
         </section>
@@ -347,12 +356,6 @@ export const AdminCompanyDetailPage = () => {
         <section className="rounded-3xl border border-danger/20 bg-danger/10 p-6 text-sm leading-6 text-danger-700 sm:p-8">
           <strong className="block">Latest rejection reason</strong>
           <p className="mt-2">{request.company.approvalRejectionReason}</p>
-        </section>
-      )}
-
-      {message && (
-        <section className="rounded-3xl border border-success/20 bg-success/10 p-6 text-sm leading-6 text-success-700 sm:p-8">
-          {message}
         </section>
       )}
 

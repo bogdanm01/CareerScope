@@ -1,8 +1,18 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Button, Chip, Input, TextArea, toast } from '@heroui/react';
-import { createApplicationReview, getMyJobApplication, type JobApplicationDetail } from '../lib/job-applications-api';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import {
+  createApplicationReview,
+  deleteMyJobApplication,
+  getMyJobApplication,
+  type JobApplicationDetail,
+  updateMyJobApplication,
+} from '../lib/job-applications-api';
 import { formatDateTime } from '../lib/date-format';
+import { ConfirmDialog } from '../components/ConfirmDialog';
+import { ApplicationInterviewTimeline } from '../components/ApplicationInterviewTimeline';
 
 const formatStatus = (status?: string) => {
   if (!status) {
@@ -14,12 +24,15 @@ const formatStatus = (status?: string) => {
 
 export const CandidateApplicationDetailPage = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [detail, setDetail] = useState<JobApplicationDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [rating, setRating] = useState('5');
   const [comment, setComment] = useState('');
   const [reviewing, setReviewing] = useState(false);
+  const [actioning, setActioning] = useState(false);
+  const [pendingAction, setPendingAction] = useState<'withdraw' | 'delete' | null>(null);
 
   const applicationId = Number(id);
 
@@ -45,7 +58,9 @@ export const CandidateApplicationDetailPage = () => {
   };
 
   useEffect(() => {
-    void loadDetail();
+    const timeoutId = window.setTimeout(() => void loadDetail(), 0);
+    return () => window.clearTimeout(timeoutId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [applicationId]);
 
   const handleReviewSubmit = async () => {
@@ -89,6 +104,39 @@ export const CandidateApplicationDetailPage = () => {
     }
   };
 
+  const canWithdraw = detail?.status === 'Submitted' || detail?.status === 'UnderReview';
+
+  const handleApplicationAction = async () => {
+    if (!detail || !pendingAction) {
+      return;
+    }
+
+    setActioning(true);
+
+    try {
+      if (pendingAction === 'withdraw') {
+        await updateMyJobApplication(applicationId, { status: 'Withdrawn' });
+        toast.success('Application withdrawn', {
+          description: 'This application is now closed for candidate actions.',
+        });
+        await loadDetail();
+      } else {
+        await deleteMyJobApplication(applicationId);
+        toast.success('Application deleted', {
+          description: 'The application was removed from your application list.',
+        });
+        navigate('/panel/applications', { replace: true });
+      }
+    } catch (actionError) {
+      toast.danger(pendingAction === 'withdraw' ? 'Unable to withdraw application' : 'Unable to delete application', {
+        description: actionError instanceof Error ? actionError.message : 'Please try again.',
+      });
+    } finally {
+      setPendingAction(null);
+      setActioning(false);
+    }
+  };
+
   if (loading) {
     return (
       <section className="rounded-xl border border-divider bg-content1 p-6 text-sm text-foreground-500 sm:p-8">
@@ -115,6 +163,21 @@ export const CandidateApplicationDetailPage = () => {
 
   return (
     <div className="grid gap-8">
+      <ConfirmDialog
+        open={pendingAction !== null}
+        title={pendingAction === 'withdraw' ? 'Withdraw application?' : 'Delete application?'}
+        description={
+          pendingAction === 'withdraw'
+            ? 'This will permanently move the application to Withdrawn. You will not be able to restore it.'
+            : 'This removes the application from your candidate view. Recruiters and admins keep their audit record.'
+        }
+        confirmLabel={pendingAction === 'withdraw' ? 'Withdraw' : 'Delete'}
+        confirmTone="danger"
+        loading={actioning}
+        onCancel={() => setPendingAction(null)}
+        onConfirm={() => void handleApplicationAction()}
+      />
+
       <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
@@ -127,12 +190,32 @@ export const CandidateApplicationDetailPage = () => {
             </p>
           </div>
 
-          <Link
-            className="rounded-lg border border-divider bg-content1 px-4 py-2 text-sm font-medium text-foreground"
-            to="/panel/applications"
-          >
-            Back to applications
-          </Link>
+          <div className="flex flex-wrap gap-3">
+            <Link
+              className="rounded-lg border border-divider bg-content1 px-4 py-2 text-sm font-medium text-foreground"
+              to="/panel/applications"
+            >
+              Back to applications
+            </Link>
+            {canWithdraw && (
+              <Button
+                type="button"
+                variant="danger"
+                isDisabled={actioning}
+                onPress={() => setPendingAction('withdraw')}
+              >
+                Withdraw
+              </Button>
+            )}
+            <Button
+              type="button"
+              variant="outline"
+              isDisabled={actioning}
+              onPress={() => setPendingAction('delete')}
+            >
+              Delete
+            </Button>
+          </div>
         </div>
 
         <div className="mt-6 grid gap-4 md:grid-cols-3">
@@ -154,6 +237,8 @@ export const CandidateApplicationDetailPage = () => {
           </div>
         </div>
       </section>
+
+      <ApplicationInterviewTimeline applicationId={applicationId} mode="readonly" />
 
       <section className="grid gap-6 lg:grid-cols-[1fr_0.9fr]">
         <div className="grid gap-8">
@@ -180,9 +265,11 @@ export const CandidateApplicationDetailPage = () => {
               </div>
               <div>
                 <span className="block text-foreground-500">Description</span>
-                <p className="mt-2 whitespace-pre-line text-foreground">
-                  {detail?.jobPosting.description || 'No description provided.'}
-                </p>
+                <div className="job-description-markdown mt-2 text-foreground">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {detail?.jobPosting.description || 'No description provided.'}
+                  </ReactMarkdown>
+                </div>
               </div>
             </div>
           </section>

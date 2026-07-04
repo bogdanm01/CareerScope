@@ -10,7 +10,7 @@ import { getApiBaseUrl } from '../lib/http';
 type PanelNavItem = {
   to: string;
   label: string;
-  icon: 'dashboard' | 'analytics' | 'profile' | 'jobs' | 'applications' | 'companies' | 'postings' | 'approvals';
+  icon: 'dashboard' | 'analytics' | 'profile' | 'jobs' | 'wishlist' | 'applications' | 'companies' | 'postings' | 'approvals';
 };
 
 const navIconPath = {
@@ -18,6 +18,7 @@ const navIconPath = {
   analytics: 'M4 19V5m0 14h16M8 16v-5m4 5V8m4 8v-7m4 7v-3',
   profile: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 8a7 7 0 0 1 14 0H5Z',
   jobs: 'M4 8.5A2.5 2.5 0 0 1 6.5 6h11A2.5 2.5 0 0 1 20 8.5v7A2.5 2.5 0 0 1 17.5 18h-11A2.5 2.5 0 0 1 4 15.5zM8 10h8M8 13h5',
+  wishlist: 'M12 20.5S5 16.4 5 10.4A4.2 4.2 0 0 1 12 7a4.2 4.2 0 0 1 7 3.4c0 6-7 10.1-7 10.1Z',
   applications: 'M7 4h10v16H7zm2 4h6M9 12h6M9 15h4',
   companies: 'M6 20V7.5A2.5 2.5 0 0 1 8.5 5h7A2.5 2.5 0 0 1 18 7.5V20m-5 0v-4h-2v4M9 9h.01M12 9h.01M15 9h.01M9 12h.01M12 12h.01M15 12h.01',
   postings: 'M5 6h14M5 10h14M5 14h9M5 18h6',
@@ -34,6 +35,8 @@ const candidateNav: PanelNavItem[] = [
   { to: '/panel', label: 'Dashboard', icon: 'dashboard' },
   { to: '/panel/analytics', label: 'Analytics', icon: 'analytics' },
   { to: '/panel/jobs', label: 'Jobs', icon: 'jobs' },
+  { to: '/panel/jobs/wishlist', label: 'Wishlist', icon: 'wishlist' },
+  { to: '/panel/companies', label: 'Companies', icon: 'companies' },
   { to: '/panel/applications', label: 'Applications', icon: 'applications' },
   { to: '/panel/profile', label: 'Profile', icon: 'profile' },
 ];
@@ -43,6 +46,7 @@ const recruiterNav: PanelNavItem[] = [
   { to: '/panel/analytics', label: 'Analytics', icon: 'analytics' },
   { to: '/panel/job-postings', label: 'Job Postings', icon: 'postings' },
   { to: '/panel/job-applications', label: 'Applications', icon: 'applications' },
+  { to: '/panel/profile', label: 'Profile', icon: 'profile' },
 ];
 
 const adminNav: PanelNavItem[] = [
@@ -52,6 +56,7 @@ const adminNav: PanelNavItem[] = [
   { to: '/panel/admin/company-approvals', label: 'Company approvals', icon: 'approvals' },
   { to: '/panel/admin/job-postings', label: 'Job Postings', icon: 'postings' },
   { to: '/panel/job-applications', label: 'Applications', icon: 'applications' },
+  { to: '/panel/profile', label: 'Profile', icon: 'profile' },
 ];
 
 const getNavItems = (role?: string) => {
@@ -102,10 +107,12 @@ export const PanelShell = () => {
   const isDark = theme === 'dark';
 
   useEffect(() => {
-    setSidebarOpen(false);
+    const timeoutId = window.setTimeout(() => setSidebarOpen(false), 0);
+    return () => window.clearTimeout(timeoutId);
   }, [location.pathname]);
 
   useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
     if (!sidebarUserId || !sidebarStorageKey) {
       setSidebarCollapsed(false);
       setSidebarStateUserId(null);
@@ -120,6 +127,9 @@ export const PanelShell = () => {
     }
 
     setSidebarStateUserId(sidebarUserId);
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, [sidebarStorageKey, sidebarUserId]);
 
   useEffect(() => {
@@ -228,18 +238,23 @@ export const PanelShell = () => {
                 <NavLink
                   key={item.to}
                   to={item.to}
-                  end={item.to === '/panel'}
+                  end={item.to === '/panel' || item.to === '/panel/jobs'}
                   onClick={() => setSidebarOpen(false)}
                   title={sidebarCollapsed ? item.label : undefined}
-                  className={({ isActive }) =>
-                    [
-                      'flex items-center rounded-lg border py-2.5 text-sm',
+                  className={({ isActive }) => {
+                    const isDashboardActive =
+                      item.to === '/panel' &&
+                      (location.pathname === '/panel' || location.pathname === '/panel/admin');
+                    const active = isActive || isDashboardActive;
+
+                    return [
+                      'flex items-center rounded-lg border py-2.5 text-sm transition-colors duration-150',
                       sidebarCollapsed ? 'gap-3 px-3.5 lg:justify-center lg:gap-0 lg:px-2' : 'gap-3 px-3.5',
-                      isActive
+                      active
                         ? 'border-[#f5e9d4] bg-[#f5e9d4] !text-[#181d26]'
-                        : 'border-transparent bg-transparent !text-white/60',
-                    ].join(' ')
-                  }
+                        : 'border-transparent bg-transparent !text-white/60 hover:bg-white/5 hover:!text-white',
+                    ].join(' ');
+                  }}
                 >
                   <NavGlyph name={item.icon} />
                   <span className={['font-medium leading-5 tracking-[-0.01em]', sidebarCollapsed ? 'block lg:hidden' : 'block'].join(' ')}>
@@ -271,7 +286,10 @@ export const PanelShell = () => {
                   </span>
                 </Button>
                 <Button
-                  className={['w-full text-white/70', sidebarCollapsed ? 'justify-start lg:justify-center lg:px-0' : 'justify-start'].join(' ')}
+                  className={[
+                    'w-full !bg-transparent text-white/70 hover:!bg-white/5 hover:!text-white data-[hover=true]:!bg-white/5 data-[hover=true]:!text-white',
+                    sidebarCollapsed ? 'justify-start lg:justify-center lg:px-0' : 'justify-start',
+                  ].join(' ')}
                   variant="ghost"
                   onPress={() => void handleSignOut()}
                   aria-label="Sign out"

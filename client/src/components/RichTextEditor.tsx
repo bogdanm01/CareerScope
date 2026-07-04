@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -54,7 +55,92 @@ const turndownService = new TurndownService({
   bulletListMarker: '-',
 });
 
+const escapeHtml = (text: string) =>
+  text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
+const isHtml = (value: string) => /<\/?[a-z][\s\S]*>/i.test(value);
+
+const inlineMarkdownToHtml = (text: string) =>
+  escapeHtml(text)
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*([^*]+)\*/g, '<em>$1</em>');
+
+const markdownToEditorHtml = (value: string) => {
+  const trimmedValue = value.trim();
+
+  if (!trimmedValue) {
+    return '';
+  }
+
+  if (isHtml(trimmedValue)) {
+    return trimmedValue;
+  }
+
+  const lines = trimmedValue.split(/\r?\n/);
+  const html: string[] = [];
+  let listType: 'ul' | 'ol' | null = null;
+
+  const closeList = () => {
+    if (!listType) {
+      return;
+    }
+
+    html.push(`</${listType}>`);
+    listType = null;
+  };
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+
+    if (!line) {
+      closeList();
+      continue;
+    }
+
+    const headingMatch = line.match(/^(#{1,3})\s+(.+)$/);
+    if (headingMatch) {
+      closeList();
+      html.push(`<h${headingMatch[1].length}>${inlineMarkdownToHtml(headingMatch[2])}</h${headingMatch[1].length}>`);
+      continue;
+    }
+
+    const unorderedListMatch = line.match(/^[-*]\s+(.+)$/);
+    if (unorderedListMatch) {
+      if (listType !== 'ul') {
+        closeList();
+        html.push('<ul>');
+        listType = 'ul';
+      }
+      html.push(`<li>${inlineMarkdownToHtml(unorderedListMatch[1])}</li>`);
+      continue;
+    }
+
+    const orderedListMatch = line.match(/^\d+\.\s+(.+)$/);
+    if (orderedListMatch) {
+      if (listType !== 'ol') {
+        closeList();
+        html.push('<ol>');
+        listType = 'ol';
+      }
+      html.push(`<li>${inlineMarkdownToHtml(orderedListMatch[1])}</li>`);
+      continue;
+    }
+
+    closeList();
+    html.push(`<p>${inlineMarkdownToHtml(line)}</p>`);
+  }
+
+  closeList();
+  return html.join('');
+};
+
 export const RichTextEditor = ({ value, onChange, placeholder }: RichTextEditorProps) => {
+  const lastEmittedValueRef = useRef(value);
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -66,7 +152,7 @@ export const RichTextEditor = ({ value, onChange, placeholder }: RichTextEditorP
         placeholder: placeholder ?? '',
       }),
     ],
-    content: value,
+    content: markdownToEditorHtml(value),
     editorProps: {
       attributes: {
         class: 'rich-text-editor__content',
@@ -74,9 +160,20 @@ export const RichTextEditor = ({ value, onChange, placeholder }: RichTextEditorP
     },
     onUpdate: ({ editor: currentEditor }) => {
       const html = currentEditor.getHTML();
-      onChange(html === '<p></p>' ? '' : turndownService.turndown(html).trim());
+      const nextValue = html === '<p></p>' ? '' : turndownService.turndown(html).trim();
+      lastEmittedValueRef.current = nextValue;
+      onChange(nextValue);
     },
   });
+
+  useEffect(() => {
+    if (!editor || value === lastEmittedValueRef.current) {
+      return;
+    }
+
+    editor.commands.setContent(markdownToEditorHtml(value), { emitUpdate: false });
+    lastEmittedValueRef.current = value;
+  }, [editor, value]);
 
   if (!editor) {
     return null;

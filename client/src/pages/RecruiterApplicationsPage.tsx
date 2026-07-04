@@ -1,9 +1,18 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Chip, ListBox, Select, Table } from '@heroui/react';
+import { Avatar, Button, Chip, Input, ListBox, Select, Table } from '@heroui/react';
+import { ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import { getRecruiterJobPostings, type JobPostingListItem } from '../lib/job-postings-api';
 import { getRecruiterJobApplications, type RecruiterJobApplicationListItem } from '../lib/job-applications-api';
-import { formatDateTime } from '../lib/date-format';
+import { formatDate } from '../lib/date-format';
+
+type ApplicationRow = RecruiterJobApplicationListItem & {
+  postingTitle: string;
+};
+
+const allPostingsKey = 'all';
+const allStatusesKey = 'all';
+const pageSize = 10;
 
 const formatStatus = (status: string) => (status === 'UnderReview' ? 'Under Review' : status);
 
@@ -22,26 +31,65 @@ const getStatusColor = (status: string): 'accent' | 'danger' | 'default' | 'succ
   }
 };
 
+const getInitials = (name: string) =>
+  name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join('') || '??';
+
 export const RecruiterApplicationsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [postings, setPostings] = useState<JobPostingListItem[]>([]);
-  const [applications, setApplications] = useState<RecruiterJobApplicationListItem[]>([]);
+  const [applications, setApplications] = useState<ApplicationRow[]>([]);
   const [loading, setLoading] = useState(false);
-  const selectedPostingId = Number(searchParams.get('postingId') || '');
-  const selectedPosting = postings.find((posting) => posting.id === selectedPostingId);
+  const [search, setSearch] = useState(searchParams.get('search') || '');
+  const [currentPage, setCurrentPage] = useState(1);
+  const selectedPostingKey = searchParams.get('postingId') || allPostingsKey;
+  const selectedStatusKey = searchParams.get('status') || allStatusesKey;
 
   useEffect(() => {
     let isMounted = true;
 
     const load = async () => {
+      setLoading(true);
+
       try {
-        const response = await getRecruiterJobPostings();
-        if (isMounted) {
-          setPostings(response.data);
+        const postingsResponse = await getRecruiterJobPostings();
+
+        if (!isMounted) {
+          return;
         }
+
+        const loadedPostings = postingsResponse.data;
+        setPostings(loadedPostings);
+
+        const applicationResponses = await Promise.allSettled(
+          loadedPostings.map(async (posting) => {
+            const response = await getRecruiterJobApplications(posting.id);
+            return response.data.map((application) => ({
+              ...application,
+              postingTitle: posting.title || `Posting #${posting.id}`,
+            }));
+          }),
+        );
+
+        if (!isMounted) {
+          return;
+        }
+
+        setApplications(
+          applicationResponses.flatMap((result) => (result.status === 'fulfilled' ? result.value : [])),
+        );
       } catch {
         if (isMounted) {
           setPostings([]);
+          setApplications([]);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
         }
       }
     };
@@ -53,127 +101,202 @@ export const RecruiterApplicationsPage = () => {
     };
   }, []);
 
+  const statuses = useMemo(
+    () => Array.from(new Set(applications.map((application) => application.status))).sort(),
+    [applications],
+  );
+
+  const filteredApplications = useMemo(() => {
+    const normalizedSearch = search.trim().toLowerCase();
+
+    return applications
+      .filter((application) => {
+        if (selectedPostingKey !== allPostingsKey && String(application.jobPostingId) !== selectedPostingKey) {
+          return false;
+        }
+
+        if (selectedStatusKey !== allStatusesKey && application.status !== selectedStatusKey) {
+          return false;
+        }
+
+        if (!normalizedSearch) {
+          return true;
+        }
+
+        return (
+          application.user.fullName.toLowerCase().includes(normalizedSearch) ||
+          application.user.email.toLowerCase().includes(normalizedSearch)
+        );
+      })
+      .sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime());
+  }, [applications, search, selectedPostingKey, selectedStatusKey]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredApplications.length / pageSize));
+  const paginatedApplications = useMemo(
+    () => filteredApplications.slice((currentPage - 1) * pageSize, currentPage * pageSize),
+    [filteredApplications, currentPage],
+  );
+
   useEffect(() => {
-    let isMounted = true;
+    setCurrentPage((page) => Math.min(page, totalPages));
+  }, [totalPages]);
 
-    const loadApplications = async () => {
-      if (!selectedPostingId) {
-        setApplications([]);
-        return;
+  const updateFilters = (updates: { postingId?: string; status?: string; search?: string }) => {
+    const next = new URLSearchParams(searchParams);
+    setCurrentPage(1);
+
+    if (updates.postingId !== undefined) {
+      if (!updates.postingId || updates.postingId === allPostingsKey) {
+        next.delete('postingId');
+      } else {
+        next.set('postingId', updates.postingId);
       }
+    }
 
-      setLoading(true);
-
-      try {
-        const response = await getRecruiterJobApplications(selectedPostingId);
-        if (isMounted) {
-          setApplications(response.data);
-        }
-      } catch {
-        if (isMounted) {
-          setApplications([]);
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
+    if (updates.status !== undefined) {
+      if (!updates.status || updates.status === allStatusesKey) {
+        next.delete('status');
+      } else {
+        next.set('status', updates.status);
       }
-    };
+    }
 
-    void loadApplications();
+    if (updates.search !== undefined) {
+      if (!updates.search.trim()) {
+        next.delete('search');
+      } else {
+        next.set('search', updates.search.trim());
+      }
+    }
 
-    return () => {
-      isMounted = false;
-    };
-  }, [selectedPostingId]);
+    setSearchParams(next);
+  };
 
   return (
-    <div className="grid gap-8">
-      <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
-        <div className="mb-6">
-          <h2 className="text-4xl leading-[1.15] text-foreground">Review job applications</h2>
-          <p className="mt-3 max-w-2xl text-sm leading-7 text-foreground-500">
-            Choose one of your postings to load its applications and review applicants.
+    <div className="grid gap-6">
+      <section>
+        <div>
+          <h2 className="text-4xl leading-[1.15] text-foreground">
+            Applications
+          </h2>
+          <p className="mt-3 text-sm leading-6 text-foreground-500">
+            Review applicants across your job postings.
           </p>
         </div>
-
-        <label className="grid gap-2">
-          <span className="text-sm text-foreground-600">Job posting</span>
-          <Select
-            selectedKey={Number.isFinite(selectedPostingId) ? String(selectedPostingId) : null}
-            onSelectionChange={(key) => {
-              const value = key ? String(key) : '';
-              setSearchParams(value ? { postingId: value } : {});
-            }}
-            fullWidth
-          >
-            <Select.Trigger>
-              <Select.Value />
-              <Select.Indicator />
-            </Select.Trigger>
-            <Select.Popover>
-              <ListBox aria-label="Job postings">
-                {postings.map((posting) => (
-                  <ListBox.Item key={posting.id} id={String(posting.id)} textValue={posting.title || `Posting ${posting.id}`}>
-                    {posting.title || `Posting ${posting.id}`}
-                  </ListBox.Item>
-                ))}
-              </ListBox>
-            </Select.Popover>
-          </Select>
-        </label>
-
-        {selectedPosting && (
-          <div className="mt-5 rounded-lg border border-divider bg-content1 p-4 text-sm text-foreground-500">
-            <span className="block text-foreground-500">Selected posting</span>
-            <strong className="block text-foreground">{selectedPosting.title || 'Untitled role'}</strong>
-            <span>{selectedPosting.company?.name || 'Unknown company'}</span>
-          </div>
-        )}
       </section>
 
-      <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
-        <h3 className="text-2xl text-foreground">Applications</h3>
+      <section className="grid gap-3 lg:grid-cols-[minmax(320px,1fr)_minmax(220px,420px)_minmax(200px,300px)]">
+        <div className="relative">
+          <Search aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-foreground-500" />
+          <Input
+            value={search}
+            onChange={(event) => {
+              setSearch(event.target.value);
+              updateFilters({ search: event.target.value });
+            }}
+            placeholder="Search applicants"
+            className="h-10 pl-9 text-sm"
+          />
+        </div>
 
+        <Select
+          selectedKey={selectedPostingKey}
+          onSelectionChange={(key) => updateFilters({ postingId: key ? String(key) : allPostingsKey })}
+          fullWidth
+        >
+          <Select.Trigger className="h-10 rounded-lg text-sm">
+            <Select.Value />
+            <Select.Indicator />
+          </Select.Trigger>
+          <Select.Popover>
+            <ListBox aria-label="Job postings">
+              <ListBox.Item id={allPostingsKey} textValue="All postings">
+                All postings
+              </ListBox.Item>
+              {postings.map((posting) => (
+                <ListBox.Item key={posting.id} id={String(posting.id)} textValue={posting.title || `Posting #${posting.id}`}>
+                  {posting.title || `Posting #${posting.id}`}
+                </ListBox.Item>
+              ))}
+            </ListBox>
+          </Select.Popover>
+        </Select>
+
+        <Select
+          selectedKey={selectedStatusKey}
+          onSelectionChange={(key) => updateFilters({ status: key ? String(key) : allStatusesKey })}
+          fullWidth
+        >
+          <Select.Trigger className="h-10 rounded-lg text-sm">
+            <Select.Value />
+            <Select.Indicator />
+          </Select.Trigger>
+          <Select.Popover>
+            <ListBox aria-label="Application statuses">
+              <ListBox.Item id={allStatusesKey} textValue="All statuses">
+                All statuses
+              </ListBox.Item>
+              {statuses.map((status) => (
+                <ListBox.Item key={status} id={status} textValue={formatStatus(status)}>
+                  {formatStatus(status)}
+                </ListBox.Item>
+              ))}
+            </ListBox>
+          </Select.Popover>
+        </Select>
+      </section>
+
+      <section className="rounded-xl border border-divider bg-content1">
         {loading ? (
-          <div className="mt-5 rounded-xl border border-divider bg-content2 p-6 text-sm text-foreground-500">
-            Loading applications...
-          </div>
-        ) : applications.length === 0 ? (
-          <div className="mt-5 rounded-xl border border-dashed border-divider bg-content2 p-6 text-sm text-foreground-500">
-            {selectedPostingId ? 'No applications found for this posting.' : 'Select a posting to view applications.'}
+          <div className="p-6 text-sm text-foreground-500">Loading applications...</div>
+        ) : filteredApplications.length === 0 ? (
+          <div className="m-6 rounded-lg border border-dashed border-divider bg-content2/50 p-6 text-sm text-foreground-500">
+            No applications found.
           </div>
         ) : (
-          <Table className="mt-5" variant="secondary">
+          <Table variant="secondary">
             <Table.ScrollContainer>
               <Table.Content aria-label="Job applications">
                 <Table.Header>
-                  <Table.Column isRowHeader>Application ID</Table.Column>
                   <Table.Column>Applicant</Table.Column>
-                  <Table.Column>Email</Table.Column>
+                  <Table.Column>Job posting</Table.Column>
                   <Table.Column>Status</Table.Column>
                   <Table.Column>Applied</Table.Column>
                   <Table.Column>Action</Table.Column>
                 </Table.Header>
                 <Table.Body>
-                  {applications.map((application) => (
+                  {paginatedApplications.map((application) => (
                     <Table.Row key={application.id} id={application.id}>
                       <Table.Cell>
-                        <span className="whitespace-nowrap font-medium text-foreground">#{application.id}</span>
+                        <div className="flex min-w-72 items-center gap-3">
+                          <Avatar className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-[#b8d8ff] !bg-[#d8e9ff] !text-[#15549a]">
+                            {application.user.image && (
+                              <Avatar.Image
+                                alt={`${application.user.fullName} avatar`}
+                                className="h-full w-full object-cover"
+                                src={application.user.image}
+                              />
+                            )}
+                            <Avatar.Fallback className="flex h-full w-full items-center justify-center bg-[#d8e9ff] text-sm font-semibold !text-[#15549a]" delayMs={0}>
+                              {getInitials(application.user.fullName)}
+                            </Avatar.Fallback>
+                          </Avatar>
+                          <div className="min-w-0">
+                            <div className="truncate font-semibold text-foreground">{application.user.fullName}</div>
+                            <div className="truncate text-sm text-foreground-500" title={application.user.email}>
+                              {application.user.email}
+                            </div>
+                          </div>
+                        </div>
                       </Table.Cell>
                       <Table.Cell>
-                        <span className="whitespace-nowrap font-medium text-foreground">
-                          {application.user.fullName}
-                        </span>
-                      </Table.Cell>
-                      <Table.Cell>
-                        <span className="block max-w-72 truncate text-foreground-500" title={application.user.email}>
-                          {application.user.email}
+                        <span className="block max-w-72 truncate font-medium text-foreground-600" title={application.postingTitle}>
+                          {application.postingTitle}
                         </span>
                       </Table.Cell>
                       <Table.Cell>
                         <Chip
-                          className="rounded-md"
+                          className="whitespace-nowrap rounded-md"
                           color={getStatusColor(application.status)}
                           size="sm"
                           variant="soft"
@@ -183,18 +306,16 @@ export const RecruiterApplicationsPage = () => {
                       </Table.Cell>
                       <Table.Cell>
                         <span className="whitespace-nowrap text-foreground-500">
-                          {formatDateTime(application.createdAt)}
+                          {formatDate(application.createdAt)}
                         </span>
                       </Table.Cell>
                       <Table.Cell>
-                        <div className="flex justify-start">
-                          <Link
-                            className="whitespace-nowrap rounded-lg border border-divider bg-content1 px-3 py-2 text-sm font-medium text-foreground"
-                            to={`/panel/job-applications/${application.id}`}
-                          >
-                            Open detail
-                          </Link>
-                        </div>
+                        <Link
+                          className="inline-flex min-h-10 items-center rounded-lg border border-divider bg-content1 px-3 text-sm font-medium text-foreground hover:bg-content2"
+                          to={`/panel/job-applications/${application.id}`}
+                        >
+                          Open detail
+                        </Link>
                       </Table.Cell>
                     </Table.Row>
                   ))}
@@ -202,6 +323,36 @@ export const RecruiterApplicationsPage = () => {
               </Table.Content>
             </Table.ScrollContainer>
           </Table>
+        )}
+
+        {totalPages > 1 && (
+          <div className="mt-5 flex items-center justify-end gap-3 px-6 pb-6">
+            <span className="text-sm text-foreground-500">
+              Page {currentPage} of {totalPages}
+            </span>
+            <Button
+              isIconOnly
+              aria-label="Previous page"
+              type="button"
+              variant="outline"
+              size="sm"
+              onPress={() => setCurrentPage((page) => Math.max(1, page - 1))}
+              isDisabled={loading || currentPage <= 1}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              isIconOnly
+              aria-label="Next page"
+              type="button"
+              variant="outline"
+              size="sm"
+              onPress={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+              isDisabled={loading || currentPage >= totalPages}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
         )}
       </section>
     </div>

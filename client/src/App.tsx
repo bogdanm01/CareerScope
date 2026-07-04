@@ -1,14 +1,17 @@
 import { useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { Toast } from '@heroui/react';
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { useAtomValue, useSetAtom } from 'jotai';
+import { GuestShell } from './components/GuestShell';
 import { PanelShell } from './components/PanelShell';
 import { AppThemeProvider } from './components/ThemeContext';
 import { CandidateJobsPage } from './pages/CandidateJobsPage';
 import { CandidateApplicationDetailPage } from './pages/CandidateApplicationDetailPage';
 import { CandidateApplicationsPage } from './pages/CandidateApplicationsPage';
+import { CandidateCompaniesPage } from './pages/CandidateCompaniesPage';
 import { CandidateJobDetailPage } from './pages/CandidateJobDetailPage';
+import { CandidateJobWishlistPage } from './pages/CandidateJobWishlistPage';
 import { CandidateProfilePage } from './pages/CandidateProfilePage';
 import { AdminCompanyApprovalsPage } from './pages/AdminCompanyApprovalsPage';
 import { AdminCompaniesPage } from './pages/AdminCompaniesPage';
@@ -31,6 +34,7 @@ import { RecruiterJobPostingDetailPage } from './pages/RecruiterJobPostingDetail
 import { RecruiterJobPostingsPage } from './pages/RecruiterJobPostingsPage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
 import { authHydratedAtom, authLoadingAtom, authSessionAtom, hydrateAuthAtom } from './store/auth';
+import { getPanelHomePath } from './lib/navigation';
 
 const AppBootstrap = () => {
   const hydrateAuth = useSetAtom(hydrateAuthAtom);
@@ -57,8 +61,6 @@ const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   return children;
 };
 
-const getPanelHomePath = (role?: string) => (role === 'Admin' ? '/panel/admin' : '/panel');
-
 const PublicOnlyRoute = ({ children }: { children: ReactNode }) => {
   const hydrated = useAtomValue(authHydratedAtom);
   const session = useAtomValue(authSessionAtom);
@@ -69,6 +71,26 @@ const PublicOnlyRoute = ({ children }: { children: ReactNode }) => {
 
   if (session) {
     return <Navigate to={getPanelHomePath(session.user.role)} replace />;
+  }
+
+  return children;
+};
+
+const PublicJobsRoute = ({ children }: { children: ReactNode }) => {
+  const hydrated = useAtomValue(authHydratedAtom);
+  const session = useAtomValue(authSessionAtom);
+  const location = useLocation();
+
+  if (!hydrated) {
+    return <div className="app-loading">Loading auth state...</div>;
+  }
+
+  if (session?.user.role === 'Candidate') {
+    const target = location.pathname === '/jobs'
+      ? '/panel/jobs'
+      : location.pathname.replace(/^\/jobs/, '/panel/jobs');
+
+    return <Navigate to={target} replace />;
   }
 
   return children;
@@ -94,7 +116,26 @@ function App() {
         <AppBootstrap />
         <Routes>
         <Route path="/" element={<HomeRedirect />} />
-        <Route path="/companies/:id" element={<CompanyProfilePage />} />
+        <Route element={<GuestShell />}>
+          <Route
+            path="/jobs"
+            element={
+              <PublicJobsRoute>
+                <CandidateJobsPage isPublic />
+              </PublicJobsRoute>
+            }
+          />
+          <Route
+            path="/jobs/:id"
+            element={
+              <PublicJobsRoute>
+                <CandidateJobDetailPage isPublic />
+              </PublicJobsRoute>
+            }
+          />
+          <Route path="/companies" element={<CandidateCompaniesPage />} />
+          <Route path="/companies/:id" element={<CompanyProfilePage />} />
+        </Route>
         <Route
           path="/login"
           element={
@@ -139,7 +180,7 @@ function App() {
           <Route
             path="profile"
             element={
-              <RoleRoute allow={['Candidate']}>
+              <RoleRoute allow={['Candidate', 'Recruiter', 'Admin']}>
                 <CandidateProfilePage />
               </RoleRoute>
             }
@@ -153,10 +194,26 @@ function App() {
             }
           />
           <Route
+            path="jobs/wishlist"
+            element={
+              <RoleRoute allow={['Candidate']}>
+                <CandidateJobWishlistPage />
+              </RoleRoute>
+            }
+          />
+          <Route
             path="jobs/:id"
             element={
               <RoleRoute allow={['Candidate']}>
                 <CandidateJobDetailPage />
+              </RoleRoute>
+            }
+          />
+          <Route
+            path="companies"
+            element={
+              <RoleRoute allow={['Candidate']}>
+                <CandidateCompaniesPage />
               </RoleRoute>
             }
           />

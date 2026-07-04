@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useParams } from 'react-router-dom';
 import { Button, Chip, TextArea, toast } from '@heroui/react';
+import { ArrowLeft, CalendarDays, Check, Download, Mail, X } from 'lucide-react';
 import {
   downloadJobApplicationCandidateCv,
   getJobApplicationDetail,
@@ -9,7 +10,8 @@ import {
   type JobApplicationDetail,
   type JobApplicationReviewStatus,
 } from '../lib/job-applications-api';
-import { formatDateTime } from '../lib/date-format';
+import { formatDate } from '../lib/date-format';
+import { ApplicationInterviewTimeline } from '../components/ApplicationInterviewTimeline';
 
 const getReviewActions = (status?: string): { status: JobApplicationReviewStatus; label: string }[] => {
   if (status === 'Submitted') {
@@ -30,21 +32,23 @@ const getReviewActions = (status?: string): { status: JobApplicationReviewStatus
 };
 
 const getReviewActionClassName = (status: JobApplicationReviewStatus, isSelected: boolean) => {
+  const baseClassName = 'w-full justify-center !rounded-lg';
+
   if (status === 'Accepted') {
     return isSelected
-      ? 'w-full justify-center rounded-lg border border-[#0f6b3a] bg-[#0f6b3a] text-white'
-      : 'w-full justify-center rounded-lg border border-[#a8d8c4] bg-[#e8f5ef] text-[#0f6b3a]';
+      ? `${baseClassName} border border-[#0f6b3a] bg-[#0f6b3a] text-white`
+      : `${baseClassName} border border-[#a8d8c4] bg-[#e8f5ef] text-[#0f6b3a]`;
   }
 
   if (status === 'Rejected') {
     return isSelected
-      ? 'w-full justify-center rounded-lg border border-[#b42318] bg-[#b42318] text-white'
-      : 'w-full justify-center rounded-lg border border-[#f3b8b2] bg-[#fdebea] text-[#b42318]';
+      ? `${baseClassName} border border-[#b42318] bg-[#b42318] text-white`
+      : `${baseClassName} border border-[#f3b8b2] bg-[#fdebea] text-[#b42318]`;
   }
 
   return isSelected
-    ? 'w-full justify-center rounded-lg bg-[#181d26] text-white'
-    : 'w-full justify-center rounded-lg';
+    ? `${baseClassName} bg-[#181d26] text-white`
+    : baseClassName;
 };
 
 const formatStatus = (status?: string) => {
@@ -68,6 +72,33 @@ const getStatusColor = (status?: string): 'accent' | 'danger' | 'default' | 'suc
     default:
       return 'default';
   }
+};
+
+const getSkillMatches = (detail: JobApplicationDetail | null) => {
+  const requiredSkills = detail?.jobPosting.skills ?? [];
+  const candidateSkills = detail?.user.skills ?? [];
+
+  return requiredSkills.map((requiredSkill) => {
+    const candidateSkill = candidateSkills.find((skill) => skill.id === requiredSkill.id);
+    const requiredYears = requiredSkill.requiredYearsOfExperience;
+    const candidateYears = candidateSkill?.yearsOfExperience ?? null;
+    const isMatched = Boolean(
+      candidateSkill &&
+        (requiredYears === null ||
+          requiredYears === undefined ||
+          candidateYears === null ||
+          candidateYears === undefined ||
+          candidateYears >= requiredYears),
+    );
+
+    return {
+      id: requiredSkill.id,
+      name: requiredSkill.name,
+      isMatched,
+      candidateYears,
+      requiredYears,
+    };
+  });
 };
 
 export const RecruiterApplicationDetailPage = () => {
@@ -107,7 +138,9 @@ export const RecruiterApplicationDetailPage = () => {
   };
 
   useEffect(() => {
-    void loadDetail();
+    const timeoutId = window.setTimeout(() => void loadDetail(), 0);
+    return () => window.clearTimeout(timeoutId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [applicationId]);
 
   useEffect(() => {
@@ -219,6 +252,8 @@ export const RecruiterApplicationDetailPage = () => {
   }
 
   const backToApplications = detail ? `/panel/job-applications?postingId=${detail.jobPosting.id}` : '/panel/job-applications';
+  const skillMatches = getSkillMatches(detail);
+  const matchedSkillCount = skillMatches.filter((skill) => skill.isMatched).length;
 
   return (
     <div className="grid gap-6">
@@ -277,136 +312,104 @@ export const RecruiterApplicationDetailPage = () => {
           document.body,
         )}
 
-      <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-3 text-sm text-foreground-500">
-              <span className="text-sm text-foreground-500">Application #{detail?.id}</span>
-            </div>
-            <h2 className="mt-4 max-w-5xl text-4xl leading-[1.12] text-foreground sm:text-5xl">
-              {detail?.user.name || 'Applicant'}
-            </h2>
-            <p className="mt-3 text-lg leading-7 text-foreground-500">
-              {detail?.jobPosting.title || 'Untitled role'}
-            </p>
-          </div>
-
-          <Link
-            className="rounded-lg border border-divider bg-content1 px-4 py-2 text-sm font-medium text-foreground"
-            to={backToApplications}
-          >
-            Back to applications
-          </Link>
+      <section className="flex flex-wrap items-start justify-between gap-4 pt-2">
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-foreground-500">Application #{detail?.id}</p>
+          <h2 className="mt-3 max-w-5xl text-4xl font-semibold leading-[1.05] tracking-[-0.04em] text-foreground sm:text-5xl">
+            {detail?.user.name || 'Applicant'}
+          </h2>
+          <p className="mt-3 text-lg leading-7 text-foreground-500">
+            {detail?.jobPosting.title || 'Untitled role'} · {detail?.jobPosting.company.name || 'Unknown company'}
+          </p>
         </div>
 
-        <div className="mt-6 flex flex-wrap gap-x-8 gap-y-3 border-t border-divider pt-5 text-sm">
-          <div>
-            <span className="block text-foreground-500">Applied</span>
-            <strong className="mt-1 block font-medium text-foreground">{formatDateTime(detail?.createdAt)}</strong>
-          </div>
-          <div>
-            <span className="block text-foreground-500">Updated</span>
-            <strong className="mt-1 block font-medium text-foreground">{formatDateTime(detail?.updatedAt)}</strong>
-          </div>
-        </div>
+        <Link
+          className="inline-flex h-11 items-center gap-2 rounded-lg border border-divider bg-content1 px-4 text-sm font-medium text-foreground transition-colors hover:bg-content2"
+          to={backToApplications}
+        >
+          <ArrowLeft aria-hidden="true" className="h-4 w-4" />
+          Back to applications
+        </Link>
       </section>
 
       <section className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <main className="grid min-w-0 gap-6">
           <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
-            <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
-                <h3 className="text-2xl text-foreground">Applicant</h3>
-                <p className="mt-2 text-sm leading-6 text-foreground-500">Candidate profile attached to this submission.</p>
+                <h3 className="text-2xl font-semibold tracking-[-0.02em] text-foreground">Skills match</h3>
+                <p className="mt-2 text-sm leading-6 text-foreground-500">Candidate skills compared with this posting’s requirements.</p>
               </div>
-            </div>
-
-            <div className="mt-6 grid gap-4 sm:grid-cols-2">
-              <div className="rounded-lg border border-divider bg-content2 p-4 text-sm">
-                <span className="block text-foreground-500">Name</span>
-                <strong className="mt-2 block font-medium text-foreground">{detail?.user.name || 'Unknown applicant'}</strong>
-              </div>
-              <div className="rounded-lg border border-divider bg-content2 p-4 text-sm">
-                <span className="block text-foreground-500">Email</span>
-                <strong className="mt-2 block truncate font-medium text-foreground" title={detail?.user.email}>
-                  {detail?.user.email || 'No email'}
-                </strong>
-              </div>
-            </div>
-
-            <div className="mt-6">
-              <div className="flex items-center justify-between gap-4">
-                <h4 className="text-sm font-medium text-foreground">Candidate skills</h4>
-                <span className="text-sm text-foreground-500">{detail?.user.skills?.length || 0} listed</span>
-              </div>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {(detail?.user.skills || []).length === 0 ? (
-                  <div className="w-full rounded-xl border border-dashed border-divider bg-content2 p-4 text-sm text-foreground-500">
-                    No skills listed.
-                  </div>
-                ) : (
-                  detail?.user.skills?.map((skill) => (
-                    <Chip key={skill.id} className="rounded-md" size="sm" variant="secondary">
-                      {skill.name} · {skill.yearsOfExperience === null ? 'No YOE required' : `${skill.yearsOfExperience}y`}
-                    </Chip>
-                  ))
-                )}
-              </div>
-            </div>
-          </section>
-
-          <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div>
-                <h3 className="text-2xl text-foreground">Job posting</h3>
-                <p className="mt-2 text-sm leading-6 text-foreground-500">Role context for this application.</p>
-              </div>
-              <Chip className="rounded-md" size="sm" variant="secondary">
-                {detail?.jobPosting.status || 'Unknown'}
+              <Chip className="rounded-lg" color={matchedSkillCount === skillMatches.length ? 'success' : 'warning'} size="sm" variant="soft">
+                {matchedSkillCount} of {skillMatches.length} required
               </Chip>
             </div>
 
-            <div className="mt-6 grid gap-4 sm:grid-cols-2">
-              <div className="rounded-lg border border-divider bg-content2 p-4 text-sm">
-                <span className="block text-foreground-500">Title</span>
-                <strong className="mt-2 block font-medium text-foreground">{detail?.jobPosting.title || 'Untitled role'}</strong>
+            <div className="mt-6 grid gap-3">
+              {skillMatches.length === 0 ? (
+                <div className="rounded-lg border border-dashed border-divider bg-content2 p-4 text-sm text-foreground-500">
+                  No skill requirements listed for this posting.
+                </div>
+              ) : (
+                skillMatches.map((skill) => (
+                  <div
+                    key={skill.id}
+                    className={[
+                      'flex flex-wrap items-center justify-between gap-3 rounded-lg border px-4 py-3 text-sm',
+                      skill.isMatched
+                        ? 'border-[#a8d8c4] bg-[#e8f5ef] text-[#0f6b3a]'
+                        : 'border-[#f3b8b2] bg-[#fdebea] text-[#9f1c16]',
+                    ].join(' ')}
+                  >
+                    <span className="inline-flex min-w-0 items-center gap-3 font-medium">
+                      {skill.isMatched ? <Check className="h-4 w-4 shrink-0" /> : <X className="h-4 w-4 shrink-0" />}
+                      <span className="truncate">{skill.name}</span>
+                    </span>
+                    <span className="text-right">
+                      {skill.isMatched
+                        ? `${skill.candidateYears ?? 'Any'}y experience · ${skill.requiredYears ?? 'Any'}y required`
+                        : `not listed · ${skill.requiredYears ?? 'Any'}y required`}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+          </section>
+
+          <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
+            <h3 className="text-2xl font-semibold tracking-[-0.02em] text-foreground">Contact</h3>
+            <div className="mt-5 grid gap-3 text-sm text-foreground-600">
+              <div className="flex min-w-0 items-center gap-3">
+                <Mail aria-hidden="true" className="h-4 w-4 shrink-0 text-foreground-500" />
+                <span className="truncate" title={detail?.user.email}>{detail?.user.email || 'No email'}</span>
               </div>
-              <div className="rounded-lg border border-divider bg-content2 p-4 text-sm">
-                <span className="block text-foreground-500">Company</span>
-                {detail?.jobPosting.company.id ? (
-                  <Link className="mt-2 block font-medium text-foreground underline-offset-4 hover:underline" to={`/companies/${detail.jobPosting.company.id}`}>
-                    {detail.jobPosting.company.name || 'Unknown company'}
-                  </Link>
-                ) : (
-                  <strong className="mt-2 block font-medium text-foreground">{detail?.jobPosting.company.name || 'Unknown company'}</strong>
-                )}
+              <div className="flex items-center gap-3">
+                <CalendarDays aria-hidden="true" className="h-4 w-4 shrink-0 text-foreground-500" />
+                <span>
+                  Applied {formatDate(detail?.createdAt)} · updated {formatDate(detail?.updatedAt)}
+                </span>
               </div>
             </div>
           </section>
 
           <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
-            <div className="flex flex-wrap items-end justify-between gap-4">
+            <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
-                <h3 className="text-2xl text-foreground">Required skills</h3>
-                <p className="mt-2 text-sm leading-6 text-foreground-500">Skills requested for this posting.</p>
+                <h3 className="text-2xl font-semibold tracking-[-0.02em] text-foreground">Candidate skills</h3>
+                <p className="mt-2 text-sm leading-6 text-foreground-500">Full skill list submitted on the profile.</p>
               </div>
-              <span className="text-sm text-foreground-500">{detail?.jobPosting.skills?.length || 0} listed</span>
+              <span className="text-sm text-foreground-500">{detail?.user.skills?.length || 0} listed</span>
             </div>
-            <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              {(detail?.jobPosting.skills || []).length === 0 ? (
-                <div className="rounded-xl border border-dashed border-divider bg-content2 p-4 text-sm text-foreground-500 sm:col-span-2">
-                  No skill requirements listed.
+            <div className="mt-5 flex flex-wrap gap-2">
+              {(detail?.user.skills || []).length === 0 ? (
+                <div className="w-full rounded-lg border border-dashed border-divider bg-content2 p-4 text-sm text-foreground-500">
+                  No candidate skills listed.
                 </div>
               ) : (
-                detail?.jobPosting.skills?.map((skill) => (
-                  <div key={skill.id} className="rounded-lg border border-divider bg-content2 p-4 text-sm text-foreground">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <strong>{skill.name}</strong>
-                      <span className="text-foreground-500">
-                        {skill.requiredYearsOfExperience === null ? 'Any experience' : `${skill.requiredYearsOfExperience}y required`}
-                      </span>
-                    </div>
-                  </div>
+                detail?.user.skills?.map((skill) => (
+                  <Chip key={skill.id} className="rounded-lg" size="sm" variant="secondary">
+                    {skill.name} · {skill.yearsOfExperience === null ? 'No YOE' : `${skill.yearsOfExperience}y`}
+                  </Chip>
                 ))
               )}
             </div>
@@ -417,19 +420,31 @@ export const RecruiterApplicationDetailPage = () => {
               {error}
             </section>
           )}
+
+          <ApplicationInterviewTimeline applicationId={applicationId} mode="manage" />
         </main>
 
         <aside className="grid gap-6 lg:sticky lg:top-6">
           <section className="rounded-xl border border-divider bg-content1 p-6">
             <div className="flex items-start justify-between gap-4">
-              <div>
-                <h3 className="text-2xl text-foreground">Review</h3>
-                <p className="mt-2 text-sm leading-6 text-foreground-500">Choose the next application status.</p>
-              </div>
+              <h3 className="text-2xl font-semibold tracking-[-0.02em] text-foreground">Review</h3>
               <Chip className="rounded-md" color={getStatusColor(detail?.status)} size="sm" variant="soft">
                 {formatStatus(detail?.status)}
               </Chip>
             </div>
+
+            <Button
+              className="mt-6 w-full !rounded-lg"
+              type="button"
+              variant="outline"
+              isDisabled={downloadingCv}
+              onPress={() => void handleDownloadCv()}
+            >
+              <span className="inline-flex items-center gap-2">
+                <Download className="h-4 w-4" />
+                {downloadingCv ? 'Downloading...' : 'Download CV'}
+              </span>
+            </Button>
 
             {reviewActions.length === 0 ? (
               <div className="mt-5 rounded-xl border border-dashed border-divider bg-content2 p-4 text-sm text-foreground-500">
@@ -458,7 +473,7 @@ export const RecruiterApplicationDetailPage = () => {
                 </div>
 
                 <Button
-                  className="w-full rounded-lg"
+                  className="w-full !rounded-lg"
                   type="button"
                   variant="primary"
                   isDisabled={!selectedStatus || reviewing}
@@ -468,18 +483,6 @@ export const RecruiterApplicationDetailPage = () => {
                 </Button>
               </div>
             )}
-
-            <div className="mt-6 border-t border-divider pt-5">
-              <Button
-                className="w-full rounded-lg"
-                type="button"
-                variant="secondary"
-                isDisabled={downloadingCv}
-                onPress={() => void handleDownloadCv()}
-              >
-                {downloadingCv ? 'Downloading...' : 'Download CV'}
-              </Button>
-            </div>
           </section>
         </aside>
       </section>

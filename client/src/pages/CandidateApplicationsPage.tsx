@@ -1,14 +1,24 @@
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Button, Chip, Table } from '@heroui/react';
+import { useEffect, useMemo, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { Button, Chip, Input, ListBox, Select, Table } from '@heroui/react';
+import { ChevronLeft, ChevronRight, ChevronsUpDown, Search, X } from 'lucide-react';
 import { getMyJobApplications, type CandidateJobApplicationListItem } from '../lib/job-applications-api';
 import { formatDate } from '../lib/date-format';
+
+const pageSize = 10;
+
+const statusOptions = ['Submitted', 'UnderReview', 'Accepted', 'Rejected', 'Withdrawn'];
+const sortableFields = ['title', 'company', 'status', 'createdAt', 'updatedAt', 'expiresAt'] as const;
+type SortField = typeof sortableFields[number];
+type SortDirection = 'asc' | 'desc';
+type SortEntry = { field: SortField; direction: SortDirection };
 
 const getStatusColor = (status: string): 'accent' | 'danger' | 'default' | 'success' | 'warning' => {
   switch (status) {
     case 'Accepted':
       return 'success';
     case 'Rejected':
+    case 'Withdrawn':
       return 'danger';
     case 'UnderReview':
       return 'warning';
@@ -21,50 +31,203 @@ const getStatusColor = (status: string): 'accent' | 'danger' | 'default' | 'succ
 
 const getStatusLabel = (status: string) => (status === 'UnderReview' ? 'Under Review' : status);
 
+const parseSort = (value: string | null): SortEntry[] => {
+  const entries = (value || 'createdAt:desc')
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter(Boolean)
+    .map((entry) => {
+      const [field, direction = 'asc'] = entry.split(':');
+      if (!sortableFields.includes(field as SortField) || (direction !== 'asc' && direction !== 'desc')) {
+        return null;
+      }
+
+      return { field: field as SortField, direction: direction as SortDirection };
+    })
+    .filter((entry): entry is SortEntry => entry !== null);
+
+  return entries.length > 0 ? entries : [{ field: 'createdAt', direction: 'desc' }];
+};
+
+const serializeSort = (entries: SortEntry[]) => entries.map((entry) => `${entry.field}:${entry.direction}`).join(',');
+
 export const CandidateApplicationsPage = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [applications, setApplications] = useState<CandidateJobApplicationListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [searchDraft, setSearchDraft] = useState(searchParams.get('search') || '');
+
+  const currentPage = Math.max(1, Number(searchParams.get('page') || '1'));
+  const search = searchParams.get('search') || '';
+  const status = searchParams.get('status') || '';
+  const sortEntries = useMemo(() => parseSort(searchParams.get('sort')), [searchParams]);
+  const sort = serializeSort(sortEntries);
+  const hasFilters = Boolean(search || status || searchParams.get('sort'));
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => setSearchDraft(search), 0);
+    return () => window.clearTimeout(timeoutId);
+  }, [search]);
+
+  const updateQuery = (changes: Record<string, string | number | null>) => {
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current);
+
+      Object.entries(changes).forEach(([key, value]) => {
+        if (value === null || value === '') {
+          next.delete(key);
+        } else {
+          next.set(key, String(value));
+        }
+      });
+
+      return next;
+    });
+  };
 
   const loadApplications = async () => {
     setLoading(true);
     setError(null);
 
     try {
-      const response = await getMyJobApplications();
+      const response = await getMyJobApplications({
+        page: currentPage,
+        limit: pageSize,
+        search: search || undefined,
+        status: status || undefined,
+        sort,
+      });
       setApplications(response.data);
+      setTotalPages(response.pagination?.totalPages ?? 1);
+      setTotalItems(response.pagination?.totalItems ?? response.data.length);
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : 'Unable to load applications');
       setApplications([]);
+      setTotalPages(1);
+      setTotalItems(0);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    void loadApplications();
-  }, []);
+    const timeoutId = window.setTimeout(() => void loadApplications(), 0);
+    return () => window.clearTimeout(timeoutId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage, search, status, sort]);
+
+  const applySearch = () => {
+    updateQuery({ search: searchDraft.trim() || null, page: 1 });
+  };
+
+  const clearFilters = () => {
+    setSearchDraft('');
+    setSearchParams(new URLSearchParams());
+  };
+
+  const toggleSort = (field: SortField) => {
+    const existing = sortEntries.find((entry) => entry.field === field);
+    const nextDirection: SortDirection = existing?.direction === 'asc' ? 'desc' : 'asc';
+    const nextSort = [
+      { field, direction: nextDirection },
+      ...sortEntries.filter((entry) => entry.field !== field),
+    ];
+
+    updateQuery({ sort: serializeSort(nextSort), page: 1 });
+  };
+
+  const renderSortButton = (field: SortField, label: string) => {
+    const activeSort = sortEntries.find((entry) => entry.field === field);
+
+    return (
+      <button
+        type="button"
+        className="inline-flex items-center gap-1 text-left font-medium text-foreground transition-colors hover:text-foreground-600"
+        onClick={() => toggleSort(field)}
+      >
+        {label}
+        <ChevronsUpDown className="h-3.5 w-3.5 text-foreground-400" />
+        {activeSort && (
+          <span className="text-xs text-foreground-500">
+            {activeSort.direction === 'asc' ? 'Asc' : 'Desc'}
+          </span>
+        )}
+      </button>
+    );
+  };
+
+  const emptyLabel = hasFilters
+    ? 'No applications match the selected filters.'
+    : 'No applications found yet.';
 
   return (
     <div className="grid gap-8">
-      <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h2 className="text-4xl leading-[1.15] text-foreground">My applications</h2>
-            <p className="mt-3 max-w-2xl text-sm leading-7 text-foreground-500">
-              Track every submission and open the full application record when you need more detail.
-            </p>
-          </div>
+      <section className="p-0">
+        <div>
+          <h2 className="text-4xl leading-[1.15] text-foreground">My applications</h2>
+          <p className="mt-3 max-w-2xl text-sm leading-7 text-foreground-500">
+            Track every submission and open the full application record when you need more detail.
+          </p>
+        </div>
+
+        <form
+          className="mt-7 grid gap-3 lg:grid-cols-[minmax(320px,1fr)_220px_auto]"
+          onSubmit={(event) => {
+            event.preventDefault();
+            applySearch();
+          }}
+        >
+          <label className="relative block">
+            <span className="sr-only">Search applications</span>
+            <Search className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-foreground-500" />
+            <Input
+              aria-label="Search applications"
+              className="h-10 rounded-lg pl-9 text-sm"
+              placeholder="Search job title or company"
+              value={searchDraft}
+              onChange={(event) => setSearchDraft(event.target.value)}
+            />
+          </label>
+
+          <Select
+            selectedKey={status || 'all'}
+            onSelectionChange={(key) => {
+              updateQuery({ status: key && String(key) !== 'all' ? String(key) : null, page: 1 });
+            }}
+          >
+            <Select.Trigger aria-label="Application status" className="h-10 rounded-lg text-sm">
+              <Select.Value />
+              <Select.Indicator />
+            </Select.Trigger>
+            <Select.Popover>
+              <ListBox aria-label="Application status options">
+                <ListBox.Item id="all" textValue="All statuses">
+                  All statuses
+                </ListBox.Item>
+                {statusOptions.map((option) => (
+                  <ListBox.Item key={option} id={option} textValue={getStatusLabel(option)}>
+                    {getStatusLabel(option)}
+                  </ListBox.Item>
+                ))}
+              </ListBox>
+            </Select.Popover>
+          </Select>
 
           <Button
+            isIconOnly
+            aria-label="Clear filters"
+            className="h-10 w-10 rounded-lg text-sm"
             type="button"
-            variant="primary"
-            onPress={() => void loadApplications()}
-            isDisabled={loading}
+            variant="outline"
+            isDisabled={!hasFilters && !searchDraft}
+            onPress={clearFilters}
           >
-            Refresh
+            <X className="h-4 w-4" />
           </Button>
-        </div>
+        </form>
 
         {error && (
           <div className="mt-5 rounded-lg border border-danger/20 bg-danger/10 px-4 py-3 text-sm leading-6 text-danger-700">
@@ -74,26 +237,25 @@ export const CandidateApplicationsPage = () => {
       </section>
 
       <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
-        <h3 className="text-2xl text-foreground">Application history</h3>
-
         {loading ? (
-          <div className="mt-5 rounded-xl border border-divider bg-content2 p-6 text-sm text-foreground-500">
+          <div className="rounded-xl border border-divider bg-content2 p-6 text-sm text-foreground-500">
             Loading applications...
           </div>
         ) : applications.length === 0 ? (
-          <div className="mt-5 rounded-xl border border-dashed border-divider bg-content2 p-6 text-sm text-foreground-500">
-            No applications found yet.
+          <div className="rounded-xl border border-dashed border-divider bg-content2 p-6 text-sm text-foreground-500">
+            {emptyLabel}
           </div>
         ) : (
-          <Table className="mt-5" variant="secondary">
+          <Table variant="secondary">
             <Table.ScrollContainer>
               <Table.Content aria-label="Application history">
                 <Table.Header>
-                  <Table.Column isRowHeader>Role</Table.Column>
-                  <Table.Column>Company</Table.Column>
-                  <Table.Column>Status</Table.Column>
-                  <Table.Column>Applied</Table.Column>
-                  <Table.Column>Expires</Table.Column>
+                  <Table.Column isRowHeader>{renderSortButton('title', 'Role')}</Table.Column>
+                  <Table.Column>{renderSortButton('company', 'Company')}</Table.Column>
+                  <Table.Column>{renderSortButton('status', 'Status')}</Table.Column>
+                  <Table.Column>{renderSortButton('createdAt', 'Applied')}</Table.Column>
+                  <Table.Column>{renderSortButton('updatedAt', 'Updated')}</Table.Column>
+                  <Table.Column>{renderSortButton('expiresAt', 'Expires')}</Table.Column>
                   <Table.Column>Action</Table.Column>
                 </Table.Header>
                 <Table.Body>
@@ -124,6 +286,11 @@ export const CandidateApplicationsPage = () => {
                       </Table.Cell>
                       <Table.Cell>
                         <span className="whitespace-nowrap text-foreground-500">
+                          {formatDate(application.updatedAt)}
+                        </span>
+                      </Table.Cell>
+                      <Table.Cell>
+                        <span className="whitespace-nowrap text-foreground-500">
                           {application.jobPosting.expiresAt
                             ? formatDate(application.jobPosting.expiresAt)
                             : 'No expiry'}
@@ -145,6 +312,37 @@ export const CandidateApplicationsPage = () => {
               </Table.Content>
             </Table.ScrollContainer>
           </Table>
+        )}
+
+        {totalPages > 1 && (
+          <div className="mt-5 flex items-center justify-end gap-3">
+            <span className="text-sm text-foreground-500">
+              Page {currentPage} of {totalPages}
+              {totalItems > 0 ? ` · ${totalItems} total` : ''}
+            </span>
+            <Button
+              isIconOnly
+              aria-label="Previous page"
+              type="button"
+              variant="outline"
+              size="sm"
+              onPress={() => updateQuery({ page: Math.max(1, currentPage - 1) })}
+              isDisabled={loading || currentPage <= 1}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              isIconOnly
+              aria-label="Next page"
+              type="button"
+              variant="outline"
+              size="sm"
+              onPress={() => updateQuery({ page: Math.min(totalPages, currentPage + 1) })}
+              isDisabled={loading || currentPage >= totalPages}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
         )}
       </section>
     </div>
