@@ -4,7 +4,7 @@ import { getApiBaseUrl, getSafeErrorMessage, HttpError } from './http';
 export type JobApplicationStatus = string;
 
 export type JobApplicationReviewStatus = 'UnderReview' | 'Accepted' | 'Rejected';
-export type JobApplicationActivityStatus = 'Pending' | 'Scheduled' | 'Completed' | 'Skipped' | 'Cancelled';
+export type JobApplicationHiringStageStatus = 'Pending' | 'Scheduled' | 'Completed' | 'Skipped' | 'Cancelled';
 
 export type JobApplicationUpdatePayload = {
   status: JobApplicationReviewStatus;
@@ -39,14 +39,14 @@ export type ApplicationReview = {
   updatedAt: string;
 };
 
-export type JobApplicationActivity = {
+export type JobApplicationHiringStage = {
   id: number;
   jobApplicationId: number;
-  templateActivityId: number | null;
+  jobPostingHiringStageId: number | null;
   title: string;
   description: string | null;
   orderIndex: number;
-  status: JobApplicationActivityStatus;
+  status: JobApplicationHiringStageStatus;
   scheduledAt: string | null;
   completedAt: string | null;
   internalNote?: string | null;
@@ -55,15 +55,19 @@ export type JobApplicationActivity = {
   updatedAt: string;
 };
 
-export type JobApplicationActivityPayload = {
+export type JobApplicationHiringStagePayload = {
   title?: string;
   description?: string | null;
   orderIndex?: number;
-  status?: JobApplicationActivityStatus;
+  status?: JobApplicationHiringStageStatus;
   scheduledAt?: string | null;
   completedAt?: string | null;
   internalNote?: string | null;
 };
+
+export type JobApplicationActivityStatus = JobApplicationHiringStageStatus;
+export type JobApplicationActivity = JobApplicationHiringStage;
+export type JobApplicationActivityPayload = JobApplicationHiringStagePayload;
 
 export type RecruiterJobApplicationListItem = {
   id: number;
@@ -143,20 +147,24 @@ export const getJobApplicationDetail = async (jobApplicationId: number) =>
   apiGet<JobApplicationDetail>(`/api/job-applications/${jobApplicationId}`);
 
 export const getJobApplicationActivities = async (jobApplicationId: number) =>
-  apiGet<JobApplicationActivity[]>(`/api/job-applications/${jobApplicationId}/activities`);
+  apiGet<JobApplicationHiringStage[]>(`/api/job-applications/${jobApplicationId}/activities`);
 
-export const createJobApplicationActivity = async (
+export const createJobApplicationHiringStage = async (
   jobApplicationId: number,
-  payload: JobApplicationActivityPayload,
-) => apiPost<JobApplicationActivity>(`/api/job-applications/${jobApplicationId}/activities`, payload);
+  payload: JobApplicationHiringStagePayload,
+) => apiPost<JobApplicationHiringStage>(`/api/job-applications/${jobApplicationId}/activities`, payload);
 
-export const updateJobApplicationActivity = async (
+export const updateJobApplicationHiringStage = async (
   activityId: number,
-  payload: JobApplicationActivityPayload,
-) => apiPatch<JobApplicationActivity>(`/api/job-application-activities/${activityId}`, payload);
+  payload: JobApplicationHiringStagePayload,
+) => apiPatch<JobApplicationHiringStage>(`/api/job-application-activities/${activityId}`, payload);
 
-export const deleteJobApplicationActivity = async (activityId: number) =>
+export const deleteJobApplicationHiringStage = async (activityId: number) =>
   apiDelete<{ id: number }>(`/api/job-application-activities/${activityId}`);
+
+export const createJobApplicationActivity = createJobApplicationHiringStage;
+export const updateJobApplicationActivity = updateJobApplicationHiringStage;
+export const deleteJobApplicationActivity = deleteJobApplicationHiringStage;
 
 export const getMyJobApplications = async (query?: CandidateJobApplicationsQuery) =>
   apiGet<CandidateJobApplicationListItem[]>('/api/me/applications', { query });
@@ -165,7 +173,7 @@ export const getMyJobApplication = async (jobApplicationId: number) =>
   apiGet<JobApplicationDetail>(`/api/me/applications/${jobApplicationId}`);
 
 export const getMyJobApplicationActivities = async (jobApplicationId: number) =>
-  apiGet<JobApplicationActivity[]>(`/api/me/applications/${jobApplicationId}/activities`);
+  apiGet<JobApplicationHiringStage[]>(`/api/me/applications/${jobApplicationId}/activities`);
 
 export const updateMyJobApplication = async (
   jobApplicationId: number,
