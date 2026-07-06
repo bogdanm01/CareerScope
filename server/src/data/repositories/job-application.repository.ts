@@ -17,8 +17,8 @@ import {
   ApplicationReview,
   ApplicationReviewInsert,
 } from '../schema/application-review.schema.ts';
-import { jobPostingActivityTemplate } from '../schema/job-posting-activity-template.schema.ts';
-import { jobApplicationActivity } from '../schema/job-application-activity.schema.ts';
+import { jobPostingHiringStage } from '../schema/job-posting-hiring-stage.schema.ts';
+import { jobApplicationHiringStage } from '../schema/job-application-hiring-stage.schema.ts';
 import { JOB_APPLICATION_ACTIVITY_STATUS } from '../util/constants.ts';
 
 type FindByJobPostingPagination = {
@@ -143,20 +143,20 @@ export class JobApplicationRepository extends GenericRepository<JobApplication, 
 
       const activityTemplates = await tx
         .select()
-        .from(jobPostingActivityTemplate)
+        .from(jobPostingHiringStage)
         .where(
           and(
-            eq(jobPostingActivityTemplate.jobPostingId, createdJobApplication.jobPostingId),
-            eq(jobPostingActivityTemplate.isDeleted, false),
+            eq(jobPostingHiringStage.jobPostingId, createdJobApplication.jobPostingId),
+            eq(jobPostingHiringStage.isDeleted, false),
           ),
         )
-        .orderBy(asc(jobPostingActivityTemplate.orderIndex), asc(jobPostingActivityTemplate.id));
+        .orderBy(asc(jobPostingHiringStage.orderIndex), asc(jobPostingHiringStage.id));
 
       if (activityTemplates.length > 0) {
-        await tx.insert(jobApplicationActivity).values(
+        await tx.insert(jobApplicationHiringStage).values(
           activityTemplates.map((template) => ({
             jobApplicationId: createdJobApplication.id,
-            templateActivityId: template.id,
+            jobPostingHiringStageId: template.id,
             title: template.title,
             description: template.description,
             orderIndex: template.orderIndex,

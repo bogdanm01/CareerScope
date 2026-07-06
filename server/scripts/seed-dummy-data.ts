@@ -6,7 +6,9 @@ import { user } from '../src/data/schema/auth.schema.ts';
 import { company } from '../src/data/schema/company.schema.ts';
 import { applicationReview } from '../src/data/schema/application-review.schema.ts';
 import { applicationStatusHistory } from '../src/data/schema/application-status-history.schema.ts';
+import { jobApplicationHiringStage } from '../src/data/schema/job-application-hiring-stage.schema.ts';
 import { jobApplication } from '../src/data/schema/job-application.schema.ts';
+import { jobPostingHiringStage } from '../src/data/schema/job-posting-hiring-stage.schema.ts';
 import { jobPosting } from '../src/data/schema/job-posting.schema.ts';
 import { jobPostingSkill } from '../src/data/schema/job-posting-skill.schema.ts';
 import { jobPostingStatusHistory } from '../src/data/schema/job-posting-status-history.schema.ts';
@@ -15,6 +17,7 @@ import skill from '../src/data/schema/skill.schema.ts';
 import { userSkill } from '../src/data/schema/user-skill.schema.ts';
 import {
   COMPANY_APPROVAL_STATUS,
+  JOB_APPLICATION_ACTIVITY_STATUS,
   JOB_APPLICATION_STATUS,
   JOB_POSTING_STATUS,
   ONBOARDING_STATUS,
@@ -1425,7 +1428,16 @@ type ApplicationSeedRecord = {
   companyId: number;
 };
 
+type ActivityTemplateSeedRecord = {
+  id: number;
+  title: string;
+  description: string | null;
+  orderIndex: number;
+};
+
 type UserKey = (typeof users)[number]['key'];
+type JobSeed = (typeof jobs)[number];
+type ApplicationSeed = (typeof applications)[number];
 
 const applicationCreatedDaysAgo = [
   57, 57, 56, 54, 54, 54, 51, 49, 49, 45,
@@ -1580,6 +1592,136 @@ const seedUserSkills = async (userByKey: Map<UserKey, string>) => {
   );
 };
 
+const getInterviewActivityTemplates = (job: JobSeed) => {
+  const hasDesignFocus = job.skills.some((item) =>
+    ['ui-ux-design', 'figma', 'design-systems', 'prototyping', 'user-research'].includes(item.slug),
+  );
+  const hasDataFocus = job.skills.some((item) =>
+    ['sql', 'data-analysis', 'data-visualization', 'business-intelligence', 'machine-learning'].includes(item.slug),
+  );
+  const hasSecurityFocus = job.skills.some((item) => ['web-security', 'authorization'].includes(item.slug));
+  const hasProductFocus = job.skills.some((item) =>
+    ['product-management', 'project-management', 'leadership'].includes(item.slug),
+  );
+
+  const roleSpecificActivity = hasDesignFocus
+    ? {
+        title: 'Portfolio review',
+        description: 'Review selected product work, design decisions, collaboration context, and tradeoffs.',
+        isRequired: true,
+      }
+    : hasDataFocus
+      ? {
+          title: 'Analytics case study',
+          description: 'Discuss a practical data problem, metric definitions, and communication of findings.',
+          isRequired: true,
+        }
+      : hasSecurityFocus
+        ? {
+            title: 'Security scenario interview',
+            description: 'Walk through threat modeling, detection, response, and secure implementation decisions.',
+            isRequired: true,
+          }
+        : hasProductFocus
+          ? {
+              title: 'Product case interview',
+              description: 'Explore discovery, prioritization, stakeholder alignment, and launch planning.',
+              isRequired: true,
+            }
+          : {
+              title: 'Technical interview',
+              description: 'Discuss architecture, implementation tradeoffs, testing approach, and production experience.',
+              isRequired: true,
+            };
+
+  return [
+    {
+      title: 'Recruiter screen',
+      description: 'Initial conversation about role fit, motivation, availability, and compensation expectations.',
+      orderIndex: 0,
+      isRequired: true,
+    },
+    {
+      ...roleSpecificActivity,
+      orderIndex: 1,
+    },
+    {
+      title: 'Team interview',
+      description: 'Meet future teammates and discuss collaboration style, communication, and delivery habits.',
+      orderIndex: 2,
+      isRequired: true,
+    },
+    {
+      title: 'Reference check',
+      description: 'Optional final validation before offer preparation.',
+      orderIndex: 3,
+      isRequired: false,
+    },
+  ];
+};
+
+const getApplicationActivityStatus = (
+  application: ApplicationSeed,
+  orderIndex: number,
+): (typeof JOB_APPLICATION_ACTIVITY_STATUS)[keyof typeof JOB_APPLICATION_ACTIVITY_STATUS] => {
+  switch (application.status) {
+    case JOB_APPLICATION_STATUS.ACCEPTED:
+      return orderIndex <= 2 ? JOB_APPLICATION_ACTIVITY_STATUS.COMPLETED : JOB_APPLICATION_ACTIVITY_STATUS.PENDING;
+    case JOB_APPLICATION_STATUS.REJECTED:
+      return orderIndex === 0
+        ? JOB_APPLICATION_ACTIVITY_STATUS.COMPLETED
+        : orderIndex === 1
+          ? JOB_APPLICATION_ACTIVITY_STATUS.CANCELLED
+          : JOB_APPLICATION_ACTIVITY_STATUS.PENDING;
+    case JOB_APPLICATION_STATUS.UNDER_REVIEW:
+      return orderIndex === 0
+        ? JOB_APPLICATION_ACTIVITY_STATUS.COMPLETED
+        : orderIndex === 1
+          ? JOB_APPLICATION_ACTIVITY_STATUS.SCHEDULED
+          : JOB_APPLICATION_ACTIVITY_STATUS.PENDING;
+    case JOB_APPLICATION_STATUS.WITHDRAWN:
+      return orderIndex === 0
+        ? JOB_APPLICATION_ACTIVITY_STATUS.COMPLETED
+        : JOB_APPLICATION_ACTIVITY_STATUS.CANCELLED;
+    default:
+      return JOB_APPLICATION_ACTIVITY_STATUS.PENDING;
+  }
+};
+
+const getApplicationActivityDates = (
+  status: (typeof JOB_APPLICATION_ACTIVITY_STATUS)[keyof typeof JOB_APPLICATION_ACTIVITY_STATUS],
+  createdDaysAgo: number,
+  orderIndex: number,
+) => {
+  if (status === JOB_APPLICATION_ACTIVITY_STATUS.COMPLETED) {
+    const completedAt = daysAgo(Math.max(1, createdDaysAgo - 2 - orderIndex * 4));
+
+    return {
+      scheduledAt: daysAgo(Math.max(1, createdDaysAgo - 3 - orderIndex * 4)),
+      completedAt,
+    };
+  }
+
+  if (status === JOB_APPLICATION_ACTIVITY_STATUS.SCHEDULED) {
+    return {
+      scheduledAt: daysFromNow(2 + orderIndex),
+      completedAt: null,
+    };
+  }
+
+  if (status === JOB_APPLICATION_ACTIVITY_STATUS.CANCELLED) {
+    return {
+      scheduledAt: daysAgo(Math.max(1, createdDaysAgo - 2 - orderIndex * 3)),
+      completedAt: null,
+    };
+  }
+
+  return {
+    scheduledAt: null,
+    completedAt: null,
+  };
+};
+
 const removeSeedJobs = async () => {
   const seedJobTitles = jobs.flatMap((item) => [item.title, `[Seed] ${item.title}`]);
   const existingJobs = await db
@@ -1600,11 +1742,13 @@ const removeSeedJobs = async () => {
   const applicationIds = existingApplications.map((item) => item.id);
 
   if (applicationIds.length > 0) {
+    await db.delete(jobApplicationHiringStage).where(inArray(jobApplicationHiringStage.jobApplicationId, applicationIds));
     await db.delete(applicationReview).where(inArray(applicationReview.jobApplicationId, applicationIds));
     await db.delete(applicationStatusHistory).where(inArray(applicationStatusHistory.jobApplicationId, applicationIds));
   }
 
   await db.delete(jobApplication).where(inArray(jobApplication.jobPostingId, jobIds));
+  await db.delete(jobPostingHiringStage).where(inArray(jobPostingHiringStage.jobPostingId, jobIds));
   await db.delete(jobPostingStatusHistory).where(inArray(jobPostingStatusHistory.jobPostingId, jobIds));
   await db.delete(jobPostingSkill).where(inArray(jobPostingSkill.jobPostingId, jobIds));
   await db.delete(jobPosting).where(inArray(jobPosting.id, jobIds));
@@ -1642,6 +1786,7 @@ const seedJobs = async (userByKey: Map<UserKey, string>) => {
   const companiesByTaxId = await getCompaniesByTaxId();
   const skillBySlug = await getBySlug();
   const jobByTitle = new Map<string, number>();
+  const activityTemplatesByJobTitle = new Map<string, ActivityTemplateSeedRecord[]>();
 
   await removeSeedJobs();
 
@@ -1685,12 +1830,38 @@ const seedJobs = async (userByKey: Map<UserKey, string>) => {
         createdAt: new Date(createdAt.getTime() + statusIndex * 4 * 24 * 60 * 60 * 1000),
       })),
     );
+
+    const createdTemplates = await db
+      .insert(jobPostingHiringStage)
+      .values(
+        getInterviewActivityTemplates(item).map((activity) => ({
+          jobPostingId: createdJob.id,
+          title: activity.title,
+          description: activity.description,
+          orderIndex: activity.orderIndex,
+          isRequired: activity.isRequired,
+          createdAt,
+          updatedAt: daysAgo(Math.max(1, 20 - jobIndex)),
+        })),
+      )
+      .returning({
+        id: jobPostingHiringStage.id,
+        title: jobPostingHiringStage.title,
+        description: jobPostingHiringStage.description,
+        orderIndex: jobPostingHiringStage.orderIndex,
+      });
+
+    activityTemplatesByJobTitle.set(item.title, createdTemplates);
   }
 
-  return jobByTitle;
+  return { jobByTitle, activityTemplatesByJobTitle };
 };
 
-const seedApplications = async (jobByTitle: Map<string, number>, userByKey: Map<UserKey, string>) => {
+const seedApplications = async (
+  jobByTitle: Map<string, number>,
+  activityTemplatesByJobTitle: Map<string, ActivityTemplateSeedRecord[]>,
+  userByKey: Map<UserKey, string>,
+) => {
   const companiesByTaxId = await getCompaniesByTaxId();
   const applicationByKey = new Map<string, ApplicationSeedRecord>();
 
@@ -1731,6 +1902,33 @@ const seedApplications = async (jobByTitle: Map<string, number>, userByKey: Map<
         reason: statusIndex === 0 ? 'Application submitted.' : `Application moved to ${status}.`,
         createdAt: daysAgo(Math.max(0, createdDaysAgo - statusIndex * 3)),
       })),
+    );
+
+    const templates = requireMapValue(activityTemplatesByJobTitle, item.jobTitle, 'seed job activity templates');
+    await db.insert(jobApplicationHiringStage).values(
+      templates.map((template) => {
+        const status = getApplicationActivityStatus(item, template.orderIndex);
+        const activityDates = getApplicationActivityDates(status, createdDaysAgo, template.orderIndex);
+
+        return {
+          jobApplicationId: createdApplication.id,
+          jobPostingHiringStageId: template.id,
+          title: template.title,
+          description: template.description,
+          orderIndex: template.orderIndex,
+          status,
+          scheduledAt: activityDates.scheduledAt,
+          completedAt: activityDates.completedAt,
+          internalNote:
+            status === JOB_APPLICATION_ACTIVITY_STATUS.COMPLETED
+              ? 'Seeded activity completed for demo analytics and interview timeline views.'
+              : status === JOB_APPLICATION_ACTIVITY_STATUS.SCHEDULED
+                ? 'Seeded upcoming interview activity.'
+                : null,
+          createdAt: daysAgo(createdDaysAgo),
+          updatedAt: activityDates.completedAt ?? daysAgo(Math.max(1, createdDaysAgo - template.orderIndex)),
+        };
+      }),
     );
   }
 
@@ -1787,8 +1985,8 @@ const main = async () => {
   await seedCompanies();
   const userByKey = await seedUsers();
   await seedUserSkills(userByKey);
-  const jobByTitle = await seedJobs(userByKey);
-  const applicationByKey = await seedApplications(jobByTitle, userByKey);
+  const { jobByTitle, activityTemplatesByJobTitle } = await seedJobs(userByKey);
+  const applicationByKey = await seedApplications(jobByTitle, activityTemplatesByJobTitle, userByKey);
   await seedApplicationReviews(applicationByKey);
   await seedNotifications(userByKey);
 

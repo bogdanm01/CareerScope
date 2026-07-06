@@ -3,15 +3,15 @@ import { inject, injectable } from 'tsyringe';
 import { TOKENS } from '../../config/dependency-tokens.ts';
 import { DbClient } from '../../config/db-client.ts';
 import {
-  jobPostingActivityTemplate,
-  JobPostingActivityTemplate,
-  JobPostingActivityTemplateInsert,
-} from '../schema/job-posting-activity-template.schema.ts';
+  jobPostingHiringStage,
+  JobPostingHiringStage,
+  JobPostingHiringStageInsert,
+} from '../schema/job-posting-hiring-stage.schema.ts';
 import {
-  jobApplicationActivity,
-  JobApplicationActivity,
-  JobApplicationActivityInsert,
-} from '../schema/job-application-activity.schema.ts';
+  jobApplicationHiringStage,
+  JobApplicationHiringStage,
+  JobApplicationHiringStageInsert,
+} from '../schema/job-application-hiring-stage.schema.ts';
 import { jobPosting } from '../schema/job-posting.schema.ts';
 import { jobApplication } from '../schema/job-application.schema.ts';
 import { company } from '../schema/company.schema.ts';
@@ -36,8 +36,8 @@ export type ApplicationActivityInput = {
 
 export type ApplicationActivityUpdateInput = Partial<ApplicationActivityInput>;
 
-export type ApplicationActivityView = JobApplicationActivity & {
-  candidateVisible: Omit<JobApplicationActivity, 'internalNote'>;
+export type ApplicationActivityView = JobApplicationHiringStage & {
+  candidateVisible: Omit<JobApplicationHiringStage, 'internalNote'>;
 };
 
 export type ApplicationActivityAccess = {
@@ -95,17 +95,17 @@ export class InterviewActivityRepository {
         companyId: jobPosting.companyId,
         userId: jobApplication.userId,
         jobApplicationId: jobApplication.id,
-        scheduledAt: jobApplicationActivity.scheduledAt,
-        status: jobApplicationActivity.status,
+        scheduledAt: jobApplicationHiringStage.scheduledAt,
+        status: jobApplicationHiringStage.status,
       })
-      .from(jobApplicationActivity)
-      .innerJoin(jobApplication, eq(jobApplicationActivity.jobApplicationId, jobApplication.id))
+      .from(jobApplicationHiringStage)
+      .innerJoin(jobApplication, eq(jobApplicationHiringStage.jobApplicationId, jobApplication.id))
       .innerJoin(jobPosting, eq(jobApplication.jobPostingId, jobPosting.id))
       .innerJoin(company, eq(jobPosting.companyId, company.id))
       .where(
         and(
-          eq(jobApplicationActivity.id, activityId),
-          eq(jobApplicationActivity.isDeleted, false),
+          eq(jobApplicationHiringStage.id, activityId),
+          eq(jobApplicationHiringStage.isDeleted, false),
           eq(jobApplication.isDeleted, false),
           eq(jobPosting.isDeleted, false),
           eq(company.isDeleted, false),
@@ -116,31 +116,31 @@ export class InterviewActivityRepository {
     return record ?? null;
   }
 
-  async findPostingTemplates(jobPostingId: number): Promise<JobPostingActivityTemplate[]> {
+  async findPostingTemplates(jobPostingId: number): Promise<JobPostingHiringStage[]> {
     return this.db
       .select()
-      .from(jobPostingActivityTemplate)
+      .from(jobPostingHiringStage)
       .where(
         and(
-          eq(jobPostingActivityTemplate.jobPostingId, jobPostingId),
-          eq(jobPostingActivityTemplate.isDeleted, false),
+          eq(jobPostingHiringStage.jobPostingId, jobPostingId),
+          eq(jobPostingHiringStage.isDeleted, false),
         ),
       )
-      .orderBy(asc(jobPostingActivityTemplate.orderIndex), asc(jobPostingActivityTemplate.id));
+      .orderBy(asc(jobPostingHiringStage.orderIndex), asc(jobPostingHiringStage.id));
   }
 
   async replacePostingTemplates(
     jobPostingId: number,
     activities: PostingActivityTemplateInput[],
-  ): Promise<JobPostingActivityTemplate[]> {
+  ): Promise<JobPostingHiringStage[]> {
     return this.db.transaction(async (tx) => {
       await tx
-        .update(jobPostingActivityTemplate)
+        .update(jobPostingHiringStage)
         .set({ isDeleted: true })
         .where(
           and(
-            eq(jobPostingActivityTemplate.jobPostingId, jobPostingId),
-            eq(jobPostingActivityTemplate.isDeleted, false),
+            eq(jobPostingHiringStage.jobPostingId, jobPostingId),
+            eq(jobPostingHiringStage.isDeleted, false),
           ),
         );
 
@@ -149,9 +149,9 @@ export class InterviewActivityRepository {
       }
 
       return tx
-        .insert(jobPostingActivityTemplate)
+        .insert(jobPostingHiringStage)
         .values(
-          activities.map((activity): JobPostingActivityTemplateInsert => ({
+          activities.map((activity): JobPostingHiringStageInsert => ({
             jobPostingId,
             title: activity.title,
             description: activity.description ?? null,
@@ -166,15 +166,15 @@ export class InterviewActivityRepository {
   async insertPostingTemplates(
     jobPostingId: number,
     activities: PostingActivityTemplateInput[],
-  ): Promise<JobPostingActivityTemplate[]> {
+  ): Promise<JobPostingHiringStage[]> {
     if (activities.length === 0) {
       return [];
     }
 
     return this.db
-      .insert(jobPostingActivityTemplate)
+      .insert(jobPostingHiringStage)
       .values(
-        activities.map((activity): JobPostingActivityTemplateInsert => ({
+        activities.map((activity): JobPostingHiringStageInsert => ({
           jobPostingId,
           title: activity.title,
           description: activity.description ?? null,
@@ -188,7 +188,7 @@ export class InterviewActivityRepository {
   async copyPostingTemplatesToApplication(
     jobPostingId: number,
     jobApplicationId: number,
-  ): Promise<JobApplicationActivity[]> {
+  ): Promise<JobApplicationHiringStage[]> {
     const templates = await this.findPostingTemplates(jobPostingId);
 
     if (templates.length === 0) {
@@ -196,11 +196,11 @@ export class InterviewActivityRepository {
     }
 
     return this.db
-      .insert(jobApplicationActivity)
+      .insert(jobApplicationHiringStage)
       .values(
-        templates.map((template): JobApplicationActivityInsert => ({
+        templates.map((template): JobApplicationHiringStageInsert => ({
           jobApplicationId,
-          templateActivityId: template.id,
+          jobPostingHiringStageId: template.id,
           title: template.title,
           description: template.description,
           orderIndex: template.orderIndex,
@@ -210,26 +210,26 @@ export class InterviewActivityRepository {
       .returning();
   }
 
-  async findApplicationActivities(jobApplicationId: number): Promise<JobApplicationActivity[]> {
+  async findApplicationActivities(jobApplicationId: number): Promise<JobApplicationHiringStage[]> {
     return this.db
       .select()
-      .from(jobApplicationActivity)
+      .from(jobApplicationHiringStage)
       .where(
         and(
-          eq(jobApplicationActivity.jobApplicationId, jobApplicationId),
-          eq(jobApplicationActivity.isDeleted, false),
+          eq(jobApplicationHiringStage.jobApplicationId, jobApplicationId),
+          eq(jobApplicationHiringStage.isDeleted, false),
         ),
       )
-      .orderBy(asc(jobApplicationActivity.orderIndex), asc(jobApplicationActivity.id));
+      .orderBy(asc(jobApplicationHiringStage.orderIndex), asc(jobApplicationHiringStage.id));
   }
 
   async createApplicationActivity(
     jobApplicationId: number,
     payload: ApplicationActivityInput,
-  ): Promise<JobApplicationActivity> {
+  ): Promise<JobApplicationHiringStage> {
     const orderIndex = payload.orderIndex ?? (await this.getNextApplicationActivityOrderIndex(jobApplicationId));
     const [record] = await this.db
-      .insert(jobApplicationActivity)
+      .insert(jobApplicationHiringStage)
       .values({
         jobApplicationId,
         title: payload.title,
@@ -248,8 +248,8 @@ export class InterviewActivityRepository {
   async updateApplicationActivity(
     activityId: number,
     payload: ApplicationActivityUpdateInput,
-  ): Promise<JobApplicationActivity | null> {
-    const updatePayload: Partial<JobApplicationActivityInsert> = {};
+  ): Promise<JobApplicationHiringStage | null> {
+    const updatePayload: Partial<JobApplicationHiringStageInsert> = {};
 
     if (payload.title !== undefined) updatePayload.title = payload.title;
     if (payload.description !== undefined) updatePayload.description = payload.description;
@@ -260,9 +260,9 @@ export class InterviewActivityRepository {
     if (payload.internalNote !== undefined) updatePayload.internalNote = payload.internalNote;
 
     const [record] = await this.db
-      .update(jobApplicationActivity)
+      .update(jobApplicationHiringStage)
       .set(updatePayload)
-      .where(and(eq(jobApplicationActivity.id, activityId), eq(jobApplicationActivity.isDeleted, false)))
+      .where(and(eq(jobApplicationHiringStage.id, activityId), eq(jobApplicationHiringStage.isDeleted, false)))
       .returning();
 
     return record ?? null;
@@ -270,22 +270,22 @@ export class InterviewActivityRepository {
 
   async deleteApplicationActivity(activityId: number): Promise<{ id: number } | null> {
     const [record] = await this.db
-      .update(jobApplicationActivity)
+      .update(jobApplicationHiringStage)
       .set({ isDeleted: true })
-      .where(and(eq(jobApplicationActivity.id, activityId), eq(jobApplicationActivity.isDeleted, false)))
-      .returning({ id: jobApplicationActivity.id });
+      .where(and(eq(jobApplicationHiringStage.id, activityId), eq(jobApplicationHiringStage.isDeleted, false)))
+      .returning({ id: jobApplicationHiringStage.id });
 
     return record ?? null;
   }
 
   private async getNextApplicationActivityOrderIndex(jobApplicationId: number): Promise<number> {
     const [record] = await this.db
-      .select({ maxOrderIndex: max(jobApplicationActivity.orderIndex) })
-      .from(jobApplicationActivity)
+      .select({ maxOrderIndex: max(jobApplicationHiringStage.orderIndex) })
+      .from(jobApplicationHiringStage)
       .where(
         and(
-          eq(jobApplicationActivity.jobApplicationId, jobApplicationId),
-          eq(jobApplicationActivity.isDeleted, false),
+          eq(jobApplicationHiringStage.jobApplicationId, jobApplicationId),
+          eq(jobApplicationHiringStage.isDeleted, false),
         ) as SQL,
       );
 

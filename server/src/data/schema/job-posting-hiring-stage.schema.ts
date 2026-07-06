@@ -2,7 +2,7 @@ import { boolean, integer, pgTable, text } from 'drizzle-orm/pg-core';
 import { jobPosting } from './job-posting.schema.ts';
 import { timestamps } from '../util/utils.ts';
 
-export const jobPostingActivityTemplate = pgTable('job_posting_activity_template', {
+export const jobPostingHiringStage = pgTable('job_posting_hiring_stage', {
   id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
   jobPostingId: integer('job_posting_id')
     .references(() => jobPosting.id)
@@ -15,5 +15,5 @@ export const jobPostingActivityTemplate = pgTable('job_posting_activity_template
   ...timestamps,
 });
 
-export type JobPostingActivityTemplate = typeof jobPostingActivityTemplate.$inferSelect;
-export type JobPostingActivityTemplateInsert = typeof jobPostingActivityTemplate.$inferInsert;
+export type JobPostingHiringStage = typeof jobPostingHiringStage.$inferSelect;
+export type JobPostingHiringStageInsert = typeof jobPostingHiringStage.$inferInsert;

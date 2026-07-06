@@ -254,7 +254,7 @@ export const JobPostingInterviewActivitiesUpdateRequestSchema = z.object({
   interviewActivities: InterviewActivityTemplateListSchema,
 });
 
-export const JobApplicationActivityCreateRequestSchema = z
+export const JobApplicationHiringStageCreateRequestSchema = z
   .object({
     title: z.string().trim().min(2).max(120),
     description: z.string().trim().max(1000).nullable().optional(),
@@ -266,10 +266,13 @@ export const JobApplicationActivityCreateRequestSchema = z
   })
   .strict();
 
-export const JobApplicationActivityUpdateRequestSchema = JobApplicationActivityCreateRequestSchema.partial()
+export const JobApplicationHiringStageUpdateRequestSchema = JobApplicationHiringStageCreateRequestSchema.partial()
   .refine((data) => Object.keys(data).length > 0, {
     message: 'At least one field must be provided.',
   });
+
+export const JobApplicationActivityCreateRequestSchema = JobApplicationHiringStageCreateRequestSchema;
+export const JobApplicationActivityUpdateRequestSchema = JobApplicationHiringStageUpdateRequestSchema;
 
 export type JobPostingListRequest = z.infer<typeof JobPostingListRequestSchema>;
 export type JobPostingInsertRequest = z.infer<typeof JobPostingInsertRequestSchema>;
@@ -280,5 +283,7 @@ export type JobPostingReadyForApproval = z.infer<typeof JobPostingReadyForApprov
 export type JobPostingDetailInclude = (typeof JOB_POSTING_DETAIL_INCLUDE)[number];
 export type JobPostingDetailRequest = z.infer<typeof JobPostingDetailRequestSchema>;
 export type InterviewActivityTemplateInput = z.infer<typeof InterviewActivityTemplateInputSchema>;
-export type JobApplicationActivityCreateRequest = z.infer<typeof JobApplicationActivityCreateRequestSchema>;
-export type JobApplicationActivityUpdateRequest = z.infer<typeof JobApplicationActivityUpdateRequestSchema>;
+export type JobApplicationHiringStageCreateRequest = z.infer<typeof JobApplicationHiringStageCreateRequestSchema>;
+export type JobApplicationHiringStageUpdateRequest = z.infer<typeof JobApplicationHiringStageUpdateRequestSchema>;
+export type JobApplicationActivityCreateRequest = JobApplicationHiringStageCreateRequest;
+export type JobApplicationActivityUpdateRequest = JobApplicationHiringStageUpdateRequest;

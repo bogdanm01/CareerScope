@@ -14,15 +14,15 @@ import { ERROR_CODE } from '../lib/error-codes.ts';
 import { IntegerIdSchema } from '../lib/zod/integer-id.zod-schema.ts';
 import { ZodValidationError } from '../lib/zod-validation-error.ts';
 import {
-  JobApplicationActivityCreateRequestSchema,
-  JobApplicationActivityUpdateRequestSchema,
+  JobApplicationHiringStageCreateRequestSchema,
+  JobApplicationHiringStageUpdateRequestSchema,
   JobPostingInterviewActivitiesUpdateRequestSchema,
 } from '../lib/zod/job-posting.zod-schema.ts';
-import { JobApplicationActivity } from '../data/schema/job-application-activity.schema.ts';
-import { JobPostingActivityTemplate } from '../data/schema/job-posting-activity-template.schema.ts';
+import { JobApplicationHiringStage } from '../data/schema/job-application-hiring-stage.schema.ts';
+import { JobPostingHiringStage } from '../data/schema/job-posting-hiring-stage.schema.ts';
 import { SingleResult } from '../lib/api-response.ts';
 
-export type CandidateApplicationActivityView = Omit<JobApplicationActivity, 'internalNote'>;
+export type CandidateApplicationActivityView = Omit<JobApplicationHiringStage, 'internalNote'>;
 
 @injectable()
 export class InterviewActivityService {
@@ -34,7 +34,7 @@ export class InterviewActivityService {
   async getPostingActivities(
     jobPostingId: unknown,
     user: AuthenticatedUser,
-  ): Promise<SingleResult<JobPostingActivityTemplate[]>> {
+  ): Promise<SingleResult<JobPostingHiringStage[]>> {
     const id = this.parseId(jobPostingId);
     await this.ensurePostingAccess(id, user);
     return { data: await this.interviewActivityRepository.findPostingTemplates(id) };
@@ -44,7 +44,7 @@ export class InterviewActivityService {
     jobPostingId: unknown,
     payload: unknown,
     user: AuthenticatedUser,
-  ): Promise<SingleResult<JobPostingActivityTemplate[]>> {
+  ): Promise<SingleResult<JobPostingHiringStage[]>> {
     const id = this.parseId(jobPostingId);
     const validationResult = JobPostingInterviewActivitiesUpdateRequestSchema.safeParse(payload);
 
@@ -67,7 +67,7 @@ export class InterviewActivityService {
   async getApplicationActivities(
     jobApplicationId: unknown,
     user: AuthenticatedUser,
-  ): Promise<SingleResult<JobApplicationActivity[] | CandidateApplicationActivityView[]>> {
+  ): Promise<SingleResult<JobApplicationHiringStage[] | CandidateApplicationActivityView[]>> {
     const id = this.parseId(jobApplicationId);
     await this.ensureApplicationAccess(id, user);
     const activities = await this.interviewActivityRepository.findApplicationActivities(id);
@@ -77,7 +77,7 @@ export class InterviewActivityService {
         data: activities.map((activity) => ({
           id: activity.id,
           jobApplicationId: activity.jobApplicationId,
-          templateActivityId: activity.templateActivityId,
+          jobPostingHiringStageId: activity.jobPostingHiringStageId,
           title: activity.title,
           description: activity.description,
           orderIndex: activity.orderIndex,
@@ -98,9 +98,9 @@ export class InterviewActivityService {
     jobApplicationId: unknown,
     payload: unknown,
     user: AuthenticatedUser,
-  ): Promise<SingleResult<JobApplicationActivity>> {
+  ): Promise<SingleResult<JobApplicationHiringStage>> {
     const id = this.parseId(jobApplicationId);
-    const validationResult = JobApplicationActivityCreateRequestSchema.safeParse(payload);
+    const validationResult = JobApplicationHiringStageCreateRequestSchema.safeParse(payload);
 
     if (!validationResult.success) {
       throw new ZodValidationError(validationResult.error);
@@ -120,9 +120,9 @@ export class InterviewActivityService {
     activityId: unknown,
     payload: unknown,
     user: AuthenticatedUser,
-  ): Promise<SingleResult<JobApplicationActivity>> {
+  ): Promise<SingleResult<JobApplicationHiringStage>> {
     const id = this.parseId(activityId);
-    const validationResult = JobApplicationActivityUpdateRequestSchema.safeParse(payload);
+    const validationResult = JobApplicationHiringStageUpdateRequestSchema.safeParse(payload);
 
     if (!validationResult.success) {
       throw new ZodValidationError(validationResult.error);
