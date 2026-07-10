@@ -126,7 +126,21 @@ The dummy seed script expects the auth users from `db:seed:auth` to already exis
 
 ## Full local reset flow
 
-For a fresh local database:
+To drop all local PostgreSQL data, reapply migrations, clear stale Redis
+sessions, and rerun both seed phases:
+
+```bash
+npm run db:reset
+```
+
+The script requires typing `RESET` before deleting data. For intentional
+non-interactive use:
+
+```bash
+npm run db:reset -- --yes
+```
+
+The equivalent manual flow for a fresh local database is:
 
 ```bash
 docker compose -f local.compose.yaml up -d

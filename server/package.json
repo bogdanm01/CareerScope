@@ -19,6 +19,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "db:generate": "drizzle-kit generate --config=src/config/drizzle.config.ts",
     "db:migrate": "drizzle-kit migrate --config=src/config/drizzle.config.ts",
+    "db:reset": "sh scripts/reset-and-seed.sh",
     "db:push": "drizzle-kit push --config=src/config/drizzle.config.ts",
     "db:seed": "tsx scripts/seed-dummy-data.ts",
     "db:seed:auth": "sh scripts/seed-auth-users.sh"
