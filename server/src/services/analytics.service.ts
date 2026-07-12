@@ -26,7 +26,13 @@ const toEndOfDay = (value: string) => {
 const formatDateOnly = (date: Date) => date.toISOString().slice(0, 10);
 
 const getDefaultFromDate = (today: Date) =>
-  new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() - 3, 1));
+  new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() - 1, 1));
+
+type ApplicationsOverTimeRecord = {
+  date: string;
+  applications?: number;
+  [key: string]: unknown;
+};
 
 @injectable()
 export class AnalyticsService {
@@ -57,7 +63,7 @@ export class AnalyticsService {
         data: {
           role,
           range: { from: formatDateOnly(from), to: formatDateOnly(to) },
-          ...overview,
+          ...this.withDenseApplicationsOverTime(overview, range),
         },
       };
     }
@@ -76,7 +82,7 @@ export class AnalyticsService {
         data: {
           role,
           range: { from: formatDateOnly(from), to: formatDateOnly(to) },
-          ...overview,
+          ...this.withDenseApplicationsOverTime(overview, range),
         },
       };
     }
@@ -87,7 +93,7 @@ export class AnalyticsService {
         data: {
           role,
           range: { from: formatDateOnly(from), to: formatDateOnly(to) },
-          ...overview,
+          ...this.withDenseApplicationsOverTime(overview, range),
         },
       };
     }
@@ -123,8 +129,65 @@ export class AnalyticsService {
       data: {
         role: USER_ROLE.RECRUITER,
         range: { from: formatDateOnly(from), to: formatDateOnly(to) },
-        ...overview,
+        ...this.withDenseApplicationsOverTime(overview, range),
       },
     };
+  }
+
+  private withDenseApplicationsOverTime<T extends { charts: Record<string, unknown> }>(
+    overview: T,
+    range: { from: Date; to: Date },
+  ): T {
+    const applicationsOverTime = overview.charts.applicationsOverTime;
+
+    if (!Array.isArray(applicationsOverTime)) {
+      return overview;
+    }
+
+    return {
+      ...overview,
+      charts: {
+        ...overview.charts,
+        applicationsOverTime: this.fillApplicationsOverTime(
+          applicationsOverTime as ApplicationsOverTimeRecord[],
+          range,
+        ),
+      },
+    };
+  }
+
+  private fillApplicationsOverTime(
+    records: ApplicationsOverTimeRecord[],
+    range: { from: Date; to: Date },
+  ): ApplicationsOverTimeRecord[] {
+    if (records.length === 0) {
+      return [];
+    }
+
+    const applicationsByDate = new Map(
+      records.map((record) => [record.date, Number(record.applications ?? 0)]),
+    );
+    const results: ApplicationsOverTimeRecord[] = [];
+    const current = new Date(Date.UTC(
+      range.from.getUTCFullYear(),
+      range.from.getUTCMonth(),
+      range.from.getUTCDate(),
+    ));
+    const end = new Date(Date.UTC(
+      range.to.getUTCFullYear(),
+      range.to.getUTCMonth(),
+      range.to.getUTCDate(),
+    ));
+
+    while (current.getTime() <= end.getTime()) {
+      const date = formatDateOnly(current);
+      results.push({
+        date,
+        applications: applicationsByDate.get(date) ?? 0,
+      });
+      current.setUTCDate(current.getUTCDate() + 1);
+    }
+
+    return results;
   }
 }
