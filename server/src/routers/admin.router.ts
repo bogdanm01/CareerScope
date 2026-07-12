@@ -11,6 +11,10 @@ export const getAdminRouter = () => {
 
   router.get('/companies', authGuard([USER_ROLE.ADMIN]), adminController.getCompanies.bind(adminController));
   router.get('/companies/:id', authGuard([USER_ROLE.ADMIN]), adminController.getCompany.bind(adminController));
+  router.get('/users', authGuard([USER_ROLE.ADMIN]), adminController.getUsers.bind(adminController));
+  router.get('/users/:id', authGuard([USER_ROLE.ADMIN]), adminController.getUser.bind(adminController));
+  router.patch('/users/:id', authGuard([USER_ROLE.ADMIN]), adminController.updateUser.bind(adminController));
+  router.patch('/users/:id/status', authGuard([USER_ROLE.ADMIN]), adminController.updateUserStatus.bind(adminController));
 
   return router;
 };

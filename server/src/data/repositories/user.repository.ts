@@ -5,10 +5,30 @@ import { inject, injectable } from 'tsyringe';
 import { DbClient } from '../../config/db-client.ts';
 import { TOKENS } from '../../config/dependency-tokens.ts';
 import { userSkill, UserSkillInsert } from '../schema/user-skill.schema.ts';
-import { eq } from 'drizzle-orm';
+import { and, asc, count, desc, eq, ilike, ne, or, SQL } from 'drizzle-orm';
 import { OnboardingStatus, UserRole } from '../util/constants.ts';
 import skill from '../schema/skill.schema.ts';
 import { company } from '../schema/company.schema.ts';
+import type { AdminUserListRequest, AdminUserUpdate } from '../../lib/zod/admin-user.zod-schema.ts';
+
+export type AdminUserListItem = {
+  id: string;
+  name: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  emailVerified: boolean;
+  image: string | null;
+  role: string;
+  dateOfBirth: string;
+  onboardingStatus: string;
+  isDeleted: boolean;
+  company: { id: number; name: string } | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+type AdminUserRow = Omit<AdminUserListItem, 'company'> & { companyId: number | null; companyName: string | null };
 
 type RecruiterOnboardingUpdate = {
   role: UserRole;
@@ -53,6 +73,68 @@ export type MeUserDetails = {
 export class UserRepository extends GenericRepository<User, UserInsert, string> {
   constructor(@inject(TOKENS.db) db: DbClient) {
     super(db, user);
+  }
+
+  private getAdminUserSelectFields() {
+    return {
+      id: user.id, name: user.name, firstName: user.firstName, lastName: user.lastName,
+      email: user.email, emailVerified: user.emailVerified, image: user.image, role: user.role,
+      dateOfBirth: user.dateOfBirth, onboardingStatus: user.onboardingStatus, isDeleted: user.isDeleted,
+      companyId: company.id, companyName: company.name, createdAt: user.createdAt, updatedAt: user.updatedAt,
+    };
+  }
+
+  private mapAdminUser(record: AdminUserRow): AdminUserListItem {
+    const { companyId, companyName, ...userRecord } = record;
+    return {
+      ...userRecord,
+      company: companyId && companyName ? { id: companyId, name: companyName } : null,
+    };
+  }
+
+  async findAdminUsers(filters: AdminUserListRequest): Promise<{ data: AdminUserListItem[]; totalItems: number }> {
+    const conditions: SQL[] = [];
+    if (filters.search) {
+      const pattern = `%${filters.search}%`;
+      conditions.push(or(ilike(user.name, pattern), ilike(user.email, pattern), ilike(user.firstName, pattern), ilike(user.lastName, pattern)) as SQL);
+    }
+    if (filters.role) conditions.push(eq(user.role, filters.role));
+    if (typeof filters.isDeleted === 'boolean') conditions.push(eq(user.isDeleted, filters.isDeleted));
+
+    const where = conditions.length ? and(...conditions) : undefined;
+    const direction = filters.sort === 'asc' ? asc : desc;
+    const rows = await this.db.select(this.getAdminUserSelectFields()).from(user).leftJoin(company, eq(user.companyId, company.id))
+      .where(where).orderBy(direction(user[filters.orderBy])).limit(filters.limit).offset((filters.page - 1) * filters.limit);
+    const [total] = await this.db.select({ value: count() }).from(user).where(where);
+    return { data: rows.map((row) => this.mapAdminUser(row)), totalItems: total?.value ?? 0 };
+  }
+
+  async findAdminUserById(id: string): Promise<AdminUserListItem | null> {
+    const [record] = await this.db.select(this.getAdminUserSelectFields()).from(user)
+      .leftJoin(company, eq(user.companyId, company.id)).where(eq(user.id, id)).limit(1);
+    return record ? this.mapAdminUser(record) : null;
+  }
+
+  async findOtherByEmail(email: string, excludedId: string) {
+    const [record] = await this.db.select({ id: user.id }).from(user)
+      .where(and(eq(user.email, email.toLowerCase()), ne(user.id, excludedId))).limit(1);
+    return record ?? null;
+  }
+
+  async updateAdminUser(id: string, values: AdminUserUpdate) {
+    const [record] = await this.db.update(user).set({ ...values, name: `${values.firstName} ${values.lastName}` })
+      .where(eq(user.id, id)).returning({ id: user.id });
+    return record ?? null;
+  }
+
+  async updateAdminUserStatus(id: string, isDeleted: boolean) {
+    const [record] = await this.db.update(user).set({ isDeleted }).where(eq(user.id, id)).returning({ id: user.id });
+    return record ?? null;
+  }
+
+  async findAccountStatus(id: string) {
+    const [record] = await this.db.select({ isDeleted: user.isDeleted }).from(user).where(eq(user.id, id)).limit(1);
+    return record ?? null;
   }
 
   // TODO: Move this to a dedicated user-skill.repository.ts when user skill operations grow.
