@@ -661,7 +661,7 @@ export const RecruiterJobPostingDetailPage = () => {
                   className={[
                     'cursor-pointer rounded-[4px] border px-3 py-1.5 !text-[14px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/20',
                     selectedCategoryId === null
-                      ? 'border-[#181d26] bg-[#181d26] text-white'
+                      ? 'border-[var(--brand)] bg-brand text-brand-foreground'
                       : 'border-divider/70 bg-content1 text-foreground-700 hover:bg-content2',
                   ].join(' ')}
                   onClick={() => {
@@ -678,7 +678,7 @@ export const RecruiterJobPostingDetailPage = () => {
                     className={[
                       'cursor-pointer rounded-[4px] border px-3 py-1.5 !text-[14px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/20',
                       selectedCategoryId === category.id
-                        ? 'border-[#181d26] bg-[#181d26] text-white'
+                        ? 'border-[var(--brand)] bg-brand text-brand-foreground'
                         : 'border-divider/70 bg-content1 text-foreground-700 hover:bg-content2',
                     ].join(' ')}
                     onClick={() => {
@@ -714,7 +714,7 @@ export const RecruiterJobPostingDetailPage = () => {
                                 className={[
                                   'cursor-pointer rounded-[4px] border px-3 py-1.5 !text-[14px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/20',
                                   selectedCategoryId === category.id
-                                    ? 'border-[#181d26] bg-[#181d26] text-white'
+                                    ? 'border-[var(--brand)] bg-brand text-brand-foreground'
                                     : 'border-divider/70 bg-content1 text-foreground-700 hover:bg-content2',
                                 ].join(' ')}
                                 onClick={() => {

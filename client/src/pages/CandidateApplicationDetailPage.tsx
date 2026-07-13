@@ -148,7 +148,7 @@ export const CandidateApplicationDetailPage = () => {
   if (error && !detail) {
     return (
       <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
-        <div className="rounded-3xl border border-danger/20 bg-danger/10 p-4 text-sm leading-6 text-danger-700">{error}</div>
+        <div className="rounded-lg border border-danger/20 bg-danger/10 p-4 text-sm leading-6 text-danger-700">{error}</div>
         <div className="mt-4 flex flex-wrap gap-3">
           <Button type="button" variant="primary" onPress={() => void loadDetail()}>
             Retry
@@ -364,7 +364,7 @@ export const CandidateApplicationDetailPage = () => {
           </section>
 
           {error && detail && (
-        <section className="rounded-3xl border border-danger/20 bg-danger/10 p-6 text-sm leading-6 text-danger-700 sm:p-8">
+        <section className="rounded-xl border border-danger/20 bg-danger/10 p-6 text-sm leading-6 text-danger-700 sm:p-8">
           {error}
         </section>
       )}

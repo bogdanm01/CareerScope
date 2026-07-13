@@ -111,17 +111,17 @@ export const AdminCompanyApprovalsPage = () => {
                         <span className="whitespace-nowrap font-medium text-foreground">#{company.id}</span>
                       </Table.Cell>
                       <Table.Cell>
-                        <Chip className="whitespace-nowrap rounded-md" color={company.isApproved ? 'accent' : 'warning'} size="sm" variant="soft">
-                          {company.isApproved ? 'Profile update' : 'New company'}
-                        </Chip>
-                      </Table.Cell>
-                      <Table.Cell>
                         <div className="min-w-56">
                           <div className="font-medium text-foreground">{company.name}</div>
                           <div className="mt-1 max-w-80 truncate text-sm text-foreground-500">
                             {company.shortDescription || company.address || 'No description provided.'}
                           </div>
                         </div>
+                      </Table.Cell>
+                      <Table.Cell>
+                        <Chip className="whitespace-nowrap rounded-md" color={company.isApproved ? 'accent' : 'warning'} size="sm" variant="soft">
+                          {company.isApproved ? 'Profile update' : 'New company'}
+                        </Chip>
                       </Table.Cell>
                       <Table.Cell>
                         <span className="whitespace-nowrap text-foreground-500">{company.taxId}</span>

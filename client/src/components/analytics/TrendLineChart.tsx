@@ -43,6 +43,12 @@ export const TrendLineChart = ({ data }: { data: AnalyticsChartRecord[] }) => {
 
       return items;
     }, []);
+  const showPointMarkers = normalizedData.length <= 45;
+  const axisTickGap = normalizedData.length > 180
+    ? 64
+    : normalizedData.length > 90
+      ? 44
+      : 28;
 
   return (
     <div className="h-80">
@@ -74,7 +80,7 @@ export const TrendLineChart = ({ data }: { data: AnalyticsChartRecord[] }) => {
             tickLine={false}
             axisLine={false}
             tickMargin={12}
-            minTickGap={28}
+            minTickGap={axisTickGap}
             className="text-xs text-default-400"
           />
           <YAxis
@@ -116,7 +122,9 @@ export const TrendLineChart = ({ data }: { data: AnalyticsChartRecord[] }) => {
               stroke: "#ffffff",
               fill: trendColor,
             }}
-            dot={{ r: 3, strokeWidth: 2, stroke: trendColor, fill: "#ffffff" }}
+            dot={showPointMarkers
+              ? { r: 3, strokeWidth: 2, stroke: trendColor, fill: "#ffffff" }
+              : false}
           />
         </AreaChart>
       </ResponsiveContainer>

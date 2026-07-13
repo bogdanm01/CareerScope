@@ -10,7 +10,7 @@ import { getApiBaseUrl } from '../lib/http';
 type PanelNavItem = {
   to: string;
   label: string;
-  icon: 'dashboard' | 'analytics' | 'profile' | 'jobs' | 'wishlist' | 'applications' | 'companies' | 'postings' | 'approvals';
+  icon: 'dashboard' | 'analytics' | 'profile' | 'jobs' | 'wishlist' | 'applications' | 'companies' | 'postings' | 'approvals' | 'users';
 };
 
 const navIconPath = {
@@ -23,6 +23,7 @@ const navIconPath = {
   companies: 'M6 20V7.5A2.5 2.5 0 0 1 8.5 5h7A2.5 2.5 0 0 1 18 7.5V20m-5 0v-4h-2v4M9 9h.01M12 9h.01M15 9h.01M9 12h.01M12 12h.01M15 12h.01',
   postings: 'M5 6h14M5 10h14M5 14h9M5 18h6',
   approvals: 'M9 12.5 11 14.5 15.5 9.5M5 6h14M5 18h14M7 3h10a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z',
+  users: 'M16 20v-1.5a4.5 4.5 0 0 0-4.5-4.5h-3A4.5 4.5 0 0 0 4 18.5V20m6-10a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm7 1a2.5 2.5 0 1 0 0-5m3 14v-1.5a4 4 0 0 0-3-3.87',
 } as const;
 
 const NavGlyph = ({ name }: { name: PanelNavItem['icon'] }) => (
@@ -52,6 +53,7 @@ const recruiterNav: PanelNavItem[] = [
 const adminNav: PanelNavItem[] = [
   { to: '/panel', label: 'Dashboard', icon: 'dashboard' },
   { to: '/panel/analytics', label: 'Analytics', icon: 'analytics' },
+  { to: '/panel/admin/users', label: 'Users', icon: 'users' },
   { to: '/panel/admin/companies', label: 'Companies', icon: 'companies' },
   { to: '/panel/admin/company-approvals', label: 'Company approvals', icon: 'approvals' },
   { to: '/panel/admin/job-postings', label: 'Job Postings', icon: 'postings' },

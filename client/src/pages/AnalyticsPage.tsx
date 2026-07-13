@@ -45,10 +45,10 @@ import { CompactStatCard } from "../components/analytics/CompactStatCard";
 
 const todayIso = () => new Date().toISOString().slice(0, 10);
 
-const threeMonthsAgoMonthStartIso = () => {
+const previousMonthStartIso = () => {
   const now = new Date();
   const date = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 3, 1),
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1),
   );
   return date.toISOString().slice(0, 10);
 };
@@ -273,21 +273,21 @@ const RecruiterCharts = ({
 
           <DashboardSection title="Selected posting analytics">
             {!effectiveSelectedPostingId && (
-              <Card className="border border-divider shadow-none">
+              <Card className="rounded-xl border border-divider shadow-none">
                 <Card.Content className="p-6 text-sm text-default-500">
                   Create a job posting to see posting-level analytics.
                 </Card.Content>
               </Card>
             )}
             {effectiveSelectedPostingId && postingLoading && !postingDetail && (
-              <Card className="border border-divider shadow-none">
+              <Card className="rounded-xl border border-divider shadow-none">
                 <Card.Content className="p-6 text-sm text-default-500">
                   Loading posting analytics...
                 </Card.Content>
               </Card>
             )}
             {effectiveSelectedPostingId && postingError && !postingLoading && (
-              <Card className="border border-danger-200 bg-danger-50 shadow-none">
+              <Card className="rounded-xl border border-danger-200 bg-danger-50 shadow-none">
                 <Card.Content className="p-6">
                   <p className="text-sm text-danger-700">{postingError}</p>
                 </Card.Content>
@@ -555,7 +555,7 @@ export const AnalyticsPage = () => {
 
   const resetRange = () => {
     const to = todayIso();
-    const from = threeMonthsAgoMonthStartIso();
+    const from = previousMonthStartIso();
 
     setRangeError(null);
     setFromDate(from);
@@ -661,7 +661,7 @@ export const AnalyticsPage = () => {
       </Modal>
 
       {loading && !overview && (
-        <Card className="border border-divider shadow-none">
+        <Card className="rounded-xl border border-divider shadow-none">
           <Card.Content className="p-6 text-sm text-default-500">
             Loading analytics...
           </Card.Content>
@@ -669,7 +669,7 @@ export const AnalyticsPage = () => {
       )}
 
       {errorMessage && !loading && (
-        <Card className="border border-danger-200 bg-danger-50 shadow-none">
+        <Card className="rounded-xl border border-danger-200 bg-danger-50 shadow-none">
           <Card.Content className="p-6">
             <p className="text-sm text-danger-700">{errorMessage}</p>
           </Card.Content>

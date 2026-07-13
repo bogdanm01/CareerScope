@@ -94,6 +94,34 @@ export type AdminCompanyListItem = {
   } | null;
 };
 
+export type AdminUser = {
+  id: string;
+  name: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  emailVerified: boolean;
+  image: string | null;
+  role: string;
+  dateOfBirth: string;
+  onboardingStatus: string;
+  isDeleted: boolean;
+  company: { id: number; name: string } | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export const getAdminUsers = async (query?: Record<string, string | number | boolean | null | undefined>) =>
+  apiGet<AdminUser[]>('/api/admin/users', { query });
+
+export const getAdminUser = async (userId: string) => apiGet<AdminUser>(`/api/admin/users/${userId}`);
+
+export const updateAdminUser = async (userId: string, values: { firstName: string; lastName: string; email: string }) =>
+  apiPatch<AdminUser>(`/api/admin/users/${userId}`, values);
+
+export const updateAdminUserStatus = async (userId: string, status: 'Active' | 'Disabled') =>
+  apiPatch<AdminUser>(`/api/admin/users/${userId}/status`, { status });
+
 export const getAdminCompanies = async (query?: Record<string, string | number | boolean | null | undefined>) =>
   apiGet<AdminCompanyListItem[]>('/api/admin/companies', { query });
 

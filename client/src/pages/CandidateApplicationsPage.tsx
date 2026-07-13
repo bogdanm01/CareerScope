@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Button, Chip, Input, ListBox, Select, Table } from '@heroui/react';
-import { ChevronLeft, ChevronRight, ChevronsUpDown, Search, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronsUpDown, RotateCcw, Search } from 'lucide-react';
 import { getMyJobApplications, type CandidateJobApplicationListItem } from '../lib/job-applications-api';
 import { formatDate } from '../lib/date-format';
 
@@ -174,7 +174,7 @@ export const CandidateApplicationsPage = () => {
         </div>
 
         <form
-          className="mt-7 grid gap-3 lg:grid-cols-[minmax(320px,1fr)_220px_auto]"
+          className="mt-7 grid gap-3 lg:grid-cols-[minmax(0,1fr)_220px_40px]"
           onSubmit={(event) => {
             event.preventDefault();
             applySearch();
@@ -185,7 +185,8 @@ export const CandidateApplicationsPage = () => {
             <Search className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-foreground-500" />
             <Input
               aria-label="Search applications"
-              className="h-10 rounded-lg pl-9 text-sm"
+              className="h-10 w-full rounded-lg pl-9 text-sm"
+              fullWidth
               placeholder="Search job title or company"
               value={searchDraft}
               onChange={(event) => setSearchDraft(event.target.value)}
@@ -218,14 +219,14 @@ export const CandidateApplicationsPage = () => {
 
           <Button
             isIconOnly
-            aria-label="Clear filters"
-            className="h-10 w-10 rounded-lg text-sm"
+            aria-label="Reset application filters"
+            className="h-10 w-10 min-w-10 border border-divider text-foreground-500"
             type="button"
-            variant="outline"
+            variant="ghost"
             isDisabled={!hasFilters && !searchDraft}
             onPress={clearFilters}
           >
-            <X className="h-4 w-4" />
+            <RotateCcw aria-hidden="true" className="h-4 w-4" strokeWidth={1.8} />
           </Button>
         </form>
 

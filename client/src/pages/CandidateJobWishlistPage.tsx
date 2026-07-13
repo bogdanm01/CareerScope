@@ -116,7 +116,7 @@ export const CandidateJobWishlistPage = () => {
         </div>
       ) : savedJobs.length === 0 ? (
         <div className="rounded-xl border border-dashed border-divider bg-content2 p-8 text-sm leading-6 text-foreground-500">
-          <Heart aria-hidden="true" className="mb-3 h-6 w-6 text-[#c24141]" strokeWidth={1.8} />
+          <Heart aria-hidden="true" className="text-status-danger mb-3 h-6 w-6" strokeWidth={1.8} />
           Your wishlist is empty. Save jobs with the heart button to see them here.
         </div>
       ) : (
@@ -151,7 +151,7 @@ export const CandidateJobWishlistPage = () => {
                   <Button
                     isIconOnly
                     aria-label={`Remove ${job.title || 'job'} from wishlist`}
-                    className="shrink-0 border border-[#f2a6a6] bg-[#fff1f1] text-[#c24141] hover:bg-[#ffe4e4]"
+                    className="status-danger hover-status-danger shrink-0 border"
                     size="sm"
                     type="button"
                     variant="secondary"
@@ -162,7 +162,7 @@ export const CandidateJobWishlistPage = () => {
                 </div>
 
                 <div className="mt-5 flex flex-wrap gap-x-4 gap-y-2 text-xs text-foreground-500">
-                  <span className="inline-flex items-center gap-1.5 text-[#19734f]">
+                  <span className="text-status-success inline-flex items-center gap-1.5">
                     <BriefcaseBusiness aria-hidden="true" className="h-4 w-4" strokeWidth={1.7} />
                     Active opening
                   </span>

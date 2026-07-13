@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
-import { Link, NavLink, useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { PublicHeader } from "./PublicHeader";
 
 type AuthShellProps = {
   eyebrow: string;
@@ -26,45 +27,16 @@ export const AuthShell = ({
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className="border-b border-divider bg-white">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
+      <PublicHeader
+        actions={(
           <Link
-            className="text-lg font-medium tracking-[-0.01em] text-foreground"
-            to="/"
-          >
-            CareerScope
-          </Link>
-
-          <nav className="flex items-center gap-1">
-            {[
-              { to: "/jobs", label: "Jobs" },
-              { to: "/companies", label: "Companies" },
-            ].map((item) => (
-              <NavLink
-                key={item.to}
-                className={({ isActive }) =>
-                  [
-                    "rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                    isActive
-                      ? "bg-[#181d26] !text-white"
-                      : "text-foreground-500 hover:bg-content2 hover:text-foreground",
-                  ].join(" ")
-                }
-                to={item.to}
-              >
-                {item.label}
-              </NavLink>
-            ))}
-          </nav>
-
-          <Link
-            className="rounded-lg bg-[#181d26] px-3 py-2 text-sm font-medium !text-white hover:bg-[#252d3a]"
+            className="rounded-lg bg-brand px-3 py-2 text-sm font-medium text-brand-foreground hover-brand"
             to={authLink.to}
           >
             {authLink.label}
           </Link>
-        </div>
-      </header>
+        )}
+      />
 
       <main className="flex min-h-[calc(100vh-65px)] items-center justify-center px-4 py-6 sm:px-8 sm:py-10">
         <div className="grid w-full max-w-6xl overflow-hidden rounded-2xl border border-divider bg-content1 shadow-[0_24px_70px_rgba(24,29,38,0.16)] lg:min-h-[680px] lg:grid-cols-[0.9fr_1.1fr]">

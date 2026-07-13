@@ -26,7 +26,7 @@ export const PieStatusChart = ({
   );
 
   return (
-    <div className="grid items-center gap-5 md:grid-cols-[minmax(172px,0.92fr)_minmax(0,1fr)]">
+    <div className="mx-auto grid min-h-56 w-full max-w-lg content-center items-center gap-5 md:grid-cols-[minmax(172px,0.92fr)_minmax(0,1fr)]">
       <div className="relative mx-auto h-52 w-full max-w-60">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>

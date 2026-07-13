@@ -24,8 +24,11 @@ export const SkillBalanceLabel = ({
       : numericValue < 0
         ? leftEdge - 8
         : rightEdge + 8;
-  const fill =
-    numericValue < 0 ? "#bd4b25" : numericValue > 0 ? "#2f7f4f" : "#667085";
+  const fill = numericValue < 0
+    ? "var(--chart-negative)"
+    : numericValue > 0
+      ? "var(--chart-positive)"
+      : "var(--chart-neutral)";
 
   return (
     <text

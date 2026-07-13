@@ -81,7 +81,7 @@ export const AdminJobPostingDetailPage = () => {
   if (!detail) {
     return (
       <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
-        <div className="rounded-3xl border border-danger/20 bg-danger/10 p-4 text-sm leading-6 text-danger-700">{error || 'Job posting not found.'}</div>
+        <div className="rounded-lg border border-danger/20 bg-danger/10 p-4 text-sm leading-6 text-danger-700">{error || 'Job posting not found.'}</div>
         <div className="mt-4 flex flex-wrap gap-3">
           <Link className="rounded-lg border border-divider bg-content1 px-4 py-2 text-sm font-medium text-foreground" to="/panel/admin/job-postings">
             Back to postings
@@ -318,7 +318,7 @@ export const AdminJobPostingDetailPage = () => {
       </section>
 
       {error && (
-        <section className="rounded-3xl border border-danger/20 bg-danger/10 p-6 text-sm leading-6 text-danger-700 sm:p-8">
+        <section className="rounded-xl border border-danger/20 bg-danger/10 p-6 text-sm leading-6 text-danger-700 sm:p-8">
           {error}
         </section>
       )}

@@ -16,32 +16,32 @@ const statIconMap: Record<
   { icon: typeof ClipboardCheck; className: string }
 > = {
   applications: { icon: ClipboardCheck, className: "bg-[#aa2d00] text-white" },
-  underReview: { icon: CircleDot, className: "bg-[#f5e9d4] text-[#8a5a12]" },
-  accepted: { icon: CheckCircle2, className: "bg-[#e8f8f1] text-[#19734f]" },
-  rejected: { icon: CircleDot, className: "bg-[#f7e4d8] text-[#9f3f18]" },
+  underReview: { icon: CircleDot, className: "bg-status-warning" },
+  accepted: { icon: CheckCircle2, className: "bg-status-success" },
+  rejected: { icon: CircleDot, className: "status-danger" },
   selectedSkills: { icon: BarChart3, className: "bg-content2 text-foreground" },
-  cvUploaded: { icon: ShieldCheck, className: "bg-[#e8f8f1] text-[#19734f]" },
+  cvUploaded: { icon: ShieldCheck, className: "bg-status-success" },
   profileCompleted: {
     icon: CheckCircle2,
-    className: "bg-[#e8f8f1] text-[#19734f]",
+    className: "bg-status-success",
   },
   postings: { icon: BriefcaseBusiness, className: "bg-[#181d26] text-white" },
   activePostings: {
     icon: BriefcaseBusiness,
-    className: "bg-[#0a2e0e] text-white",
+    className: "bg-status-success-solid",
   },
   pendingPostings: {
     icon: ClipboardCheck,
-    className: "bg-[#f5e9d4] text-[#8a5a12]",
+    className: "bg-status-warning",
   },
   companies: { icon: Building2, className: "bg-[#181d26] text-white" },
   pendingCompanies: {
     icon: Building2,
-    className: "bg-[#f5e9d4] text-[#8a5a12]",
+    className: "bg-status-warning",
   },
   approvedCompanies: {
     icon: ShieldCheck,
-    className: "bg-[#e8f8f1] text-[#19734f]",
+    className: "bg-status-success",
   },
 };
 
@@ -61,7 +61,7 @@ export const CompactStatCard = ({ stat }: { stat: AnalyticsStat }) => {
   const StatIcon = iconConfig.icon;
 
   return (
-    <Card className="border border-divider shadow-none">
+    <Card className="rounded-xl border border-divider shadow-none">
       <Card.Content className="!flex min-h-[72px] !flex-row !items-center !justify-start gap-3 px-3.5 py-2">
         <span
           className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${iconConfig.className}`}

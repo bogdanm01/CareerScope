@@ -180,7 +180,7 @@ export const AdminCompanyDetailPage = () => {
   if (!request) {
     return (
       <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
-        <div className="rounded-3xl border border-danger/20 bg-danger/10 p-4 text-sm leading-6 text-danger-700">
+        <div className="rounded-lg border border-danger/20 bg-danger/10 p-4 text-sm leading-6 text-danger-700">
           {error || 'Company approval not found.'}
         </div>
         <div className="mt-4 flex flex-wrap gap-3">
@@ -353,14 +353,14 @@ export const AdminCompanyDetailPage = () => {
       </section>
 
       {request.company.approvalStatus === 'Rejected' && request.company.approvalRejectionReason && (
-        <section className="rounded-3xl border border-danger/20 bg-danger/10 p-6 text-sm leading-6 text-danger-700 sm:p-8">
+        <section className="rounded-xl border border-danger/20 bg-danger/10 p-6 text-sm leading-6 text-danger-700 sm:p-8">
           <strong className="block">Latest rejection reason</strong>
           <p className="mt-2">{request.company.approvalRejectionReason}</p>
         </section>
       )}
 
       {error && (
-        <section className="rounded-3xl border border-danger/20 bg-danger/10 p-6 text-sm leading-6 text-danger-700 sm:p-8">
+        <section className="rounded-xl border border-danger/20 bg-danger/10 p-6 text-sm leading-6 text-danger-700 sm:p-8">
           {error}
         </section>
       )}

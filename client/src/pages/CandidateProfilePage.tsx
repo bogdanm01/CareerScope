@@ -520,7 +520,7 @@ export const CandidateProfilePage = () => {
                       Add the skills you want recruiters to see on your profile.
                     </p>
                   </div>
-                  <div className="inline-flex w-fit rounded-full border border-[#9edec5] bg-[#e8f8f1] px-3 py-1.5 text-xs font-medium text-[#19734f]">
+                  <div className="status-success inline-flex w-fit rounded-full border px-3 py-1.5 text-xs font-medium">
                     {skillCatalogCount} available
                   </div>
                 </div>
@@ -538,7 +538,7 @@ export const CandidateProfilePage = () => {
                           className={[
                             'cursor-pointer rounded-[4px] border px-3 py-1.5 !text-[14px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/20',
                             selectedCategoryId === null
-                              ? 'border-[#181d26] bg-[#181d26] text-white'
+                              ? 'border-[var(--brand)] bg-brand text-brand-foreground'
                               : 'border-divider/70 bg-content1 text-foreground-700 hover:bg-content2',
                           ].join(' ')}
                           onClick={() => {
@@ -554,7 +554,7 @@ export const CandidateProfilePage = () => {
                             className={[
                               'cursor-pointer rounded-[4px] border px-3 py-1.5 !text-[14px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/20',
                               selectedCategoryId === category.id
-                                ? 'border-[#181d26] bg-[#181d26] text-white'
+                                ? 'border-[var(--brand)] bg-brand text-brand-foreground'
                                 : 'border-divider/70 bg-content1 text-foreground-700 hover:bg-content2',
                             ].join(' ')}
                             onClick={() => {
@@ -589,7 +589,7 @@ export const CandidateProfilePage = () => {
                                         className={[
                                           'cursor-pointer rounded-[4px] border px-3 py-1.5 !text-[14px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/20',
                                           selectedCategoryId === category.id
-                                            ? 'border-[#181d26] bg-[#181d26] text-white'
+                                            ? 'border-[var(--brand)] bg-brand text-brand-foreground'
                                             : 'border-divider/70 bg-content1 text-foreground-700 hover:bg-content2',
                                         ].join(' ')}
                                         onClick={() => {
@@ -643,7 +643,7 @@ export const CandidateProfilePage = () => {
                       <Button
                         type="button"
                         variant="primary"
-                        className="h-10 w-full rounded-lg bg-[#19734f] px-6 text-white hover:bg-[#145f42] lg:w-auto"
+                        className="bg-status-success-solid hover-status-success h-10 w-full rounded-lg px-6 lg:w-auto"
                         onPress={addSkill}
                       >
                         <Plus className="h-4 w-4" />
@@ -718,14 +718,14 @@ export const CandidateProfilePage = () => {
 
               <div className="mt-5 grid max-w-xl gap-4">
                 {cvUrl && (
-                  <div className="flex flex-col gap-3 rounded-xl border border-[#9edec5] bg-[#e8f8f1] p-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="status-success flex flex-col gap-3 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                      <div className="text-sm font-medium text-[#19734f]">CV uploaded</div>
-                      <div className="mt-1 text-xs text-[#19734f]/80">Upload a new PDF only if you want to replace it.</div>
+                      <div className="text-sm font-medium">CV uploaded</div>
+                      <div className="mt-1 text-xs opacity-80">Upload a new PDF only if you want to replace it.</div>
                     </div>
                     {cvDownloadUrl && (
                       <a
-                        className="inline-flex h-9 items-center justify-center rounded-lg border border-[#9edec5] bg-white px-3 text-sm font-medium text-[#19734f]"
+                        className="inline-flex h-9 items-center justify-center rounded-lg border border-current bg-content1 px-3 text-sm font-medium"
                         href={cvDownloadUrl}
                       >
                         Download CV

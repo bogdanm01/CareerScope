@@ -11,7 +11,7 @@ import {
   rejectRecruiterOnboarding,
   type AdminCompanyListItem,
 } from '../lib/admin-api';
-import { getApiBaseUrl } from '../lib/http';
+import { getCompanyLogoUrl } from '../lib/company-logo';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 
 const formatApprovalStatus = (status: string) => {
@@ -56,19 +56,6 @@ const formatDotDate = (value: string | null | undefined, fallback = 'Not provide
     .replace(/\//g, '.');
 };
 
-const resolveAssetUrl = (assetUrl?: string | null) => {
-  if (!assetUrl) {
-    return null;
-  }
-
-  if (/^https?:\/\//i.test(assetUrl)) {
-    return assetUrl;
-  }
-
-  const baseUrl = getApiBaseUrl();
-  return baseUrl.startsWith('/') ? `${baseUrl.replace(/\/$/, '')}${assetUrl}` : new URL(assetUrl, baseUrl).toString();
-};
-
 export const AdminCompanyProfilePage = () => {
   const { id } = useParams();
   const location = useLocation();
@@ -83,7 +70,10 @@ export const AdminCompanyProfilePage = () => {
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
   const [actioning, setActioning] = useState(false);
-  const logoUrl = useMemo(() => resolveAssetUrl(company?.logoUrl), [company?.logoUrl]);
+  const logoUrl = useMemo(
+    () => getCompanyLogoUrl(company?.logoUrl, company?.websiteUrl, 192),
+    [company?.logoUrl, company?.websiteUrl],
+  );
   const canReviewCompany = company?.approvalStatus === 'PendingApproval' && !company.isDeleted;
   const isProfileUpdateRequest = Boolean(company?.isApproved && company.pendingChangeRequest);
 
@@ -271,25 +261,8 @@ export const AdminCompanyProfilePage = () => {
               <ArrowLeft aria-hidden="true" className="h-4 w-4" />
               Back
             </Link>
-            <div className="mt-6 flex min-w-0 items-center gap-5">
-              <Avatar className="h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-[#e3d3b8] !bg-[#f5e9d4] !text-[#181d26]">
-                {logoUrl && (
-                  <Avatar.Image alt={`${company.name} logo`} className="h-full w-full bg-white object-contain p-2" src={logoUrl} />
-                )}
-                <Avatar.Fallback className="flex h-full w-full items-center justify-center bg-[#f5e9d4] text-lg font-semibold !text-[#181d26]" delayMs={0}>
-                  {company.name
-                    .split(' ')
-                    .filter(Boolean)
-                    .slice(0, 2)
-                    .map((part) => part[0]?.toUpperCase())
-                    .join('')}
-                </Avatar.Fallback>
-              </Avatar>
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <Chip className="rounded-md" color={getApprovalColor(company.approvalStatus)} size="sm" variant="soft">
-                    {formatApprovalStatus(company.approvalStatus)}
-                  </Chip>
+            <div className="mt-6 min-w-0">
+              {(isProfileUpdateRequest || company.isDeleted) && <div className="mb-2 flex flex-wrap items-center gap-2">
                   {isProfileUpdateRequest && (
                     <Chip className="rounded-md" color="accent" size="sm" variant="soft">
                       Profile update
@@ -300,12 +273,26 @@ export const AdminCompanyProfilePage = () => {
                       Deleted
                     </Chip>
                   )}
-                </div>
-                <h2 className="mt-3 text-4xl leading-[1.15] text-foreground">{company.name}</h2>
-                <p className="mt-3 max-w-3xl text-sm leading-7 text-foreground-500">
-                  {company.shortDescription || 'No company summary provided.'}
-                </p>
+              </div>}
+              <div className="flex min-w-0 items-center gap-3">
+                <Avatar className="h-10 w-10 shrink-0 overflow-hidden rounded-lg !bg-[#f5e9d4] !text-[#181d26]">
+                  {logoUrl && (
+                    <Avatar.Image alt={`${company.name} logo`} className="h-full w-full bg-white object-contain p-1" src={logoUrl} />
+                  )}
+                  <Avatar.Fallback className="flex h-full w-full items-center justify-center bg-[#f5e9d4] text-sm font-semibold !text-[#181d26]" delayMs={0}>
+                    {company.name
+                      .split(' ')
+                      .filter(Boolean)
+                      .slice(0, 2)
+                      .map((part) => part[0]?.toUpperCase())
+                      .join('')}
+                  </Avatar.Fallback>
+                </Avatar>
+                <h2 className="text-4xl leading-[1.15] text-foreground">{company.name}</h2>
               </div>
+              <p className="mt-2 max-w-3xl text-sm leading-7 text-foreground-500">
+                {company.shortDescription || 'No company summary provided.'}
+              </p>
             </div>
           </div>
 
@@ -359,7 +346,11 @@ export const AdminCompanyProfilePage = () => {
           <dl className="mt-6 grid gap-4 text-sm">
             <div>
               <dt className="text-foreground-500">Status</dt>
-              <dd className="mt-1 font-medium text-foreground">{formatApprovalStatus(company.approvalStatus)}</dd>
+              <dd className="mt-2">
+                <Chip className="rounded-md" color={getApprovalColor(company.approvalStatus)} size="sm" variant="soft">
+                  {formatApprovalStatus(company.approvalStatus)}
+                </Chip>
+              </dd>
             </div>
             <div>
               <dt className="text-foreground-500">Approved</dt>

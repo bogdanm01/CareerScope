@@ -5,6 +5,7 @@ import { useSetAtom } from 'jotai';
 import { Button, Calendar, DateField, DatePicker, Input, TextArea } from '@heroui/react';
 import { parseDate } from '@internationalized/date';
 import { RichTextEditor } from '../components/RichTextEditor';
+import { PublicHeader } from '../components/PublicHeader';
 import { authErrorAtom, authLoadingAtom, registerRecruiterAtom } from '../store/auth';
 
 type RecruiterOnboardingPageProps = {
@@ -95,34 +96,28 @@ export const RecruiterOnboardingPage = ({ loading }: RecruiterOnboardingPageProp
   };
 
   return (
-    <main className="min-h-screen bg-background px-4 py-8 text-foreground sm:px-8 lg:py-12">
-      <div className="mx-auto grid w-full max-w-5xl gap-6">
-        <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <Link className="text-xl font-semibold tracking-[-0.03em] text-foreground" to="/login">
-            CareerScope
+    <div className="min-h-screen bg-background text-foreground">
+      <PublicHeader
+        actions={(
+          <Link className="rounded-lg bg-brand px-3 py-2 text-sm font-medium text-brand-foreground hover-brand" to="/login">
+            Sign in
           </Link>
-          <div className="flex items-center gap-3 text-sm">
-            <Link className="font-medium text-foreground-600 hover:text-foreground" to="/register">
-              Candidate registration
-            </Link>
-            <Link className="rounded-lg border border-divider bg-content1 px-4 py-2 font-medium text-foreground" to="/login">
-              Back to sign in
-            </Link>
-          </div>
-        </header>
+        )}
+      />
+      <main className="px-4 py-8 sm:px-8 lg:py-12">
+        <div className="mx-auto grid w-full max-w-5xl gap-6">
+          <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
+            <div className="max-w-3xl">
+              <h1 className="text-4xl font-medium tracking-[-0.06em] text-foreground sm:text-5xl">
+                Create your recruiter account.
+              </h1>
+              <p className="mt-4 max-w-2xl text-base leading-7 text-foreground-500">
+                Set up your account and company profile in one step. After submission, the company profile is sent for approval before postings can go live.
+              </p>
+            </div>
+          </section>
 
-        <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
-          <div className="max-w-3xl">
-            <h1 className="text-4xl font-medium tracking-[-0.06em] text-foreground sm:text-5xl">
-              Create your recruiter account.
-            </h1>
-            <p className="mt-4 max-w-2xl text-base leading-7 text-foreground-500">
-              Set up your account and company profile in one step. After submission, the company profile is sent for approval before postings can go live.
-            </p>
-          </div>
-        </section>
-
-        <form className="grid gap-6" onSubmit={onSubmit}>
+          <form className="grid gap-6" onSubmit={onSubmit}>
           <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
               <div>
@@ -345,8 +340,9 @@ export const RecruiterOnboardingPage = ({ loading }: RecruiterOnboardingPageProp
               Submit onboarding request
             </Button>
           </div>
-        </form>
-      </div>
-    </main>
+          </form>
+        </div>
+      </main>
+    </div>
   );
 };

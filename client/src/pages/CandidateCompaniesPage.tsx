@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button, Input } from '@heroui/react';
-import { BriefcaseBusiness, Building2, CalendarDays, ChevronLeft, ChevronRight, MapPin, Search, UsersRound } from 'lucide-react';
+import { BriefcaseBusiness, Building2, CalendarDays, ChevronLeft, ChevronRight, MapPin, RotateCcw, Search, UsersRound } from 'lucide-react';
 import { getCompanies, type PublicCompanyListItem } from '../lib/companies-api';
 import type { ApiPagination } from '../lib/panel-api';
 import { getCompanyLogoUrl } from '../lib/company-logo';
@@ -108,7 +108,7 @@ export const CandidateCompaniesPage = () => {
         </div>
 
         <form
-          className="mb-6 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto]"
+          className="mb-6 grid grid-cols-[minmax(0,1fr)_40px] gap-3"
           onSubmit={(event) => {
             event.preventDefault();
             setCurrentPage(1);
@@ -122,19 +122,23 @@ export const CandidateCompaniesPage = () => {
               aria-label="Search companies"
               className="h-10 rounded-lg pl-9 text-sm"
               fullWidth
-              placeholder="Search by company name"
+              placeholder="Search by company name (2+ characters)"
               value={searchDraft}
               onChange={(event) => setSearchDraft(event.target.value)}
             />
           </label>
-          <Button type="button" variant="secondary" isDisabled={!searchDraft && !search} onPress={clearSearch}>
-            Clear
+          <Button
+            isIconOnly
+            aria-label="Reset company search"
+            type="button"
+            variant="ghost"
+            className="h-10 w-10 min-w-10 border border-divider text-foreground-500"
+            isDisabled={!searchDraft && !search}
+            onPress={clearSearch}
+          >
+            <RotateCcw aria-hidden="true" className="h-4 w-4" strokeWidth={1.8} />
           </Button>
         </form>
-
-        {searchDraft.trim().length === 1 && (
-          <div className="mb-4 text-sm text-foreground-500">Type at least 2 characters to search</div>
-        )}
 
         {error && (
           <div className="mb-4 rounded-xl border border-danger/20 bg-danger/10 p-4 text-sm text-danger-700">
@@ -192,7 +196,7 @@ export const CandidateCompaniesPage = () => {
                   </div>
 
                   <div className="mt-5 grid gap-2 text-sm text-foreground-500">
-                    <span className="inline-flex items-center gap-2 font-medium text-[#19734f]">
+                    <span className="text-status-success inline-flex items-center gap-2 font-medium">
                       <BriefcaseBusiness aria-hidden="true" className="h-4 w-4" strokeWidth={1.7} />
                       {formatOpenPositions(company.openPositionsCount)}
                     </span>
@@ -218,7 +222,7 @@ export const CandidateCompaniesPage = () => {
 
                   <div className="mt-auto pt-5">
                     <Link
-                      className="inline-flex items-center justify-center rounded-lg bg-[#181d26] px-4 py-2 text-sm font-medium !text-white hover:bg-[#252d3a]"
+                      className="hover-brand inline-flex items-center justify-center rounded-lg bg-brand px-4 py-2 text-sm font-medium text-brand-foreground"
                       to={`/companies/${company.id}?backTo=${backTo}`}
                     >
                       View company

@@ -140,7 +140,7 @@ export const CompanyProfilePage = () => {
     return (
       <main className="text-foreground">
         <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
-          <div className="rounded-3xl border border-danger/20 bg-danger/10 p-4 text-sm leading-6 text-danger-700">{error}</div>
+          <div className="rounded-lg border border-danger/20 bg-danger/10 p-4 text-sm leading-6 text-danger-700">{error}</div>
           <div className="mt-4 flex flex-wrap gap-3">
             <Button type="button" variant="primary" onPress={() => void loadCompany()}>
               Retry
@@ -164,31 +164,31 @@ export const CompanyProfilePage = () => {
 
         <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
           <div className="flex flex-wrap items-start justify-between gap-6">
-            <div className="flex min-w-0 items-center gap-5">
-              {logoUrl ? (
-                <img
-                  alt={`${company?.name} logo`}
-                  className="h-16 w-16 shrink-0 object-contain"
-                  src={logoUrl}
-                />
-              ) : (
-                <Avatar className="h-16 w-16 shrink-0 overflow-hidden rounded-xl !bg-[#f5e9d4] !text-[#181d26]">
-                  <Avatar.Fallback className="flex h-full w-full items-center justify-center bg-[#f5e9d4] text-lg font-semibold !text-[#181d26]" delayMs={0}>
-                    {company?.name
-                      .split(' ')
-                      .filter(Boolean)
-                      .slice(0, 2)
-                      .map((part) => part[0]?.toUpperCase())
-                      .join('') || <Building2 aria-hidden="true" className="h-8 w-8" strokeWidth={1.7} />}
-                  </Avatar.Fallback>
-                </Avatar>
-              )}
-              <div className="min-w-0">
+            <div className="min-w-0">
+              <div className="flex min-w-0 items-center gap-3">
+                {logoUrl ? (
+                  <img
+                    alt={`${company?.name} logo`}
+                    className="h-10 w-10 shrink-0 object-contain"
+                    src={logoUrl}
+                  />
+                ) : (
+                  <Avatar className="h-10 w-10 shrink-0 overflow-hidden rounded-lg !bg-[#f5e9d4] !text-[#181d26]">
+                    <Avatar.Fallback className="flex h-full w-full items-center justify-center bg-[#f5e9d4] text-sm font-semibold !text-[#181d26]" delayMs={0}>
+                      {company?.name
+                        .split(' ')
+                        .filter(Boolean)
+                        .slice(0, 2)
+                        .map((part) => part[0]?.toUpperCase())
+                        .join('') || <Building2 aria-hidden="true" className="h-5 w-5" strokeWidth={1.7} />}
+                    </Avatar.Fallback>
+                  </Avatar>
+                )}
                 <h1 className="text-4xl leading-[1.1] text-foreground sm:text-5xl">{company?.name}</h1>
-                <p className="mt-3 max-w-3xl text-[15px] leading-7 text-foreground-500">
-                  {company?.shortDescription || 'No company summary provided.'}
-                </p>
               </div>
+              <p className="mt-2 max-w-3xl text-[15px] leading-7 text-foreground-500">
+                {company?.shortDescription || 'No company summary provided.'}
+              </p>
             </div>
 
             <div className="grid gap-2 text-sm text-foreground-500">

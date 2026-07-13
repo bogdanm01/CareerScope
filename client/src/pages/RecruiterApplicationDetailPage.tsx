@@ -36,18 +36,18 @@ const getReviewActionClassName = (status: JobApplicationReviewStatus, isSelected
 
   if (status === 'Accepted') {
     return isSelected
-      ? `${baseClassName} border border-[#0f6b3a] bg-[#0f6b3a] text-white`
-      : `${baseClassName} border border-[#a8d8c4] bg-[#e8f5ef] text-[#0f6b3a]`;
+      ? `${baseClassName} status-success-solid border`
+      : `${baseClassName} status-success border`;
   }
 
   if (status === 'Rejected') {
     return isSelected
-      ? `${baseClassName} border border-[#b42318] bg-[#b42318] text-white`
-      : `${baseClassName} border border-[#f3b8b2] bg-[#fdebea] text-[#b42318]`;
+      ? `${baseClassName} status-danger-solid border`
+      : `${baseClassName} status-danger border`;
   }
 
   return isSelected
-    ? `${baseClassName} bg-[#181d26] text-white`
+    ? `${baseClassName} bg-brand text-brand-foreground`
     : baseClassName;
 };
 
@@ -238,7 +238,7 @@ export const RecruiterApplicationDetailPage = () => {
   if (error && !detail) {
     return (
       <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
-        <div className="rounded-3xl border border-danger/20 bg-danger/10 p-4 text-sm leading-6 text-danger-700">{error}</div>
+        <div className="rounded-lg border border-danger/20 bg-danger/10 p-4 text-sm leading-6 text-danger-700">{error}</div>
         <div className="mt-4 flex flex-wrap gap-3">
           <Button type="button" variant="primary" onPress={() => void loadDetail()}>
             Retry
@@ -356,9 +356,7 @@ export const RecruiterApplicationDetailPage = () => {
                     key={skill.id}
                     className={[
                       'flex flex-wrap items-center justify-between gap-3 rounded-lg border px-4 py-3 text-sm',
-                      skill.isMatched
-                        ? 'border-[#a8d8c4] bg-[#e8f5ef] text-[#0f6b3a]'
-                        : 'border-[#f3b8b2] bg-[#fdebea] text-[#9f1c16]',
+                      skill.isMatched ? 'status-success' : 'status-danger',
                     ].join(' ')}
                   >
                     <span className="inline-flex min-w-0 items-center gap-3 font-medium">

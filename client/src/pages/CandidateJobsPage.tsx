@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button, Input, ListBox, Modal, Select, toast, useOverlayState } from '@heroui/react';
-import { BriefcaseBusiness, Building2, CalendarDays, ChevronLeft, ChevronRight, Clock3, Filter, Heart, MapPin, Search, WalletCards, X } from 'lucide-react';
+import { BriefcaseBusiness, Building2, CalendarDays, ChevronLeft, ChevronRight, Clock3, Filter, Heart, MapPin, RotateCcw, Search, WalletCards, X } from 'lucide-react';
 import {
   getActiveJobPostings,
   type JobPostingEmploymentType,
@@ -81,7 +81,7 @@ export const CandidateJobsPage = ({ isPublic = false }: CandidateJobsPageProps) 
   const filterModal = useOverlayState();
   const selectedSort = sortOptions.find((option) => option.value === sortValue) ?? sortOptions[0];
   const selectedSkillIds = useMemo(() => selectedSkills.map((skill) => skill.id), [selectedSkills]);
-  const hasFilters = search.trim().length > 0 || selectedSkills.length > 0 || sortValue !== 'createdAt-desc';
+  const hasActiveFilters = search.trim().length > 0 || selectedSkills.length > 0 || sortValue !== 'createdAt-desc';
   const detailsBasePath = isPublic ? '/jobs' : '/panel/jobs';
   const isApplyBlockedByRole = isPublic && !!session && session.user.role !== 'Candidate';
   const wishlistStorageKey = session?.user.role === 'Candidate'
@@ -226,15 +226,15 @@ export const CandidateJobsPage = ({ isPublic = false }: CandidateJobsPageProps) 
         </div>
 
         <div className="mb-6 grid gap-4">
-          <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_150px_110px] lg:items-center">
+          <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_150px_158px] lg:items-center">
             <label className="grid w-full gap-2 lg:block">
               <span className="sr-only">Search jobs</span>
               <div className="relative w-full">
                 <Search aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-foreground-500" />
                 <Input
-                  className="w-full pl-9"
+                  className="h-10 w-full pl-9"
                   fullWidth
-                  placeholder="Search by job title"
+                  placeholder="Search by job title (2+ characters)"
                   value={search}
                   onChange={(event) => {
                     setSearch(event.target.value);
@@ -254,7 +254,7 @@ export const CandidateJobsPage = ({ isPublic = false }: CandidateJobsPageProps) 
                 }}
                 fullWidth
               >
-                <Select.Trigger>
+                <Select.Trigger className="h-10">
                   <Select.Value />
                   <Select.Indicator />
                 </Select.Trigger>
@@ -270,41 +270,44 @@ export const CandidateJobsPage = ({ isPublic = false }: CandidateJobsPageProps) 
               </Select>
             </label>
 
-            <Button type="button" variant="secondary" className="w-full" onPress={filterModal.open}>
-              <Filter aria-hidden="true" className="h-4 w-4" strokeWidth={1.8} />
-              Filters
-              {selectedSkills.length > 0 && (
-                <span className="ml-1 rounded-full bg-[#181d26] px-2 py-0.5 text-xs text-white">{selectedSkills.length}</span>
-              )}
-            </Button>
+            <div className="grid grid-cols-[110px_40px] gap-2">
+              <Button type="button" variant="secondary" className="h-10 w-full" onPress={filterModal.open}>
+                <Filter aria-hidden="true" className="h-4 w-4" strokeWidth={1.8} />
+                Filters
+                {selectedSkills.length > 0 && (
+                  <span className="ml-1 rounded-full bg-[#181d26] px-2 py-0.5 text-xs text-white">{selectedSkills.length}</span>
+                )}
+              </Button>
+              <Button
+                isIconOnly
+                aria-label="Reset filters"
+                type="button"
+                variant="ghost"
+                className="h-10 w-10 min-w-10 border border-divider text-foreground-500"
+                isDisabled={!hasActiveFilters}
+                onPress={clearFilters}
+              >
+                <RotateCcw aria-hidden="true" className="h-4 w-4" strokeWidth={1.8} />
+              </Button>
+            </div>
           </div>
 
-          {(selectedSkills.length > 0 || hasFilters) && (
+          {selectedSkills.length > 0 && (
             <div className="flex flex-wrap items-center gap-2">
               {selectedSkills.map((skill) => (
-                <span key={skill.id} className="inline-flex items-center gap-2 rounded-full border border-[#9edec5] bg-[#e8f8f1] px-3 py-1.5 text-xs font-medium text-[#19734f]">
+                <span key={skill.id} className="status-success inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium">
                   {skill.name}
                   <button
                     type="button"
                     aria-label={`Remove ${skill.name} filter`}
-                    className="text-[#19734f]/70 hover:text-[#19734f]"
+                    className="opacity-70 hover:opacity-100"
                     onClick={() => removeSkillFilter(skill.id)}
                   >
                     <X aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={1.8} />
                   </button>
                 </span>
               ))}
-
-              {hasFilters && (
-                <Button type="button" variant="ghost" className="px-2 text-foreground-500" onPress={clearFilters}>
-                  Clear filters
-                </Button>
-              )}
             </div>
-          )}
-
-          {search.trim().length === 1 && (
-            <div className="text-sm text-foreground-500">Type at least 2 characters to search</div>
           )}
         </div>
 
@@ -346,13 +349,13 @@ export const CandidateJobsPage = ({ isPublic = false }: CandidateJobsPageProps) 
                           {selectedSkills.map((skill) => (
                             <span
                               key={skill.id}
-                              className="inline-flex items-center gap-2 rounded-full border border-[#9edec5] bg-[#e8f8f1] px-3 py-1.5 text-xs font-medium text-[#19734f]"
+                              className="status-success inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium"
                             >
                               {skill.name}
                               <button
                                 type="button"
                                 aria-label={`Remove ${skill.name} filter`}
-                                className="text-[#19734f]/70 hover:text-[#19734f]"
+                                className="opacity-70 hover:opacity-100"
                                 onClick={() => removeSkillFilter(skill.id)}
                               >
                                 <X aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={1.8} />
@@ -365,7 +368,7 @@ export const CandidateJobsPage = ({ isPublic = false }: CandidateJobsPageProps) 
                   </div>
                 </Modal.Body>
                 <Modal.Footer>
-                  <Button type="button" variant="ghost" onPress={clearFilters}>
+                  <Button type="button" variant="ghost" isDisabled={!hasActiveFilters} onPress={clearFilters}>
                     Clear all
                   </Button>
                   <Button type="button" variant="primary" onPress={filterModal.close}>
@@ -422,8 +425,8 @@ export const CandidateJobsPage = ({ isPublic = false }: CandidateJobsPageProps) 
                       className={[
                         'shrink-0 border',
                         isWishlisted
-                          ? 'border-[#c24141] bg-[#fff1f1] text-[#c24141] hover:bg-[#ffe4e4]'
-                          : 'border-[#f2a6a6] bg-content1 text-[#c24141] hover:bg-[#fff1f1]',
+                          ? 'status-danger hover-status-danger'
+                          : 'border-status-danger bg-content1 text-status-danger hover-status-danger',
                       ].join(' ')}
                       size="sm"
                       type="button"
@@ -436,7 +439,7 @@ export const CandidateJobsPage = ({ isPublic = false }: CandidateJobsPageProps) 
                 </div>
 
                 <div className="mt-5 flex flex-wrap gap-x-4 gap-y-2 text-xs text-foreground-500">
-                  <span className="inline-flex items-center gap-1.5 text-[#19734f]">
+                  <span className="text-status-success inline-flex items-center gap-1.5">
                     <BriefcaseBusiness aria-hidden="true" className="h-4 w-4" strokeWidth={1.7} />
                     Active opening
                   </span>
@@ -485,7 +488,7 @@ export const CandidateJobsPage = ({ isPublic = false }: CandidateJobsPageProps) 
                       </Link>
                       {!isPublic && (
                         <Button
-                          className="rounded-lg bg-[#19734f] text-white hover:bg-[#145f42]"
+                          className="bg-status-success-solid hover-status-success rounded-lg"
                           type="button"
                           variant="primary"
                           isDisabled={applyingId === job.id || isApplyBlockedByRole}

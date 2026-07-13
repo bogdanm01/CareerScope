@@ -19,6 +19,8 @@ import { AdminCompanyDetailPage } from './pages/AdminCompanyDetailPage';
 import { AdminCompanyProfilePage } from './pages/AdminCompanyProfilePage';
 import { AdminJobPostingsPage } from './pages/AdminJobPostingsPage';
 import { AdminJobPostingDetailPage } from './pages/AdminJobPostingDetailPage';
+import { AdminUsersPage } from './pages/AdminUsersPage';
+import { AdminUserDetailPage } from './pages/AdminUserDetailPage';
 import { AnalyticsPage } from './pages/AnalyticsPage';
 import { CompanyProfilePage } from './pages/CompanyProfilePage';
 import { DashboardPage } from './pages/DashboardPage';
@@ -279,6 +281,22 @@ function App() {
               element={
                 <RoleRoute allow={['Admin']}>
                   <DashboardPage />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="users"
+              element={
+                <RoleRoute allow={['Admin']}>
+                  <AdminUsersPage />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path="users/:id"
+              element={
+                <RoleRoute allow={['Admin']}>
+                  <AdminUserDetailPage />
                 </RoleRoute>
               }
             />

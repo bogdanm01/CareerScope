@@ -144,7 +144,7 @@ export const CandidateJobDetailPage = ({ isPublic = false }: CandidateJobDetailP
   if (error && !detail) {
     return (
       <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
-        <div className="rounded-3xl border border-danger/20 bg-danger/10 p-4 text-sm leading-6 text-danger-700">{error}</div>
+        <div className="rounded-lg border border-danger/20 bg-danger/10 p-4 text-sm leading-6 text-danger-700">{error}</div>
         <div className="mt-4 flex flex-wrap gap-3">
           <Button type="button" variant="primary" onPress={() => void loadDetail()}>
             Retry
@@ -251,7 +251,7 @@ export const CandidateJobDetailPage = ({ isPublic = false }: CandidateJobDetailP
         </section>
       </main>
 
-      <aside className="grid gap-6 lg:sticky lg:top-6">
+      <aside className="grid gap-6 lg:sticky lg:top-20">
         <section className="rounded-xl border border-divider bg-content1 p-5">
           <Button
             className="h-11 w-full rounded-lg"

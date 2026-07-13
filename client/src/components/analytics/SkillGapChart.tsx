@@ -56,7 +56,7 @@ export const SkillGapChart = ({ data }: { data: AnalyticsChartRecord[] }) => {
             margin={{ top: 10, right: 42, left: 8, bottom: 18 }}
             barCategoryGap={24}
           >
-            <CartesianGrid stroke="#d9dee7" vertical horizontal={false} />
+            <CartesianGrid stroke="var(--chart-grid)" vertical horizontal={false} />
             <XAxis
               type="number"
               domain={[-domainPadding, domainPadding]}
@@ -78,12 +78,12 @@ export const SkillGapChart = ({ data }: { data: AnalyticsChartRecord[] }) => {
             />
             <ReferenceLine
               x={0}
-              stroke="#b8c0cc"
+              stroke="var(--chart-reference)"
               strokeWidth={1.5}
               ifOverflow="extendDomain"
             />
             <Tooltip
-              cursor={{ fill: "rgba(15, 23, 42, 0.035)" }}
+              cursor={{ fill: "var(--chart-cursor)" }}
               content={<SkillBalanceTooltip />}
               isAnimationActive={false}
             />
@@ -100,10 +100,10 @@ export const SkillGapChart = ({ data }: { data: AnalyticsChartRecord[] }) => {
                   className="transition-opacity duration-150 hover:opacity-85"
                   fill={
                     item.supplyBalance < 0
-                      ? "#df7048"
+                      ? "var(--chart-negative)"
                       : item.supplyBalance > 0
-                        ? "#8ec77f"
-                        : "#98a2b3"
+                        ? "var(--chart-positive)"
+                        : "var(--chart-neutral)"
                   }
                 />
               ))}
@@ -115,9 +115,9 @@ export const SkillGapChart = ({ data }: { data: AnalyticsChartRecord[] }) => {
           </BarChart>
         </ResponsiveContainer>
       </div>
-      <div className="grid w-full gap-2 rounded-xl border border-divider bg-content2/50 px-4 py-3 text-sm text-default-500 sm:grid-cols-3">
+      <div className="grid w-full gap-2 rounded-lg border border-divider bg-content2/50 px-4 py-3 text-sm text-default-500 sm:grid-cols-3">
         <span className="sm:text-left">
-          <strong className="font-semibold text-[#bd4b25]">Negative:</strong>{" "}
+          <strong className="font-semibold" style={{ color: "var(--chart-negative)" }}>Negative:</strong>{" "}
           Demand exceeds supply
         </span>
         <span className="sm:text-center">
@@ -125,7 +125,7 @@ export const SkillGapChart = ({ data }: { data: AnalyticsChartRecord[] }) => {
           Balanced
         </span>
         <span className="sm:text-right">
-          <strong className="font-semibold text-[#2f7f4f]">Positive:</strong>{" "}
+          <strong className="font-semibold" style={{ color: "var(--chart-positive)" }}>Positive:</strong>{" "}
           Supply exceeds demand
         </span>
       </div>

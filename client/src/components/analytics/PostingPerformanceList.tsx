@@ -39,7 +39,7 @@ export const PostingPerformanceList = ({
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-divider">
+    <div className="overflow-hidden rounded-lg border border-divider">
       <div className="grid grid-cols-[minmax(220px,1fr)_92px_76px_76px_76px_112px] items-center gap-3 border-b border-divider bg-content2/60 px-3 py-2 text-xs font-medium text-default-500 max-lg:hidden">
         <span>Posting</span>
         <span>Status</span>

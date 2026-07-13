@@ -8,17 +8,17 @@ export const ApplicationFunnel = ({ stats }: { stats: AnalyticsStat[] }) => {
     {
       label: "Under review",
       value: getStatValue(stats, "underReview"),
-      color: "#ad7816",
+      color: "var(--status-warning)",
     },
     {
       label: "Accepted",
       value: getStatValue(stats, "accepted"),
-      color: "#2f8a64",
+      color: "var(--chart-positive)",
     },
     {
       label: "Rejected",
       value: getStatValue(stats, "rejected"),
-      color: "#c6532a",
+      color: "var(--chart-negative)",
     },
   ];
   const maxValue = Math.max(1, total, ...rows.map((row) => row.value));

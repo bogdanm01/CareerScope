@@ -22,13 +22,13 @@ const getAdminStatusLabel = (status: string) => (status === 'PendingApproval' ? 
 const getStatusClassName = (status: string) => {
   switch (status) {
     case 'Accepted':
-      return 'border-[#9edec5] bg-[#e8f8f1] text-[#19734f]';
+      return 'status-success';
     case 'Rejected':
-      return 'border-[#f2a6a6] bg-[#fff1f1] text-[#c24141]';
+      return 'status-danger';
     case 'UnderReview':
-      return 'border-[#f1d39d] bg-[#fff7e8] text-[#8a5a12]';
+      return 'status-warning';
     case 'Submitted':
-      return 'border-[#cfd6e4] bg-[#f4f6f9] text-[#41454d]';
+      return 'status-neutral';
     default:
       return 'border-divider bg-content2 text-foreground-500';
   }
@@ -291,7 +291,7 @@ export const DashboardPage = () => {
           </div>
           {isOnboardingComplete && (
             <Link
-              className="inline-flex h-8 items-center rounded-lg border border-[#9edec5] bg-[#e8f8f1] px-3 text-xs font-medium leading-none text-[#19734f]"
+              className="status-success inline-flex h-8 items-center rounded-lg border px-3 text-xs font-medium leading-none"
               to="/panel/profile"
             >
               Profile completed
@@ -303,14 +303,14 @@ export const DashboardPage = () => {
           <div className="mt-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             {[
               { label: 'Applications', value: applicationStats.total, icon: ClipboardCheck, iconClassName: 'bg-[#aa2d00] text-white' },
-              { label: 'Under review', value: applicationStats.underReview, icon: Search, iconClassName: 'bg-[#f5e9d4] text-[#8a5a12]' },
-              { label: 'Accepted', value: applicationStats.accepted, icon: CheckCircle2, iconClassName: 'bg-[#e8f8f1] text-[#19734f]' },
-              { label: 'Active jobs', value: activeJobsTotal, icon: BriefcaseBusiness, iconClassName: 'bg-[#0a2e0e] text-white' },
+              { label: 'Under review', value: applicationStats.underReview, icon: Search, iconClassName: 'bg-status-warning' },
+              { label: 'Accepted', value: applicationStats.accepted, icon: CheckCircle2, iconClassName: 'bg-status-success' },
+              { label: 'Active jobs', value: activeJobsTotal, icon: BriefcaseBusiness, iconClassName: 'bg-status-success-solid' },
             ].map((stat) => {
               const StatIcon = stat.icon;
 
               return (
-                <Card key={stat.label} className="border border-divider shadow-none">
+                <Card key={stat.label} className="rounded-xl border border-divider shadow-none">
                   <div className="flex min-h-20 items-center gap-5 px-3 py-2.5">
                     <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${stat.iconClassName}`}>
                       <StatIcon aria-hidden="true" className="h-5 w-5" strokeWidth={1.8} />
@@ -327,15 +327,15 @@ export const DashboardPage = () => {
         ) : role === 'Admin' ? (
           <div className="mt-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             {[
-              { label: 'Pending companies', value: adminDashboard.pendingCompanyTotal, icon: Building2, iconClassName: 'bg-[#f5e9d4] text-[#8a5a12]' },
+              { label: 'Pending companies', value: adminDashboard.pendingCompanyTotal, icon: Building2, iconClassName: 'bg-status-warning' },
               { label: 'Pending postings', value: adminDashboard.pendingPostingTotal, icon: ClipboardCheck, iconClassName: 'bg-[#aa2d00] text-white' },
-              { label: 'Approved companies', value: adminDashboard.approvedCompanyTotal, icon: ShieldCheck, iconClassName: 'bg-[#e8f8f1] text-[#19734f]' },
-              { label: 'Active postings', value: adminDashboard.activePostingTotal, icon: BriefcaseBusiness, iconClassName: 'bg-[#0a2e0e] text-white' },
+              { label: 'Approved companies', value: adminDashboard.approvedCompanyTotal, icon: ShieldCheck, iconClassName: 'bg-status-success' },
+              { label: 'Active postings', value: adminDashboard.activePostingTotal, icon: BriefcaseBusiness, iconClassName: 'bg-status-success-solid' },
             ].map((stat) => {
               const StatIcon = stat.icon;
 
               return (
-                <Card key={stat.label} className="border border-divider shadow-none">
+                <Card key={stat.label} className="rounded-xl border border-divider shadow-none">
                   <div className="flex min-h-20 items-center gap-5 px-3 py-2.5">
                     <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${stat.iconClassName}`}>
                       <StatIcon aria-hidden="true" className="h-5 w-5" strokeWidth={1.8} />
@@ -355,14 +355,14 @@ export const DashboardPage = () => {
           <div className="mt-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             {[
               { label: 'Postings', value: recruiterStats.totalPostings, icon: BriefcaseBusiness, iconClassName: 'bg-[#181d26] text-white' },
-              { label: 'Active postings', value: recruiterStats.activePostings, icon: CheckCircle2, iconClassName: 'bg-[#e8f8f1] text-[#19734f]' },
-              { label: 'Pending approval', value: recruiterStats.pendingPostings, icon: ClipboardCheck, iconClassName: 'bg-[#f5e9d4] text-[#8a5a12]' },
+              { label: 'Active postings', value: recruiterStats.activePostings, icon: CheckCircle2, iconClassName: 'bg-status-success' },
+              { label: 'Pending approval', value: recruiterStats.pendingPostings, icon: ClipboardCheck, iconClassName: 'bg-status-warning' },
               { label: 'Applications', value: recruiterStats.totalApplications, icon: UsersRound, iconClassName: 'bg-[#aa2d00] text-white' },
             ].map((stat) => {
               const StatIcon = stat.icon;
 
               return (
-                <Card key={stat.label} className="border border-divider shadow-none">
+                <Card key={stat.label} className="rounded-xl border border-divider shadow-none">
                   <div className="flex min-h-20 items-center gap-5 px-3 py-2.5">
                     <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${stat.iconClassName}`}>
                       <StatIcon aria-hidden="true" className="h-5 w-5" strokeWidth={1.8} />
@@ -383,7 +383,7 @@ export const DashboardPage = () => {
 
       {role === 'Recruiter' && (
         <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(360px,0.72fr)]">
-          <Card className="border border-divider shadow-none">
+          <Card className="rounded-xl border border-divider shadow-none">
             <Card.Content className="p-6">
               <div className="flex items-center justify-between gap-4">
                 <div>
@@ -391,7 +391,7 @@ export const DashboardPage = () => {
                   <p className="mt-2 text-sm text-default-500">Latest roles from your company.</p>
                 </div>
                 <Button
-                  className="h-10 shrink-0 rounded-lg bg-[#181d26] px-4 !text-sm font-medium text-white hover:bg-[#252b36]"
+                  className="hover-brand h-10 shrink-0 rounded-lg bg-brand px-4 !text-sm font-medium text-brand-foreground"
                   type="button"
                   variant="secondary"
                   onPress={() => navigate('/panel/job-postings/new')}
@@ -403,17 +403,17 @@ export const DashboardPage = () => {
 
               <div className="mt-6 grid gap-3">
                 {recruiterDashboardLoading ? (
-                  <div className="rounded-xl border border-divider bg-content2 p-5 text-sm text-default-500">
+                  <div className="rounded-lg border border-divider bg-content2 p-5 text-sm text-default-500">
                     Loading recent postings...
                   </div>
                 ) : recruiterDashboard.postingsError ? (
-                  <div className="rounded-xl border border-danger/20 bg-danger/10 p-5 text-sm leading-6 text-danger-700">
+                  <div className="rounded-lg border border-danger/20 bg-danger/10 p-5 text-sm leading-6 text-danger-700">
                     {recruiterDashboard.postingsError}
                   </div>
                 ) : recruiterStats.recentPostings.length === 0 ? (
                   <Link
                     to="/panel/job-postings/new"
-                    className="rounded-xl border border-dashed border-divider bg-content2 p-5 text-sm text-default-500 transition-colors hover:bg-content1"
+                    className="rounded-lg border border-dashed border-divider bg-content2 p-5 text-sm text-default-500 transition-colors hover:bg-content1"
                   >
                     No postings yet. Create your first posting to start collecting applicants.
                   </Link>
@@ -422,7 +422,7 @@ export const DashboardPage = () => {
                     <Link
                       key={posting.id}
                       to={`/panel/job-postings/${posting.id}`}
-                      className="rounded-xl border border-divider bg-content2 p-4 transition-colors hover:bg-content1"
+                      className="rounded-lg border border-divider bg-content2 p-4 transition-colors hover:bg-content1"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
@@ -458,7 +458,7 @@ export const DashboardPage = () => {
             </Card.Content>
           </Card>
 
-          <Card className="border border-divider shadow-none">
+          <Card className="rounded-xl border border-divider shadow-none">
             <Card.Content className="p-6">
               <div className="flex items-center justify-between gap-4">
                 <div>
@@ -472,20 +472,20 @@ export const DashboardPage = () => {
 
               <div className="mt-6 grid gap-3">
                 {recruiterDashboard.applicationsWarning && !recruiterDashboardLoading && (
-                  <div className="rounded-xl border border-warning/20 bg-warning/10 p-4 text-sm leading-6 text-warning-700">
+                  <div className="rounded-lg border border-warning/20 bg-warning/10 p-4 text-sm leading-6 text-warning-700">
                     {recruiterDashboard.applicationsWarning}
                   </div>
                 )}
                 {recruiterDashboardLoading ? (
-                  <div className="rounded-xl border border-divider bg-content2 p-5 text-sm text-default-500">
+                  <div className="rounded-lg border border-divider bg-content2 p-5 text-sm text-default-500">
                     Loading latest applicants...
                   </div>
                 ) : recruiterDashboard.postingsError ? (
-                  <div className="rounded-xl border border-danger/20 bg-danger/10 p-5 text-sm leading-6 text-danger-700">
+                  <div className="rounded-lg border border-danger/20 bg-danger/10 p-5 text-sm leading-6 text-danger-700">
                     Applications could not be loaded because postings failed to load.
                   </div>
                 ) : recruiterStats.latestApplicants.length === 0 ? (
-                  <div className="rounded-xl border border-dashed border-divider bg-content2 p-5 text-sm text-default-500">
+                  <div className="rounded-lg border border-dashed border-divider bg-content2 p-5 text-sm text-default-500">
                     No applications yet.
                   </div>
                 ) : (
@@ -493,7 +493,7 @@ export const DashboardPage = () => {
                     <Link
                       key={application.id}
                       to={`/panel/job-applications/${application.id}`}
-                      className="rounded-xl border border-divider bg-content2 p-4 transition-colors hover:bg-content1"
+                      className="rounded-lg border border-divider bg-content2 p-4 transition-colors hover:bg-content1"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
@@ -526,7 +526,7 @@ export const DashboardPage = () => {
 
       {role === 'Candidate' && (
         <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(360px,0.72fr)]">
-          <Card className="border border-divider shadow-none">
+          <Card className="rounded-xl border border-divider shadow-none">
             <Card.Content className="p-6">
               <div className="flex items-center justify-between gap-4">
                 <div>
@@ -540,7 +540,7 @@ export const DashboardPage = () => {
 
               <div className="mt-6 grid gap-3">
                 {latestJobs.length === 0 ? (
-                  <div className="rounded-xl border border-dashed border-divider bg-content2 p-5 text-sm text-default-500">
+                  <div className="rounded-lg border border-dashed border-divider bg-content2 p-5 text-sm text-default-500">
                     No active jobs available right now.
                   </div>
                 ) : (
@@ -551,7 +551,7 @@ export const DashboardPage = () => {
                       <Link
                         key={job.id}
                         to={`/panel/jobs/${job.id}`}
-                        className="grid gap-3 rounded-xl border border-divider bg-content2 p-4 transition-colors hover:bg-content1 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center"
+                        className="grid gap-3 rounded-lg border border-divider bg-content2 p-4 transition-colors hover:bg-content1 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center"
                       >
                         <span className="flex h-11 w-11 items-center justify-start overflow-hidden rounded-lg text-white">
                           {companyLogoUrl ? (
@@ -582,7 +582,7 @@ export const DashboardPage = () => {
             </Card.Content>
           </Card>
 
-          <Card className="border border-divider shadow-none">
+          <Card className="rounded-xl border border-divider shadow-none">
             <Card.Content className="p-6">
               <div className="flex items-center justify-between gap-4">
                 <div>
@@ -596,7 +596,7 @@ export const DashboardPage = () => {
 
               <div className="mt-6 grid gap-3">
                 {applicationStats.latestActivity.length === 0 ? (
-                  <div className="rounded-xl border border-dashed border-divider bg-content2 p-5 text-sm text-default-500">
+                  <div className="rounded-lg border border-dashed border-divider bg-content2 p-5 text-sm text-default-500">
                     No application activity yet.
                   </div>
                 ) : (
@@ -604,7 +604,7 @@ export const DashboardPage = () => {
                     <Link
                       key={application.id}
                       to={`/panel/applications/${application.id}`}
-                      className="rounded-xl border border-divider bg-content2 p-4 transition-colors hover:bg-content1"
+                      className="rounded-lg border border-divider bg-content2 p-4 transition-colors hover:bg-content1"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
@@ -634,7 +634,7 @@ export const DashboardPage = () => {
       {role === 'Admin' && (
         <>
           <section className="grid gap-4 xl:grid-cols-2">
-            <Card className="border border-divider shadow-none">
+            <Card className="rounded-xl border border-divider shadow-none">
               <Card.Content className="p-6">
                 <div className="flex items-center justify-between gap-4">
                   <div>
@@ -648,15 +648,15 @@ export const DashboardPage = () => {
 
                 <div className="mt-6 grid gap-3">
                   {adminDashboardLoading ? (
-                    <div className="rounded-xl border border-divider bg-content2 p-5 text-sm text-default-500">
+                    <div className="rounded-lg border border-divider bg-content2 p-5 text-sm text-default-500">
                       Loading pending companies...
                     </div>
                   ) : adminDashboard.pendingCompaniesError ? (
-                    <div className="rounded-xl border border-danger/20 bg-danger/10 p-5 text-sm leading-6 text-danger-700">
+                    <div className="rounded-lg border border-danger/20 bg-danger/10 p-5 text-sm leading-6 text-danger-700">
                       {adminDashboard.pendingCompaniesError}
                     </div>
                   ) : adminDashboard.pendingCompanies.length === 0 ? (
-                    <div className="rounded-xl border border-dashed border-divider bg-content2 p-5 text-sm text-default-500">
+                    <div className="rounded-lg border border-dashed border-divider bg-content2 p-5 text-sm text-default-500">
                       No companies are waiting for approval.
                     </div>
                   ) : (
@@ -665,7 +665,7 @@ export const DashboardPage = () => {
                         key={company.id}
                         to={`/panel/admin/companies/${company.id}`}
                         state={{ company, backTo: '/panel' }}
-                        className="rounded-xl border border-divider bg-content2 p-4 transition-colors hover:bg-content1"
+                        className="rounded-lg border border-divider bg-content2 p-4 transition-colors hover:bg-content1"
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0">
@@ -686,7 +686,7 @@ export const DashboardPage = () => {
               </Card.Content>
             </Card>
 
-            <Card className="border border-divider shadow-none">
+            <Card className="rounded-xl border border-divider shadow-none">
               <Card.Content className="p-6">
                 <div className="flex items-center justify-between gap-4">
                   <div>
@@ -700,15 +700,15 @@ export const DashboardPage = () => {
 
                 <div className="mt-6 grid gap-3">
                   {adminDashboardLoading ? (
-                    <div className="rounded-xl border border-divider bg-content2 p-5 text-sm text-default-500">
+                    <div className="rounded-lg border border-divider bg-content2 p-5 text-sm text-default-500">
                       Loading pending postings...
                     </div>
                   ) : adminDashboard.pendingPostingsError ? (
-                    <div className="rounded-xl border border-danger/20 bg-danger/10 p-5 text-sm leading-6 text-danger-700">
+                    <div className="rounded-lg border border-danger/20 bg-danger/10 p-5 text-sm leading-6 text-danger-700">
                       {adminDashboard.pendingPostingsError}
                     </div>
                   ) : adminDashboard.pendingPostings.length === 0 ? (
-                    <div className="rounded-xl border border-dashed border-divider bg-content2 p-5 text-sm text-default-500">
+                    <div className="rounded-lg border border-dashed border-divider bg-content2 p-5 text-sm text-default-500">
                       No job postings are waiting for approval.
                     </div>
                   ) : (
@@ -717,7 +717,7 @@ export const DashboardPage = () => {
                         key={posting.id}
                         to={`/panel/admin/job-postings/${posting.id}`}
                         state={{ posting }}
-                        className="rounded-xl border border-divider bg-content2 p-4 transition-colors hover:bg-content1"
+                        className="rounded-lg border border-divider bg-content2 p-4 transition-colors hover:bg-content1"
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0">

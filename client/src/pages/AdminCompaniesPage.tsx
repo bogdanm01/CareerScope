@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
+  Avatar,
   Button,
   Chip,
   Dropdown,
@@ -19,6 +20,7 @@ import {
   X,
 } from "lucide-react";
 import { getAdminCompanies, type AdminCompanyListItem } from "../lib/admin-api";
+import { getCompanyLogoUrl } from "../lib/company-logo";
 
 const pageSize = 10;
 
@@ -307,8 +309,7 @@ export const AdminCompaniesPage = () => {
             <Table.ScrollContainer>
               <Table.Content aria-label="Companies">
                 <Table.Header>
-                  <Table.Column isRowHeader>ID</Table.Column>
-                  <Table.Column>Company</Table.Column>
+                  <Table.Column isRowHeader>Company</Table.Column>
                   <Table.Column>Tax ID</Table.Column>
                   <Table.Column>Status</Table.Column>
                   <Table.Column>Employees</Table.Column>
@@ -320,19 +321,28 @@ export const AdminCompaniesPage = () => {
                   {companies.map((company) => (
                     <Table.Row key={company.id} id={company.id}>
                       <Table.Cell>
-                        <span className="whitespace-nowrap font-medium text-foreground">
-                          #{company.id}
-                        </span>
-                      </Table.Cell>
-                      <Table.Cell>
-                        <div className="min-w-56">
-                          <div className="font-medium text-foreground">
-                            {company.name}
-                          </div>
-                          <div className="mt-1 max-w-80 truncate text-sm text-foreground-500">
-                            {company.shortDescription ||
-                              company.address ||
-                              "No description provided."}
+                        <div className="flex min-w-72 items-center gap-3">
+                          <Avatar className="h-10 w-10 shrink-0 overflow-hidden rounded-lg border border-divider !bg-content2">
+                            {getCompanyLogoUrl(company.logoUrl, company.websiteUrl) && (
+                              <Avatar.Image
+                                alt={`${company.name} logo`}
+                                className="h-full w-full bg-white object-contain p-1.5"
+                                src={getCompanyLogoUrl(company.logoUrl, company.websiteUrl) ?? undefined}
+                              />
+                            )}
+                            <Avatar.Fallback className="flex h-full w-full items-center justify-center bg-content2 text-sm font-semibold text-foreground" delayMs={0}>
+                              {company.name.trim().charAt(0).toUpperCase() || '?'}
+                            </Avatar.Fallback>
+                          </Avatar>
+                          <div className="min-w-0">
+                            <div className="truncate font-medium text-foreground">
+                              {company.name}
+                            </div>
+                            <div className="mt-1 max-w-80 truncate text-sm text-foreground-500">
+                              {company.shortDescription ||
+                                company.address ||
+                                "No description provided."}
+                            </div>
                           </div>
                         </div>
                       </Table.Cell>

@@ -158,7 +158,7 @@ export const SkillAutocomplete = ({
               className={[
                 'shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors',
                 selectedCategoryId === null
-                  ? 'border-[#181d26] bg-[#181d26] text-white'
+                  ? 'border-[var(--brand)] bg-brand text-brand-foreground'
                   : 'border-divider bg-content1 text-foreground-600 hover:border-foreground/30',
               ].join(' ')}
               onClick={() => {
@@ -176,7 +176,7 @@ export const SkillAutocomplete = ({
                 className={[
                   'shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors',
                   selectedCategoryId === category.id
-                    ? 'border-[#181d26] bg-[#181d26] text-white'
+                    ? 'border-[var(--brand)] bg-brand text-brand-foreground'
                     : 'border-divider bg-content1 text-foreground-600 hover:border-foreground/30',
                 ].join(' ')}
                 onClick={() => {

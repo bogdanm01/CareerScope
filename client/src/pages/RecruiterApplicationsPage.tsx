@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
-import { Avatar, Button, Chip, Input, ListBox, Select, Table } from '@heroui/react';
-import { ChevronLeft, ChevronRight, Search } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { Avatar, Button, Chip, ComboBox, Dropdown, Input, ListBox, Select, Table } from '@heroui/react';
+import { ChevronLeft, ChevronRight, MoreHorizontal, PanelTopOpen, Search } from 'lucide-react';
 import { getRecruiterJobPostings, type JobPostingListItem } from '../lib/job-postings-api';
 import { getRecruiterJobApplications, type RecruiterJobApplicationListItem } from '../lib/job-applications-api';
 import { formatDate } from '../lib/date-format';
@@ -11,6 +11,7 @@ type ApplicationRow = RecruiterJobApplicationListItem & {
 };
 
 const allPostingsKey = 'all';
+const allCompaniesKey = 'all';
 const allStatusesKey = 'all';
 const pageSize = 10;
 
@@ -47,6 +48,7 @@ export const RecruiterApplicationsPage = () => {
   const [search, setSearch] = useState(searchParams.get('search') || '');
   const [currentPage, setCurrentPage] = useState(1);
   const selectedPostingKey = searchParams.get('postingId') || allPostingsKey;
+  const selectedCompanyKey = searchParams.get('companyId') || allCompaniesKey;
   const selectedStatusKey = searchParams.get('status') || allStatusesKey;
 
   useEffect(() => {
@@ -106,12 +108,34 @@ export const RecruiterApplicationsPage = () => {
     [applications],
   );
 
+  const companies = useMemo(() => {
+    const byId = new Map<number, NonNullable<JobPostingListItem['company']>>();
+    postings.forEach((posting) => {
+      if (posting.company) byId.set(posting.company.id, posting.company);
+    });
+    return Array.from(byId.values()).sort((left, right) => left.name.localeCompare(right.name));
+  }, [postings]);
+
+  const visiblePostings = useMemo(
+    () => postings.filter((posting) => selectedCompanyKey === allCompaniesKey || String(posting.company?.id) === selectedCompanyKey),
+    [postings, selectedCompanyKey],
+  );
+
+  const postingCompanyById = useMemo(
+    () => new Map(postings.map((posting) => [posting.id, posting.company?.id])),
+    [postings],
+  );
+
   const filteredApplications = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
 
     return applications
       .filter((application) => {
         if (selectedPostingKey !== allPostingsKey && String(application.jobPostingId) !== selectedPostingKey) {
+          return false;
+        }
+
+        if (selectedCompanyKey !== allCompaniesKey && String(postingCompanyById.get(application.jobPostingId)) !== selectedCompanyKey) {
           return false;
         }
 
@@ -129,7 +153,7 @@ export const RecruiterApplicationsPage = () => {
         );
       })
       .sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime());
-  }, [applications, search, selectedPostingKey, selectedStatusKey]);
+  }, [applications, postingCompanyById, search, selectedCompanyKey, selectedPostingKey, selectedStatusKey]);
 
   const totalPages = Math.max(1, Math.ceil(filteredApplications.length / pageSize));
   const paginatedApplications = useMemo(
@@ -138,10 +162,13 @@ export const RecruiterApplicationsPage = () => {
   );
 
   useEffect(() => {
-    setCurrentPage((page) => Math.min(page, totalPages));
+    const timeout = window.setTimeout(() => {
+      setCurrentPage((page) => Math.min(page, totalPages));
+    }, 0);
+    return () => window.clearTimeout(timeout);
   }, [totalPages]);
 
-  const updateFilters = (updates: { postingId?: string; status?: string; search?: string }) => {
+  const updateFilters = (updates: { companyId?: string; postingId?: string; status?: string; search?: string }) => {
     const next = new URLSearchParams(searchParams);
     setCurrentPage(1);
 
@@ -150,6 +177,14 @@ export const RecruiterApplicationsPage = () => {
         next.delete('postingId');
       } else {
         next.set('postingId', updates.postingId);
+      }
+    }
+
+    if (updates.companyId !== undefined) {
+      if (!updates.companyId || updates.companyId === allCompaniesKey) {
+        next.delete('companyId');
+      } else {
+        next.set('companyId', updates.companyId);
       }
     }
 
@@ -185,7 +220,7 @@ export const RecruiterApplicationsPage = () => {
         </div>
       </section>
 
-      <section className="grid gap-3 lg:grid-cols-[minmax(320px,1fr)_minmax(220px,420px)_minmax(200px,300px)]">
+      <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-[400px_220px_minmax(280px,1fr)_200px]">
         <div className="relative">
           <Search aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-foreground-500" />
           <Input
@@ -195,32 +230,57 @@ export const RecruiterApplicationsPage = () => {
               updateFilters({ search: event.target.value });
             }}
             placeholder="Search applicants"
-            className="h-10 pl-9 text-sm"
+            className="h-10 w-100 pl-9 text-sm"
           />
         </div>
 
-        <Select
+        <ComboBox
+          selectedKey={selectedCompanyKey}
+          onSelectionChange={(key) => {
+            const companyId = key ? String(key) : allCompaniesKey;
+            updateFilters({ companyId, postingId: allPostingsKey });
+          }}
+          fullWidth
+        >
+          <ComboBox.InputGroup className="flex h-10 items-center">
+            <Input aria-label="Filter by company" className="!text-sm !font-medium" placeholder="Search companies" />
+            <ComboBox.Trigger />
+          </ComboBox.InputGroup>
+          <ComboBox.Popover>
+            <ListBox aria-label="Companies" className="max-h-64 overflow-auto py-1">
+              <ListBox.Item id={allCompaniesKey} textValue="All companies">All companies</ListBox.Item>
+              {companies.map((company) => (
+                <ListBox.Item key={company.id} id={String(company.id)} textValue={company.name}>{company.name}</ListBox.Item>
+              ))}
+            </ListBox>
+          </ComboBox.Popover>
+        </ComboBox>
+
+        <ComboBox
           selectedKey={selectedPostingKey}
           onSelectionChange={(key) => updateFilters({ postingId: key ? String(key) : allPostingsKey })}
           fullWidth
         >
-          <Select.Trigger className="h-10 rounded-lg text-sm">
-            <Select.Value />
-            <Select.Indicator />
-          </Select.Trigger>
-          <Select.Popover>
-            <ListBox aria-label="Job postings">
+          <ComboBox.InputGroup className="flex h-10 items-center">
+            <Input aria-label="Filter by job posting" className="!text-sm !font-medium" placeholder="Search postings" />
+            <ComboBox.Trigger />
+          </ComboBox.InputGroup>
+          <ComboBox.Popover>
+            <ListBox aria-label="Job postings" className="max-h-64 overflow-auto py-1">
               <ListBox.Item id={allPostingsKey} textValue="All postings">
                 All postings
               </ListBox.Item>
-              {postings.map((posting) => (
+              {visiblePostings.map((posting) => (
                 <ListBox.Item key={posting.id} id={String(posting.id)} textValue={posting.title || `Posting #${posting.id}`}>
-                  {posting.title || `Posting #${posting.id}`}
+                  <div className="grid gap-0.5">
+                    <span>{posting.title || `Posting #${posting.id}`}</span>
+                    {posting.company && <span className="text-xs text-foreground-500">{posting.company.name}</span>}
+                  </div>
                 </ListBox.Item>
               ))}
             </ListBox>
-          </Select.Popover>
-        </Select>
+          </ComboBox.Popover>
+        </ComboBox>
 
         <Select
           selectedKey={selectedStatusKey}
@@ -262,14 +322,14 @@ export const RecruiterApplicationsPage = () => {
                   <Table.Column>Job posting</Table.Column>
                   <Table.Column>Status</Table.Column>
                   <Table.Column>Applied</Table.Column>
-                  <Table.Column>Action</Table.Column>
+                  <Table.Column>Actions</Table.Column>
                 </Table.Header>
                 <Table.Body>
                   {paginatedApplications.map((application) => (
                     <Table.Row key={application.id} id={application.id}>
                       <Table.Cell>
                         <div className="flex min-w-72 items-center gap-3">
-                          <Avatar className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-[#b8d8ff] !bg-[#d8e9ff] !text-[#15549a]">
+                          <Avatar className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-divider !bg-content2">
                             {application.user.image && (
                               <Avatar.Image
                                 alt={`${application.user.fullName} avatar`}
@@ -277,7 +337,7 @@ export const RecruiterApplicationsPage = () => {
                                 src={application.user.image}
                               />
                             )}
-                            <Avatar.Fallback className="flex h-full w-full items-center justify-center bg-[#d8e9ff] text-sm font-semibold !text-[#15549a]" delayMs={0}>
+                            <Avatar.Fallback className="flex h-full w-full items-center justify-center bg-content2 text-sm font-semibold text-foreground" delayMs={0}>
                               {getInitials(application.user.fullName)}
                             </Avatar.Fallback>
                           </Avatar>
@@ -310,12 +370,27 @@ export const RecruiterApplicationsPage = () => {
                         </span>
                       </Table.Cell>
                       <Table.Cell>
-                        <Link
-                          className="inline-flex min-h-10 items-center rounded-lg border border-divider bg-content1 px-3 text-sm font-medium text-foreground hover:bg-content2"
-                          to={`/panel/job-applications/${application.id}`}
-                        >
-                          Open detail
-                        </Link>
+                        <Dropdown>
+                          <Dropdown.Trigger
+                            aria-label={`${application.user.fullName} application actions`}
+                            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-divider bg-content1 text-foreground transition-colors hover:bg-content2"
+                          >
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Dropdown.Trigger>
+                          <Dropdown.Popover placement="bottom end">
+                            <Dropdown.Menu aria-label={`${application.user.fullName} application actions`}>
+                              <Dropdown.Item
+                                href={`/panel/job-applications/${application.id}`}
+                                textValue="Open detail"
+                              >
+                                <span className="inline-flex w-full items-center gap-2">
+                                  <PanelTopOpen className="h-4 w-4" />
+                                  Open detail
+                                </span>
+                              </Dropdown.Item>
+                            </Dropdown.Menu>
+                          </Dropdown.Popover>
+                        </Dropdown>
                       </Table.Cell>
                     </Table.Row>
                   ))}
