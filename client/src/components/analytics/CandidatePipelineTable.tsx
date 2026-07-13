@@ -1,10 +1,11 @@
-import { Chip, Input, ListBox, Select, Table } from "@heroui/react";
+import { Chip, Input, Table } from "@heroui/react";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import type { AnalyticsChartRecord } from "../../lib/analytics-api";
 import { getRecordNumber, getRecordString, statusLabel } from "../../lib/analytics-utils";
 import { formatDateTime } from "../../lib/date-format";
 import { EmptyChart } from "./EmptyChart";
+import { StatusMultiSelect } from "../StatusMultiSelect";
 
 const getStatusColor = (status: string): "accent" | "danger" | "default" | "success" | "warning" => {
   if (status === "Hired" || status === "Completed") return "success";
@@ -22,9 +23,11 @@ export const CandidatePipelineTable = ({
   showPosting?: boolean;
 }) => {
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilters, setStatusFilters] = useState<string[]>([]);
   const statuses = useMemo(
-    () => Array.from(new Set(data.map((item) => getRecordString(item, "applicationStatus")).filter(Boolean))).sort(),
+    () => Array.from(new Set(data.map((item) => getRecordString(item, "applicationStatus")).filter(Boolean)))
+      .sort()
+      .map((status) => ({ value: status, label: statusLabel(status) })),
     [data],
   );
   const filteredData = useMemo(() => {
@@ -32,7 +35,7 @@ export const CandidatePipelineTable = ({
 
     return data.filter((item) => {
       const applicationStatus = getRecordString(item, "applicationStatus");
-      const matchesStatus = statusFilter === "all" || applicationStatus === statusFilter;
+      const matchesStatus = statusFilters.length === 0 || statusFilters.includes(applicationStatus);
       const matchesSearch =
         !query ||
         [
@@ -49,7 +52,7 @@ export const CandidatePipelineTable = ({
 
       return matchesStatus && matchesSearch;
     });
-  }, [data, search, statusFilter]);
+  }, [data, search, statusFilters]);
 
   if (data.length === 0) {
     return <EmptyChart label="No candidate applications in the selected date range." />;
@@ -66,30 +69,13 @@ export const CandidatePipelineTable = ({
           value={search}
           onChange={(event) => setSearch(event.target.value)}
         />
-        <Select
-          selectedKey={statusFilter}
-          onSelectionChange={(key) => setStatusFilter(key ? String(key) : "all")}
-        >
-          <Select.Trigger
-            aria-label="Filter candidate pipeline by status"
-            className="h-10 min-w-44 rounded-lg text-sm"
-          >
-            <Select.Value />
-            <Select.Indicator />
-          </Select.Trigger>
-          <Select.Popover>
-            <ListBox aria-label="Candidate pipeline status options">
-              <ListBox.Item id="all" textValue="All statuses">
-                All statuses
-              </ListBox.Item>
-              {statuses.map((status) => (
-                <ListBox.Item key={status} id={status} textValue={statusLabel(status)}>
-                  {statusLabel(status)}
-                </ListBox.Item>
-              ))}
-            </ListBox>
-          </Select.Popover>
-        </Select>
+        <StatusMultiSelect
+          ariaLabel="Filter candidate pipeline by status"
+          className="h-10 min-w-44 rounded-lg text-sm"
+          options={statuses}
+          selectedValues={statusFilters}
+          onChange={(values) => setStatusFilters(values.length === statuses.length ? [] : values)}
+        />
       </div>
 
       {filteredData.length === 0 ? (

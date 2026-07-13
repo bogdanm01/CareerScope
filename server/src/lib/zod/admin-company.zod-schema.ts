@@ -37,7 +37,11 @@ const QueryBooleanSchema = z
 
 export const AdminCompanyListRequestSchema = z.object({
   search: z.string().trim().min(1).optional(),
-  approvalStatus: z.enum(Object.values(COMPANY_APPROVAL_STATUS)).optional(),
+  approvalStatus: z
+    .string()
+    .transform((value) => value.split(',').map((status) => status.trim()).filter(Boolean))
+    .pipe(z.array(z.enum(Object.values(COMPANY_APPROVAL_STATUS))).min(1))
+    .optional(),
   isApproved: QueryBooleanSchema.optional(),
   isDeleted: QueryBooleanSchema.optional().default(false),
   page: z.coerce.number().int().positive().default(1),

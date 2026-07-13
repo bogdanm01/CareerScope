@@ -326,6 +326,50 @@ Airbnb builds products for discovering stays, hosting guests, managing trust and
     logoUrl: null,
     websiteUrl: 'https://www.airbnb.com',
   },
+  {
+    name: 'Vercel',
+    taxId: 'RS-215709483',
+    approvalStatus: COMPANY_APPROVAL_STATUS.APPROVED,
+    shortDescription: 'Frontend cloud platform for building, deploying, and scaling web applications.',
+    description: `## Frontend cloud platform
+
+Vercel provides infrastructure and developer tools for teams building modern web applications with a focus on performance, collaboration, and reliable global delivery.
+
+### Product areas
+
+- Web application deployment
+- Edge compute and delivery
+- Developer workflow automation
+- Preview environments
+- Frontend observability`,
+    foundingYear: 2015,
+    numberOfEmployees: 650,
+    address: '340 S Lemon Ave, Walnut, CA, USA',
+    logoUrl: null,
+    websiteUrl: 'https://vercel.com',
+  },
+  {
+    name: 'Linear',
+    taxId: 'RS-368142750',
+    approvalStatus: COMPANY_APPROVAL_STATUS.APPROVED,
+    shortDescription: 'Product development platform for planning, tracking, and delivering software.',
+    description: `## Product development system
+
+Linear builds planning and issue-tracking tools that help product and engineering teams organize roadmaps, projects, incidents, and day-to-day software delivery.
+
+### Product areas
+
+- Issue and project tracking
+- Product roadmaps
+- Engineering workflows
+- Team planning
+- Workflow integrations`,
+    foundingYear: 2019,
+    numberOfEmployees: 180,
+    address: 'San Francisco, CA, USA',
+    logoUrl: null,
+    websiteUrl: 'https://linear.app',
+  },
 ] as const;
 
 const users = [
@@ -537,6 +581,60 @@ const users = [
     role: USER_ROLE.CANDIDATE,
     dateOfBirth: '1998-01-28',
   },
+  {
+    key: 'candidateAleksa',
+    name: 'Aleksa Candidate',
+    email: 'aleksa.candidate+seed@careerscope.local',
+    firstName: 'Aleksa',
+    lastName: 'Candidate',
+    role: USER_ROLE.CANDIDATE,
+    dateOfBirth: '1995-03-14',
+  },
+  {
+    key: 'candidateTamara',
+    name: 'Tamara Candidate',
+    email: 'tamara.candidate+seed@careerscope.local',
+    firstName: 'Tamara',
+    lastName: 'Candidate',
+    role: USER_ROLE.CANDIDATE,
+    dateOfBirth: '1997-08-09',
+  },
+  {
+    key: 'candidateVuk',
+    name: 'Vuk Candidate',
+    email: 'vuk.candidate+seed@careerscope.local',
+    firstName: 'Vuk',
+    lastName: 'Candidate',
+    role: USER_ROLE.CANDIDATE,
+    dateOfBirth: '1993-12-18',
+  },
+  {
+    key: 'candidateLena',
+    name: 'Lena Candidate',
+    email: 'lena.candidate+seed@careerscope.local',
+    firstName: 'Lena',
+    lastName: 'Candidate',
+    role: USER_ROLE.CANDIDATE,
+    dateOfBirth: '1998-04-25',
+  },
+  {
+    key: 'candidateDusan',
+    name: 'Dusan Candidate',
+    email: 'dusan.candidate+seed@careerscope.local',
+    firstName: 'Dusan',
+    lastName: 'Candidate',
+    role: USER_ROLE.CANDIDATE,
+    dateOfBirth: '1994-09-07',
+  },
+  {
+    key: 'candidateSofija',
+    name: 'Sofija Candidate',
+    email: 'sofija.candidate+seed@careerscope.local',
+    firstName: 'Sofija',
+    lastName: 'Candidate',
+    role: USER_ROLE.CANDIDATE,
+    dateOfBirth: '1999-06-11',
+  },
 ] as const;
 
 const candidateSkills = [
@@ -602,6 +700,36 @@ const candidateSkills = [
   { userKey: 'candidateKatarina', skillSlug: 'figma', yearsOfExperience: 3 },
   { userKey: 'candidateKatarina', skillSlug: 'prototyping', yearsOfExperience: 2 },
   { userKey: 'candidateKatarina', skillSlug: 'communication', yearsOfExperience: null },
+  { userKey: 'candidateAleksa', skillSlug: 'typescript', yearsOfExperience: 4 },
+  { userKey: 'candidateAleksa', skillSlug: 'nodejs', yearsOfExperience: 4 },
+  { userKey: 'candidateAleksa', skillSlug: 'postgresql', yearsOfExperience: 3 },
+  { userKey: 'candidateAleksa', skillSlug: 'distributed-systems', yearsOfExperience: 2 },
+  { userKey: 'candidateAleksa', skillSlug: 'debugging', yearsOfExperience: 4 },
+  { userKey: 'candidateTamara', skillSlug: 'ui-ux-design', yearsOfExperience: 4 },
+  { userKey: 'candidateTamara', skillSlug: 'figma', yearsOfExperience: 5 },
+  { userKey: 'candidateTamara', skillSlug: 'design-systems', yearsOfExperience: 3 },
+  { userKey: 'candidateTamara', skillSlug: 'prototyping', yearsOfExperience: 4 },
+  { userKey: 'candidateTamara', skillSlug: 'user-research', yearsOfExperience: 3 },
+  { userKey: 'candidateVuk', skillSlug: 'aws', yearsOfExperience: 4 },
+  { userKey: 'candidateVuk', skillSlug: 'kubernetes', yearsOfExperience: 4 },
+  { userKey: 'candidateVuk', skillSlug: 'docker', yearsOfExperience: 5 },
+  { userKey: 'candidateVuk', skillSlug: 'infrastructure-as-code', yearsOfExperience: 3 },
+  { userKey: 'candidateVuk', skillSlug: 'observability', yearsOfExperience: 3 },
+  { userKey: 'candidateLena', skillSlug: 'product-management', yearsOfExperience: 4 },
+  { userKey: 'candidateLena', skillSlug: 'data-analysis', yearsOfExperience: 3 },
+  { userKey: 'candidateLena', skillSlug: 'sql', yearsOfExperience: 3 },
+  { userKey: 'candidateLena', skillSlug: 'communication', yearsOfExperience: null },
+  { userKey: 'candidateLena', skillSlug: 'project-management', yearsOfExperience: 3 },
+  { userKey: 'candidateDusan', skillSlug: 'reactjs', yearsOfExperience: 4 },
+  { userKey: 'candidateDusan', skillSlug: 'nextjs', yearsOfExperience: 3 },
+  { userKey: 'candidateDusan', skillSlug: 'typescript', yearsOfExperience: 4 },
+  { userKey: 'candidateDusan', skillSlug: 'frontend-development', yearsOfExperience: 4 },
+  { userKey: 'candidateDusan', skillSlug: 'playwright', yearsOfExperience: 2 },
+  { userKey: 'candidateSofija', skillSlug: 'playwright', yearsOfExperience: 3 },
+  { userKey: 'candidateSofija', skillSlug: 'debugging', yearsOfExperience: 3 },
+  { userKey: 'candidateSofija', skillSlug: 'typescript', yearsOfExperience: 2 },
+  { userKey: 'candidateSofija', skillSlug: 'swift', yearsOfExperience: 3 },
+  { userKey: 'candidateSofija', skillSlug: 'communication', yearsOfExperience: null },
 ] as const;
 
 const jobs = [
@@ -1188,6 +1316,122 @@ Improve frontend performance for high-traffic storefront, checkout, and merchant
       { slug: 'debugging', yoe: 3 },
     ],
   },
+  {
+    title: 'Developer Productivity Engineer',
+    companyTaxId: 'RS-215709483',
+    createdByUserKey: 'admin',
+    shortDescription: 'Improve the local development, build, and debugging experience for product engineers.',
+    description: `## Make product teams faster
+
+Build tools and workflows that shorten feedback loops across local development, continuous integration, and production debugging.
+
+### You will
+
+- Improve TypeScript and Next.js development workflows
+- Build reusable frontend tooling
+- Reduce build and test feedback times
+- Partner with engineers to identify recurring friction
+- Document and measure developer productivity improvements`,
+    workLocation: 'Remote',
+    employmentType: 'FullTime',
+    salaryRange: '$125k - $170k',
+    status: JOB_POSTING_STATUS.ACTIVE,
+    expiresAt: daysFromNow(48),
+    skills: [
+      { slug: 'typescript', yoe: 4 },
+      { slug: 'nextjs', yoe: 3 },
+      { slug: 'reactjs', yoe: 3 },
+      { slug: 'frontend-development', yoe: 4 },
+      { slug: 'debugging', yoe: 3 },
+    ],
+  },
+  {
+    title: 'Product Operations Manager',
+    companyTaxId: 'RS-368142750',
+    createdByUserKey: 'admin',
+    shortDescription: 'Create operating rhythms and insights that help product teams make better decisions.',
+    description: `## Scale product operations
+
+Build the processes, reporting, and feedback systems that connect product, design, engineering, and customer-facing teams.
+
+### You will
+
+- Coordinate planning and launch workflows
+- Turn product data into actionable insights
+- Improve customer feedback programs
+- Maintain decision records and operating cadences
+- Help teams communicate priorities and outcomes`,
+    workLocation: 'Hybrid',
+    employmentType: 'FullTime',
+    salaryRange: '$100k - $140k',
+    status: JOB_POSTING_STATUS.ACTIVE,
+    expiresAt: daysFromNow(41),
+    skills: [
+      { slug: 'product-management', yoe: 4 },
+      { slug: 'project-management', yoe: 3 },
+      { slug: 'data-analysis', yoe: 2 },
+      { slug: 'communication', yoe: null },
+      { slug: 'leadership', yoe: 2 },
+    ],
+  },
+  {
+    title: 'Observability Platform Engineer',
+    companyTaxId: 'RS-927614358',
+    createdByUserKey: 'admin',
+    shortDescription: 'Build telemetry pipelines and platform capabilities for reliable cloud services.',
+    description: `## Build the observability platform
+
+Create scalable telemetry systems that help engineering teams understand and improve production services.
+
+### You will
+
+- Build metrics, logs, and tracing pipelines
+- Operate services on Kubernetes and AWS
+- Improve debugging workflows and incident context
+- Design resilient distributed systems
+- Partner with product teams on instrumentation standards`,
+    workLocation: 'Remote',
+    employmentType: 'FullTime',
+    salaryRange: '$135k - $180k',
+    status: JOB_POSTING_STATUS.ACTIVE,
+    expiresAt: daysFromNow(55),
+    skills: [
+      { slug: 'observability', yoe: 4 },
+      { slug: 'kubernetes', yoe: 3 },
+      { slug: 'aws', yoe: 3 },
+      { slug: 'distributed-systems', yoe: 3 },
+      { slug: 'debugging', yoe: 3 },
+    ],
+  },
+  {
+    title: 'Staff Design Engineer',
+    companyTaxId: 'RS-693845217',
+    createdByUserKey: 'recruiterFigma',
+    shortDescription: 'Bridge design and engineering to create polished, reusable product foundations.',
+    description: `## Shape product quality at scale
+
+Work across design and frontend engineering to turn interaction patterns into accessible, reusable systems.
+
+### You will
+
+- Prototype complex product interactions
+- Evolve shared components and design tokens
+- Partner with designers on technical feasibility
+- Improve accessibility and visual consistency
+- Communicate implementation guidance across teams`,
+    workLocation: 'Hybrid',
+    employmentType: 'FullTime',
+    salaryRange: '$140k - $185k',
+    status: JOB_POSTING_STATUS.PAUSED,
+    expiresAt: daysFromNow(64),
+    skills: [
+      { slug: 'design-systems', yoe: 4 },
+      { slug: 'figma', yoe: 4 },
+      { slug: 'ui-ux-design', yoe: 4 },
+      { slug: 'typescript', yoe: 2 },
+      { slug: 'communication', yoe: null },
+    ],
+  },
 ] as const;
 
 const applications = [
@@ -1299,6 +1543,140 @@ const applications = [
   { userKey: 'candidateJovana', jobTitle: 'Product Manager, Collaboration', status: JOB_APPLICATION_STATUS.SUBMITTED },
   { userKey: 'candidateNikola', jobTitle: 'Workspace Backend Engineer', status: JOB_APPLICATION_STATUS.UNDER_REVIEW },
   { userKey: 'candidateTeodora', jobTitle: 'Product Manager, Collaboration', status: JOB_APPLICATION_STATUS.WITHDRAWN },
+  {
+    userKey: 'candidateAleksa',
+    jobTitle: 'Developer Productivity Engineer',
+    status: JOB_APPLICATION_STATUS.INTERVIEWING,
+  },
+  {
+    userKey: 'candidateAleksa',
+    jobTitle: 'Observability Platform Engineer',
+    status: JOB_APPLICATION_STATUS.HIRED,
+  },
+  {
+    userKey: 'candidateAleksa',
+    jobTitle: 'Backend Platform Engineer',
+    status: JOB_APPLICATION_STATUS.SUBMITTED,
+  },
+  {
+    userKey: 'candidateAleksa',
+    jobTitle: 'Workspace Backend Engineer',
+    status: JOB_APPLICATION_STATUS.UNDER_REVIEW,
+  },
+  {
+    userKey: 'candidateTamara',
+    jobTitle: 'Staff Design Engineer',
+    status: JOB_APPLICATION_STATUS.INTERVIEWING,
+  },
+  { userKey: 'candidateTamara', jobTitle: 'Product Designer', status: JOB_APPLICATION_STATUS.HIRED },
+  {
+    userKey: 'candidateTamara',
+    jobTitle: 'Junior Product Designer',
+    status: JOB_APPLICATION_STATUS.UNDER_REVIEW,
+  },
+  {
+    userKey: 'candidateTamara',
+    jobTitle: 'Product Operations Manager',
+    status: JOB_APPLICATION_STATUS.SUBMITTED,
+  },
+  {
+    userKey: 'candidateVuk',
+    jobTitle: 'Observability Platform Engineer',
+    status: JOB_APPLICATION_STATUS.HIRED,
+  },
+  {
+    userKey: 'candidateVuk',
+    jobTitle: 'Cloud Security Engineer',
+    status: JOB_APPLICATION_STATUS.INTERVIEWING,
+  },
+  { userKey: 'candidateVuk', jobTitle: 'DevOps Engineer', status: JOB_APPLICATION_STATUS.UNDER_REVIEW },
+  {
+    userKey: 'candidateVuk',
+    jobTitle: 'Site Reliability Engineer',
+    status: JOB_APPLICATION_STATUS.REJECTED,
+  },
+  {
+    userKey: 'candidateLena',
+    jobTitle: 'Product Operations Manager',
+    status: JOB_APPLICATION_STATUS.INTERVIEWING,
+  },
+  { userKey: 'candidateLena', jobTitle: 'Data Analyst', status: JOB_APPLICATION_STATUS.HIRED },
+  {
+    userKey: 'candidateLena',
+    jobTitle: 'Product Manager, Collaboration',
+    status: JOB_APPLICATION_STATUS.UNDER_REVIEW,
+  },
+  {
+    userKey: 'candidateLena',
+    jobTitle: 'Revenue Data Engineer',
+    status: JOB_APPLICATION_STATUS.SUBMITTED,
+  },
+  {
+    userKey: 'candidateDusan',
+    jobTitle: 'Developer Productivity Engineer',
+    status: JOB_APPLICATION_STATUS.HIRED,
+  },
+  {
+    userKey: 'candidateDusan',
+    jobTitle: 'Frontend Performance Engineer',
+    status: JOB_APPLICATION_STATUS.INTERVIEWING,
+  },
+  {
+    userKey: 'candidateDusan',
+    jobTitle: 'Senior Fullstack Engineer',
+    status: JOB_APPLICATION_STATUS.UNDER_REVIEW,
+  },
+  {
+    userKey: 'candidateDusan',
+    jobTitle: 'Design Systems Engineer',
+    status: JOB_APPLICATION_STATUS.SUBMITTED,
+  },
+  {
+    userKey: 'candidateSofija',
+    jobTitle: 'QA Automation Engineer',
+    status: JOB_APPLICATION_STATUS.INTERVIEWING,
+  },
+  {
+    userKey: 'candidateSofija',
+    jobTitle: 'iOS Product Engineer',
+    status: JOB_APPLICATION_STATUS.UNDER_REVIEW,
+  },
+  {
+    userKey: 'candidateSofija',
+    jobTitle: 'Frontend Platform Engineer',
+    status: JOB_APPLICATION_STATUS.REJECTED,
+  },
+  {
+    userKey: 'candidateSofija',
+    jobTitle: 'Developer Productivity Engineer',
+    status: JOB_APPLICATION_STATUS.SUBMITTED,
+  },
+  {
+    userKey: 'candidatePetar',
+    jobTitle: 'Observability Platform Engineer',
+    status: JOB_APPLICATION_STATUS.REJECTED,
+  },
+  {
+    userKey: 'candidateAna',
+    jobTitle: 'Product Operations Manager',
+    status: JOB_APPLICATION_STATUS.INTERVIEWING,
+  },
+  {
+    userKey: 'candidateJovana',
+    jobTitle: 'Staff Design Engineer',
+    status: JOB_APPLICATION_STATUS.UNDER_REVIEW,
+  },
+  {
+    userKey: 'candidateNikola',
+    jobTitle: 'Developer Productivity Engineer',
+    status: JOB_APPLICATION_STATUS.INTERVIEWING,
+  },
+  { userKey: 'candidateMilica', jobTitle: 'Staff Design Engineer', status: JOB_APPLICATION_STATUS.HIRED },
+  {
+    userKey: 'candidateStefan',
+    jobTitle: 'Observability Platform Engineer',
+    status: JOB_APPLICATION_STATUS.UNDER_REVIEW,
+  },
 ] as const;
 
 const applicationReviews = [
@@ -1307,36 +1685,182 @@ const applicationReviews = [
     jobTitle: 'Product Designer',
     rating: 5,
     comment: 'Clear process, fast feedback, and a thoughtful design challenge.',
+    createdDaysAgo: 46,
   },
   {
     userKey: 'candidatePetar',
     jobTitle: 'DevOps Engineer',
     rating: 3,
     comment: 'Useful screening call, but the role was more infrastructure-heavy than expected.',
+    createdDaysAgo: 42,
   },
   {
     userKey: 'candidateNikola',
     jobTitle: 'Senior Java Engineer',
     rating: 5,
     comment: 'The interview covered architecture tradeoffs and gave a clear picture of the team.',
+    createdDaysAgo: 37,
   },
   {
     userKey: 'candidateStefan',
     jobTitle: 'Site Reliability Engineer',
     rating: 4,
     comment: 'Strong technical discussion and transparent expectations about on-call work.',
+    createdDaysAgo: 33,
   },
   {
     userKey: 'candidateMilica',
     jobTitle: 'QA Automation Engineer',
     rating: 4,
     comment: 'Practical exercise, quick feedback, and a well-structured interview process.',
+    createdDaysAgo: 29,
   },
   {
     userKey: 'candidateNikola',
     jobTitle: 'Backend Platform Engineer',
     rating: 3,
     comment: 'The process was professional, although the final feedback could have been more detailed.',
+    createdDaysAgo: 27,
+  },
+  {
+    userKey: 'candidatePetar',
+    jobTitle: 'Senior Fullstack Engineer',
+    rating: 4,
+    comment: 'The recruiter explained the team structure clearly and kept every interview step well organized.',
+    createdDaysAgo: 25,
+  },
+  {
+    userKey: 'candidateAna',
+    jobTitle: 'Data Analyst',
+    rating: 2,
+    comment: 'The role changed during the process and the expected scope was not communicated early enough.',
+    createdDaysAgo: 24,
+  },
+  {
+    userKey: 'candidateJovana',
+    jobTitle: 'Frontend Platform Engineer',
+    rating: 4,
+    comment: 'Thoughtful interviewers and useful feedback even though I was not selected for the role.',
+    createdDaysAgo: 23,
+  },
+  {
+    userKey: 'candidateStefan',
+    jobTitle: 'Cloud Security Engineer',
+    rating: 5,
+    comment: 'Excellent security discussions, realistic scenarios, and a transparent explanation of the responsibilities.',
+    createdDaysAgo: 22,
+  },
+  {
+    userKey: 'candidateTeodora',
+    jobTitle: 'Revenue Data Engineer',
+    rating: 4,
+    comment: 'The data exercise reflected the actual work and the team shared clear evaluation criteria.',
+    createdDaysAgo: 20,
+  },
+  {
+    userKey: 'candidateLazar',
+    jobTitle: 'Security Software Engineer',
+    rating: 5,
+    comment: 'A demanding but fair technical process with responsive recruiters and strong engineering conversations.',
+    createdDaysAgo: 19,
+  },
+  {
+    userKey: 'candidateMina',
+    jobTitle: 'Data Analyst',
+    rating: 3,
+    comment: 'The process was efficient, though more context before the analytical exercise would have helped.',
+    createdDaysAgo: 18,
+  },
+  {
+    userKey: 'candidateUros',
+    jobTitle: 'Workspace Backend Engineer',
+    rating: 5,
+    comment: 'Collaborative system-design interviews and quick communication made this a very positive experience.',
+    createdDaysAgo: 17,
+  },
+  {
+    userKey: 'candidateKatarina',
+    jobTitle: 'Design Systems Engineer',
+    rating: 4,
+    comment: 'The portfolio discussion was respectful and the rejection feedback was specific and actionable.',
+    createdDaysAgo: 16,
+  },
+  {
+    userKey: 'candidateTamara',
+    jobTitle: 'Product Designer',
+    rating: 5,
+    comment: 'The design challenge was relevant, the panel was welcoming, and decisions were communicated quickly.',
+    createdDaysAgo: 15,
+  },
+  {
+    userKey: 'candidateVuk',
+    jobTitle: 'Site Reliability Engineer',
+    rating: 3,
+    comment: 'Strong technical questions, but scheduling between interview stages took longer than expected.',
+    createdDaysAgo: 14,
+  },
+  {
+    userKey: 'candidateLena',
+    jobTitle: 'Data Analyst',
+    rating: 4,
+    comment: 'Clear expectations, practical questions, and a good balance between technical and product discussion.',
+    createdDaysAgo: 13,
+  },
+  {
+    userKey: 'candidateDusan',
+    jobTitle: 'Developer Productivity Engineer',
+    rating: 5,
+    comment: 'The interviews focused on real developer problems and gave me a strong sense of the engineering culture.',
+    createdDaysAgo: 12,
+  },
+  {
+    userKey: 'candidateSofija',
+    jobTitle: 'Frontend Platform Engineer',
+    rating: 2,
+    comment: 'The process was professional, but the technical assignment required more time than initially described.',
+    createdDaysAgo: 11,
+  },
+  {
+    userKey: 'candidatePetar',
+    jobTitle: 'Observability Platform Engineer',
+    rating: 4,
+    comment: 'Detailed architecture discussion and prompt feedback made the process useful despite the final outcome.',
+    createdDaysAgo: 10,
+  },
+  {
+    userKey: 'candidateMilica',
+    jobTitle: 'Staff Design Engineer',
+    rating: 5,
+    comment: 'A polished process with close collaboration between design and engineering throughout the interviews.',
+    createdDaysAgo: 9,
+  },
+  {
+    userKey: 'candidateAna',
+    jobTitle: 'Product Operations Manager',
+    rating: 4,
+    comment: 'So far the conversations have been focused, friendly, and clear about what success in the role means.',
+    createdDaysAgo: 8,
+  },
+  {
+    userKey: 'candidateAleksa',
+    jobTitle: 'Observability Platform Engineer',
+    rating: 5,
+    comment: 'The team shared realistic production challenges and gave thoughtful feedback after every conversation.',
+    createdDaysAgo: 7,
+  },
+  {
+    userKey: 'candidateVuk',
+    jobTitle: 'Observability Platform Engineer',
+    rating: 4,
+    comment: 'Well-structured platform interviews with good communication and no unnecessary repetition between stages.',
+    createdDaysAgo: 6,
+  },
+  {
+    userKey: 'candidateTeodora',
+    jobTitle: 'Product Manager, Collaboration',
+    rating: 3,
+    comment: 'Helpful conversations overall, although the product case could have been scoped more clearly.',
+    createdDaysAgo: 5,
   },
 ] as const;
 
@@ -1978,6 +2502,8 @@ const seedApplicationReviews = async (applicationByKey: Map<string, ApplicationS
         companyId: application.companyId,
         rating: item.rating,
         comment: item.comment,
+        createdAt: daysAgo(item.createdDaysAgo),
+        updatedAt: daysAgo(Math.max(0, item.createdDaysAgo - 1)),
       };
     }),
   );

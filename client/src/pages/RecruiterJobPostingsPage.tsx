@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, Chip, Dropdown, Input, ListBox, Select, Table } from '@heroui/react';
+import { Button, Chip, Dropdown, Input, Table } from '@heroui/react';
 import { ChevronLeft, ChevronRight, MoreHorizontal, PanelTopOpen, Plus, RotateCcw, Search } from 'lucide-react';
 import { getRecruiterJobPostings, type JobPostingListItem } from '../lib/job-postings-api';
 import { formatDate } from '../lib/date-format';
+import { StatusMultiSelect } from '../components/StatusMultiSelect';
 
 const pageSize = 10;
 
@@ -37,7 +38,7 @@ export const RecruiterJobPostingsPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [statusFilters, setStatusFilters] = useState<string[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -61,14 +62,17 @@ export const RecruiterJobPostingsPage = () => {
   }, []);
 
   const statusOptions = useMemo(
-    () => Array.from(new Set(postings.map((posting) => posting.status))).sort(),
+    () => Array.from(new Set(postings.map((posting) => posting.status))).sort().map((status) => ({
+      value: status,
+      label: getStatusLabel(status),
+    })),
     [postings],
   );
   const filteredPostings = useMemo(() => {
     const query = search.trim().toLowerCase();
 
     return postings.filter((posting) => {
-      const matchesStatus = statusFilter === 'all' || posting.status === statusFilter;
+      const matchesStatus = statusFilters.length === 0 || statusFilters.includes(posting.status);
       const matchesSearch =
         !query ||
         [posting.title, posting.shortDescription]
@@ -79,7 +83,7 @@ export const RecruiterJobPostingsPage = () => {
 
       return matchesStatus && matchesSearch;
     });
-  }, [postings, search, statusFilter]);
+  }, [postings, search, statusFilters]);
   const totalPages = Math.max(1, Math.ceil(filteredPostings.length / pageSize));
   const visiblePage = Math.min(currentPage, totalPages);
   const paginatedPostings = useMemo(
@@ -137,30 +141,15 @@ export const RecruiterJobPostingsPage = () => {
                 />
               </label>
 
-              <Select
-                selectedKey={statusFilter}
-                onSelectionChange={(key) => {
-                  setStatusFilter(key ? String(key) : 'all');
+              <StatusMultiSelect
+                ariaLabel="Filter job postings by status"
+                options={statusOptions}
+                selectedValues={statusFilters}
+                onChange={(values) => {
+                  setStatusFilters(values.length === statusOptions.length ? [] : values);
                   setCurrentPage(1);
                 }}
-              >
-                <Select.Trigger aria-label="Job posting status" className="h-10 rounded-lg text-sm">
-                  <Select.Value />
-                  <Select.Indicator />
-                </Select.Trigger>
-                <Select.Popover>
-                  <ListBox aria-label="Job posting status options">
-                    <ListBox.Item id="all" textValue="All statuses">
-                      All statuses
-                    </ListBox.Item>
-                    {statusOptions.map((status) => (
-                      <ListBox.Item key={status} id={status} textValue={getStatusLabel(status)}>
-                        {getStatusLabel(status)}
-                      </ListBox.Item>
-                    ))}
-                  </ListBox>
-                </Select.Popover>
-              </Select>
+              />
 
               <Button
                 isIconOnly
@@ -168,10 +157,10 @@ export const RecruiterJobPostingsPage = () => {
                 className="h-10 w-10 min-w-10 border border-divider text-foreground-500"
                 type="button"
                 variant="ghost"
-                isDisabled={!search && statusFilter === 'all'}
+                isDisabled={!search && statusFilters.length === 0}
                 onPress={() => {
                   setSearch('');
-                  setStatusFilter('all');
+                  setStatusFilters([]);
                   setCurrentPage(1);
                 }}
               >

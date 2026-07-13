@@ -4,7 +4,7 @@ import { inject, injectable } from 'tsyringe';
 import { TOKENS } from '../../config/dependency-tokens.ts';
 import { DbClient } from '../../config/db-client.ts';
 import { applicationStatusHistory } from '../schema/application-status-history.schema.ts';
-import { and, asc, count, desc, eq, ilike, isNull, or, SQL, sql } from 'drizzle-orm';
+import { and, asc, count, desc, eq, ilike, inArray, isNull, or, SQL, sql } from 'drizzle-orm';
 import { user } from '../schema/auth.schema.ts';
 import { jobPosting } from '../schema/job-posting.schema.ts';
 import { userSkill } from '../schema/user-skill.schema.ts';
@@ -33,7 +33,7 @@ export type CandidateApplicationSort = {
 
 type FindByUserFilters = {
   search?: string;
-  status?: JobApplicationStatus;
+  status?: JobApplicationStatus[];
   sort?: CandidateApplicationSort[];
 };
 
@@ -45,6 +45,7 @@ type FindByJobPostingResult = {
 type FindJobApplicationDetailScope = {
   companyId?: number;
   userId?: string;
+  includeStatusHistory?: boolean;
 };
 
 type FindJobApplicationReviewTargetScope = {
@@ -124,6 +125,12 @@ export type JobApplicationDetail = {
     };
     skills: JobPostingSkillDetail[];
   };
+  statusHistory?: {
+    id: number;
+    status: string;
+    reason: string | null;
+    createdAt: Date;
+  }[];
 };
 
 @injectable()
@@ -167,6 +174,23 @@ export class JobApplicationRepository extends GenericRepository<JobApplication, 
 
       return createdJobApplication;
     });
+  }
+
+  async findLatestByUserAndJobPosting(userId: string, jobPostingId: number): Promise<JobApplication | null> {
+    const [record] = await this.db
+      .select()
+      .from(jobApplication)
+      .where(
+        and(
+          eq(jobApplication.userId, userId),
+          eq(jobApplication.jobPostingId, jobPostingId),
+          eq(jobApplication.isDeleted, false),
+        ),
+      )
+      .orderBy(desc(jobApplication.createdAt), desc(jobApplication.id))
+      .limit(1);
+
+    return record ?? null;
   }
 
   async findReviewTarget(
@@ -397,8 +421,8 @@ export class JobApplicationRepository extends GenericRepository<JobApplication, 
       eq(company.isDeleted, false),
     ];
 
-    if (filters.status) {
-      conditions.push(eq(jobApplication.status, filters.status));
+    if (filters.status?.length) {
+      conditions.push(inArray(jobApplication.status, filters.status));
     }
 
     if (filters.search) {
@@ -519,9 +543,21 @@ export class JobApplicationRepository extends GenericRepository<JobApplication, 
       return null;
     }
 
-    const [candidateSkills, requiredSkills] = await Promise.all([
+    const [candidateSkills, requiredSkills, statusHistory] = await Promise.all([
       this.findCandidateSkills(record.userId),
       this.findJobPostingSkills(record.jobPostingId),
+      scope.includeStatusHistory
+        ? this.db
+            .select({
+              id: applicationStatusHistory.id,
+              status: applicationStatusHistory.status,
+              reason: applicationStatusHistory.reason,
+              createdAt: applicationStatusHistory.createdAt,
+            })
+            .from(applicationStatusHistory)
+            .where(eq(applicationStatusHistory.jobApplicationId, record.id))
+            .orderBy(asc(applicationStatusHistory.createdAt), asc(applicationStatusHistory.id))
+        : Promise.resolve([]),
     ]);
 
     return {
@@ -548,6 +584,7 @@ export class JobApplicationRepository extends GenericRepository<JobApplication, 
         },
         skills: requiredSkills,
       },
+      ...(scope.includeStatusHistory ? { statusHistory } : {}),
     };
   }
 

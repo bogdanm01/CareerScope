@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { getAdminCompanies, type AdminCompanyListItem } from "../lib/admin-api";
 import { getCompanyLogoUrl } from "../lib/company-logo";
+import { StatusMultiSelect } from "../components/StatusMultiSelect";
 
 const pageSize = 10;
 
@@ -88,12 +89,12 @@ export const AdminCompaniesPage = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [searchDraft, setSearchDraft] = useState("");
   const [search, setSearch] = useState("");
-  const [approvalStatus, setApprovalStatus] = useState("");
+  const [approvalStatuses, setApprovalStatuses] = useState<string[]>([]);
   const [deletedFilter, setDeletedFilter] = useState("false");
   const hasNonDefaultFilters =
     searchDraft.trim().length > 0 ||
     search.length > 0 ||
-    approvalStatus !== "" ||
+    approvalStatuses.length > 0 ||
     deletedFilter !== "false";
 
   const query = useMemo(
@@ -101,12 +102,12 @@ export const AdminCompaniesPage = () => {
       page: currentPage,
       limit: pageSize,
       search: search.trim() || undefined,
-      approvalStatus: approvalStatus || undefined,
+      approvalStatus: approvalStatuses.length > 0 ? approvalStatuses.join(",") : undefined,
       isDeleted: optionalBoolean(deletedFilter),
       sort: "desc",
       orderBy: "id",
     }),
-    [approvalStatus, currentPage, deletedFilter, search],
+    [approvalStatuses, currentPage, deletedFilter, search],
   );
 
   useEffect(() => {
@@ -173,7 +174,7 @@ export const AdminCompaniesPage = () => {
     setCurrentPage(1);
     setSearchDraft("");
     setSearch("");
-    setApprovalStatus("");
+    setApprovalStatuses([]);
     setDeletedFilter("false");
   };
   const publicCompanyBackTo = encodeURIComponent(
@@ -212,39 +213,19 @@ export const AdminCompaniesPage = () => {
             />
           </label>
 
-          <Select
-            selectedKey={approvalStatus || "all"}
-            onSelectionChange={(key) => {
+          <StatusMultiSelect
+            ariaLabel="Filter companies by approval status"
+            options={[
+              { value: "PendingApproval", label: "Pending approval" },
+              { value: "Approved", label: "Approved" },
+              { value: "Rejected", label: "Rejected" },
+            ]}
+            selectedValues={approvalStatuses}
+            onChange={(values) => {
               setCurrentPage(1);
-              setApprovalStatus(
-                key && String(key) !== "all" ? String(key) : "",
-              );
+              setApprovalStatuses(values.length === 3 ? [] : values);
             }}
-          >
-            <Select.Trigger
-              aria-label="Approval status"
-              className="h-10 rounded-lg text-sm"
-            >
-              <Select.Value />
-              <Select.Indicator />
-            </Select.Trigger>
-            <Select.Popover>
-              <ListBox aria-label="Approval status options">
-                <ListBox.Item id="all" textValue="All statuses">
-                  All statuses
-                </ListBox.Item>
-                <ListBox.Item id="PendingApproval" textValue="Pending approval">
-                  Pending approval
-                </ListBox.Item>
-                <ListBox.Item id="Approved" textValue="Approved">
-                  Approved
-                </ListBox.Item>
-                <ListBox.Item id="Rejected" textValue="Rejected">
-                  Rejected
-                </ListBox.Item>
-              </ListBox>
-            </Select.Popover>
-          </Select>
+          />
 
           <Select
             selectedKey={deletedFilter || "all"}

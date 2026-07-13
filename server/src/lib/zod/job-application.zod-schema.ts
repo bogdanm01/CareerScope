@@ -36,7 +36,11 @@ export const JobApplicationListRequestSchema = z.object({
 
 export const CandidateJobApplicationListRequestSchema = JobApplicationListRequestSchema.extend({
   search: z.string().trim().min(1).optional(),
-  status: z.enum(Object.values(JOB_APPLICATION_STATUS)).optional(),
+  status: z
+    .string()
+    .transform((value) => value.split(',').map((status) => status.trim()).filter(Boolean))
+    .pipe(z.array(z.enum(Object.values(JOB_APPLICATION_STATUS))).min(1))
+    .optional(),
   sort: z
     .string()
     .trim()

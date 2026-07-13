@@ -12,6 +12,8 @@ export type PublicCompany = {
   address: string | null;
   logoUrl: string | null;
   websiteUrl: string | null;
+  averageRating: number;
+  reviewCount: number;
 };
 
 export type PublicCompanyListItem = {

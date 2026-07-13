@@ -43,6 +43,13 @@
       "when": 1783947600000,
       "tag": "0005_interviewing_application_status",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1783970400000,
+      "tag": "0006_withdrawn_application_reapply",
+      "breakpoints": true
     }
   ]
 }

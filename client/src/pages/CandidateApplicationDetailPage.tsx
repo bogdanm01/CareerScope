@@ -169,7 +169,7 @@ export const CandidateApplicationDetailPage = () => {
         title={pendingAction === 'withdraw' ? 'Withdraw application?' : 'Delete application?'}
         description={
           pendingAction === 'withdraw'
-            ? 'This will permanently move the application to Withdrawn. You will not be able to restore it.'
+            ? 'This will move the application to Withdrawn. If the posting is still active, you may submit a new application later.'
             : 'This removes the application from your candidate view. Recruiters and admins keep their audit record.'
         }
         confirmLabel={pendingAction === 'withdraw' ? 'Withdraw' : 'Delete'}

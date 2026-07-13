@@ -4,7 +4,7 @@ import { inject, injectable } from 'tsyringe';
 import { TOKENS } from '../../config/dependency-tokens.ts';
 import { DbClient } from '../../config/db-client.ts';
 import { company } from '../schema/company.schema.ts';
-import { and, asc, count, desc, eq, gte, ilike, or, SQL, sql } from 'drizzle-orm';
+import { and, asc, count, desc, eq, gte, ilike, inArray, or, SQL, sql } from 'drizzle-orm';
 import { user } from '../schema/auth.schema.ts';
 import { COMPANY_APPROVAL_STATUS, JOB_POSTING_STATUS, ONBOARDING_STATUS, USER_ROLE } from '../util/constants.ts';
 import { applicationReview } from '../schema/application-review.schema.ts';
@@ -148,6 +148,20 @@ export type PublicCompanyListItem = {
   openPositionsCount: number;
 };
 
+export type PublicCompanyProfile = {
+  id: number;
+  name: string;
+  shortDescription: string | null;
+  description: string | null;
+  foundingYear: number | null;
+  numberOfEmployees: number | null;
+  address: string;
+  logoUrl: string | null;
+  websiteUrl: string | null;
+  averageRating: number;
+  reviewCount: number;
+};
+
 export type CompanyReviewListItem = {
   id: number;
   rating: number;
@@ -218,8 +232,8 @@ export class CompanyRepository extends GenericRepository<Company, CompanyInsert,
       conditions.push(eq(company.isApproved, isApproved));
     }
 
-    if (approvalStatus) {
-      conditions.push(eq(company.approvalStatus, approvalStatus));
+    if (approvalStatus?.length) {
+      conditions.push(inArray(company.approvalStatus, approvalStatus));
     }
 
     if (search) {
@@ -444,6 +458,47 @@ export class CompanyRepository extends GenericRepository<Company, CompanyInsert,
       data: records,
       totalItems: countResult?.totalItems ?? 0,
     };
+  }
+
+  async findPublicCompanyProfile(companyId: number): Promise<PublicCompanyProfile | null> {
+    const [record] = await this.db
+      .select({
+        id: company.id,
+        name: company.name,
+        shortDescription: company.shortDescription,
+        description: company.description,
+        foundingYear: company.foundingYear,
+        numberOfEmployees: company.numberOfEmployees,
+        address: company.address,
+        logoUrl: company.logoUrl,
+        websiteUrl: company.websiteUrl,
+        averageRating: sql<number>`coalesce(
+          round((avg(${applicationReview.rating}) filter (where ${user.isDeleted} = false))::numeric, 1),
+          0
+        )::double precision`.mapWith(Number),
+        reviewCount: sql<number>`count(${applicationReview.id}) filter (where ${user.isDeleted} = false)::int`.mapWith(Number),
+      })
+      .from(company)
+      .leftJoin(
+        applicationReview,
+        and(
+          eq(applicationReview.companyId, company.id),
+          eq(applicationReview.isDeleted, false),
+        ),
+      )
+      .leftJoin(jobApplication, eq(applicationReview.jobApplicationId, jobApplication.id))
+      .leftJoin(user, eq(jobApplication.userId, user.id))
+      .where(
+        and(
+          eq(company.id, companyId),
+          eq(company.isApproved, true),
+          eq(company.isDeleted, false),
+        ),
+      )
+      .groupBy(company.id)
+      .limit(1);
+
+    return record ?? null;
   }
 
   async findCompanyReviews(

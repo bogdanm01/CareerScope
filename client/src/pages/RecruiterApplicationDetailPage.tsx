@@ -10,7 +10,7 @@ import {
   type JobApplicationDetail,
   type JobApplicationReviewStatus,
 } from '../lib/job-applications-api';
-import { formatDate } from '../lib/date-format';
+import { formatDate, formatDateTime } from '../lib/date-format';
 import { ApplicationInterviewTimeline } from '../components/ApplicationInterviewTimeline';
 import { updateJobPosting } from '../lib/job-postings-api';
 import { HttpError } from '../lib/http';
@@ -643,6 +643,48 @@ export const RecruiterApplicationDetailPage = () => {
                 </Button>
               </div>
             )}
+          </section>
+
+          <section className="rounded-xl border border-divider bg-content1 p-6">
+            <div>
+              <h3 className="text-xl font-semibold tracking-[-0.02em] text-foreground">
+                Application status history
+              </h3>
+              <p className="mt-2 text-sm leading-6 text-foreground-500">
+                Complete audit trail of this application’s lifecycle.
+              </p>
+            </div>
+
+            <div className="mt-5 grid gap-0">
+              {(detail?.statusHistory || []).length === 0 ? (
+                <div className="rounded-lg border border-dashed border-divider bg-content2 p-4 text-sm text-foreground-500">
+                  No application status history is available.
+                </div>
+              ) : (
+                detail?.statusHistory?.map((entry, index) => {
+                  const isLast = index === (detail.statusHistory?.length ?? 0) - 1;
+
+                  return (
+                    <div key={entry.id} className={isLast ? 'pb-0' : 'pb-5'}>
+                      <Chip
+                        className="rounded-md"
+                        color={getStatusColor(entry.status)}
+                        size="sm"
+                        variant="soft"
+                      >
+                        {formatStatus(entry.status)}
+                      </Chip>
+                      <span className="mt-2 block text-xs text-foreground-500">
+                        {formatDateTime(entry.createdAt)}
+                      </span>
+                      {entry.reason && (
+                        <p className="mt-2 text-sm leading-6 text-foreground-500">{entry.reason}</p>
+                      )}
+                    </div>
+                  );
+                })
+              )}
+            </div>
           </section>
         </aside>
       </section>

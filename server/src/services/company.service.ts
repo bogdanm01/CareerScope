@@ -1,16 +1,14 @@
 import { TOKENS } from '../config/dependency-tokens.ts';
 import { inject, injectable } from 'tsyringe';
-import { CompanyRepository } from '../data/repositories/company.repository.ts';
-import { company, Company } from '../data/schema/company.schema.ts';
+import { CompanyRepository, type PublicCompanyProfile } from '../data/repositories/company.repository.ts';
 import { PaginatedResult, SingleResult } from '../lib/api-response.ts';
 import { IntegerIdSchema } from '../lib/zod/integer-id.zod-schema.ts';
 import { ZodValidationError } from '../lib/zod-validation-error.ts';
-import { and, eq } from 'drizzle-orm';
 import { NotFoundError } from '../lib/app-error.ts';
 import { CompanyReviewListItem, PublicCompanyListItem } from '../data/repositories/company.repository.ts';
 import { CompanyListRequestSchema, CompanyReviewsRequestSchema } from '../lib/zod/company.zod-schema.ts';
 
-export type PublicCompany = Omit<Company, 'taxId' | 'isApproved' | 'approvedAt' | 'isDeleted'>;
+export type PublicCompany = PublicCompanyProfile;
 
 @injectable()
 export class CompanyService {
@@ -54,28 +52,14 @@ export class CompanyService {
 
     const validCompanyId = idValidationResult.data.id;
 
-    const result = await this.companyRepository.findOne(
-      validCompanyId,
-      {
-        id: company.id,
-        name: company.name,
-        shortDescription: company.shortDescription,
-        description: company.description,
-        foundingYear: company.foundingYear,
-        numberOfEmployees: company.numberOfEmployees,
-        address: company.address,
-        logoUrl: company.logoUrl,
-        websiteUrl: company.websiteUrl,
-      },
-      and(eq(company.isApproved, true), eq(company.isDeleted, false)),
-    );
+    const result = await this.companyRepository.findPublicCompanyProfile(validCompanyId);
 
     if (!result) {
       throw new NotFoundError('Company not found.');
     }
 
     return {
-      data: result as PublicCompany,
+      data: result,
     };
   }
 

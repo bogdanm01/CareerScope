@@ -251,7 +251,7 @@ export const CandidateJobDetailPage = ({ isPublic = false }: CandidateJobDetailP
         </section>
       </main>
 
-      <aside className="grid gap-6 lg:sticky lg:top-20">
+      <aside className="grid gap-6 lg:sticky lg:top-6">
         <section className="rounded-xl border border-divider bg-content1 p-5">
           <Button
             className="h-11 w-full rounded-lg"

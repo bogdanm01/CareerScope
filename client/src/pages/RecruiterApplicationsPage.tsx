@@ -1,17 +1,21 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useAtomValue } from 'jotai';
 import { useSearchParams } from 'react-router-dom';
-import { Avatar, Button, Chip, ComboBox, Dropdown, Input, ListBox, Select, Table } from '@heroui/react';
+import { Avatar, Button, Chip, ComboBox, Dropdown, Input, ListBox, Table } from '@heroui/react';
 import { ChevronLeft, ChevronRight, MoreHorizontal, PanelTopOpen, Search } from 'lucide-react';
 import { getRecruiterJobPostings, type JobPostingListItem } from '../lib/job-postings-api';
 import { getRecruiterJobApplications, type RecruiterJobApplicationListItem } from '../lib/job-applications-api';
 import { formatDate } from '../lib/date-format';
+import { authSessionAtom } from '../store/auth';
+import { StatusMultiSelect } from '../components/StatusMultiSelect';
 
 type ApplicationRow = RecruiterJobApplicationListItem & {
   postingTitle: string;
+  postingCompanyId: number | null;
 };
 
 const allPostingsKey = 'all';
-const allStatusesKey = 'all';
+const allCompaniesKey = 'all';
 const pageSize = 10;
 
 const formatStatus = (status: string) => (status === 'UnderReview' ? 'Under Review' : status);
@@ -42,14 +46,20 @@ const getInitials = (name: string) =>
     .join('') || '??';
 
 export const RecruiterApplicationsPage = () => {
+  const session = useAtomValue(authSessionAtom);
   const [searchParams, setSearchParams] = useSearchParams();
   const [postings, setPostings] = useState<JobPostingListItem[]>([]);
   const [applications, setApplications] = useState<ApplicationRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState(searchParams.get('search') || '');
   const [currentPage, setCurrentPage] = useState(1);
+  const isAdmin = session?.user.role === 'Admin';
   const selectedPostingKey = searchParams.get('postingId') || allPostingsKey;
-  const selectedStatusKey = searchParams.get('status') || allStatusesKey;
+  const selectedCompanyKey = isAdmin ? searchParams.get('companyId') || allCompaniesKey : allCompaniesKey;
+  const selectedStatusKeys = useMemo(
+    () => searchParams.getAll('status').filter((status) => status !== 'all'),
+    [searchParams],
+  );
 
   useEffect(() => {
     let isMounted = true;
@@ -73,6 +83,7 @@ export const RecruiterApplicationsPage = () => {
             return response.data.map((application) => ({
               ...application,
               postingTitle: posting.title || `Posting #${posting.id}`,
+              postingCompanyId: posting.company?.id ?? null,
             }));
           }),
         );
@@ -108,6 +119,25 @@ export const RecruiterApplicationsPage = () => {
     [applications],
   );
 
+  const companies = useMemo(() => {
+    const byId = new Map<number, NonNullable<JobPostingListItem['company']>>();
+    postings.forEach((posting) => {
+      if (posting.company) {
+        byId.set(posting.company.id, posting.company);
+      }
+    });
+    return Array.from(byId.values()).sort((left, right) => left.name.localeCompare(right.name));
+  }, [postings]);
+
+  const visiblePostings = useMemo(
+    () =>
+      postings.filter(
+        (posting) =>
+          selectedCompanyKey === allCompaniesKey || String(posting.company?.id) === selectedCompanyKey,
+      ),
+    [postings, selectedCompanyKey],
+  );
+
   const filteredApplications = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
 
@@ -117,7 +147,15 @@ export const RecruiterApplicationsPage = () => {
           return false;
         }
 
-        if (selectedStatusKey !== allStatusesKey && application.status !== selectedStatusKey) {
+        if (
+          isAdmin &&
+          selectedCompanyKey !== allCompaniesKey &&
+          String(application.postingCompanyId) !== selectedCompanyKey
+        ) {
+          return false;
+        }
+
+        if (selectedStatusKeys.length > 0 && !selectedStatusKeys.includes(application.status)) {
           return false;
         }
 
@@ -131,7 +169,7 @@ export const RecruiterApplicationsPage = () => {
         );
       })
       .sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime());
-  }, [applications, search, selectedPostingKey, selectedStatusKey]);
+  }, [applications, isAdmin, search, selectedCompanyKey, selectedPostingKey, selectedStatusKeys]);
 
   const totalPages = Math.max(1, Math.ceil(filteredApplications.length / pageSize));
   const paginatedApplications = useMemo(
@@ -146,10 +184,20 @@ export const RecruiterApplicationsPage = () => {
     return () => window.clearTimeout(timeout);
   }, [totalPages]);
 
-  const updateFilters = (updates: { postingId?: string; status?: string; search?: string }) => {
+  const updateFilters = (updates: { companyId?: string; postingId?: string; status?: string[]; search?: string }) => {
     const next = new URLSearchParams(searchParams);
-    next.delete('companyId');
+    if (!isAdmin) {
+      next.delete('companyId');
+    }
     setCurrentPage(1);
+
+    if (isAdmin && updates.companyId !== undefined) {
+      if (!updates.companyId || updates.companyId === allCompaniesKey) {
+        next.delete('companyId');
+      } else {
+        next.set('companyId', updates.companyId);
+      }
+    }
 
     if (updates.postingId !== undefined) {
       if (!updates.postingId || updates.postingId === allPostingsKey) {
@@ -160,11 +208,8 @@ export const RecruiterApplicationsPage = () => {
     }
 
     if (updates.status !== undefined) {
-      if (!updates.status || updates.status === allStatusesKey) {
-        next.delete('status');
-      } else {
-        next.set('status', updates.status);
-      }
+      next.delete('status');
+      updates.status.forEach((status) => next.append('status', status));
     }
 
     if (updates.search !== undefined) {
@@ -186,12 +231,18 @@ export const RecruiterApplicationsPage = () => {
             Applications
           </h2>
           <p className="mt-3 text-sm leading-6 text-foreground-500">
-            Review applicants across your job postings.
+            {isAdmin ? 'Review applicants across company job postings.' : 'Review applicants across your job postings.'}
           </p>
         </div>
       </section>
 
-      <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-[400px_minmax(280px,1fr)_200px]">
+      <section
+        className={`grid gap-3 md:grid-cols-2 ${
+          isAdmin
+            ? 'xl:grid-cols-[400px_220px_minmax(280px,1fr)_200px]'
+            : 'xl:grid-cols-[400px_minmax(280px,1fr)_200px]'
+        }`}
+      >
         <div className="relative">
           <Search aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-foreground-500" />
           <Input
@@ -204,6 +255,36 @@ export const RecruiterApplicationsPage = () => {
             className="h-10 w-100 pl-9 text-sm"
           />
         </div>
+
+        {isAdmin && (
+          <ComboBox
+            selectedKey={selectedCompanyKey}
+            onSelectionChange={(key) =>
+              updateFilters({
+                companyId: key ? String(key) : allCompaniesKey,
+                postingId: allPostingsKey,
+              })
+            }
+            fullWidth
+          >
+            <ComboBox.InputGroup className="flex h-10 items-center">
+              <Input aria-label="Filter by company" className="!text-sm !font-medium" placeholder="Search companies" />
+              <ComboBox.Trigger />
+            </ComboBox.InputGroup>
+            <ComboBox.Popover>
+              <ListBox aria-label="Companies" className="max-h-64 overflow-auto py-1">
+                <ListBox.Item id={allCompaniesKey} textValue="All companies">
+                  All companies
+                </ListBox.Item>
+                {companies.map((company) => (
+                  <ListBox.Item key={company.id} id={String(company.id)} textValue={company.name}>
+                    {company.name}
+                  </ListBox.Item>
+                ))}
+              </ListBox>
+            </ComboBox.Popover>
+          </ComboBox>
+        )}
 
         <ComboBox
           selectedKey={selectedPostingKey}
@@ -219,37 +300,26 @@ export const RecruiterApplicationsPage = () => {
               <ListBox.Item id={allPostingsKey} textValue="All postings">
                 All postings
               </ListBox.Item>
-              {postings.map((posting) => (
+              {visiblePostings.map((posting) => (
                 <ListBox.Item key={posting.id} id={String(posting.id)} textValue={posting.title || `Posting #${posting.id}`}>
-                  {posting.title || `Posting #${posting.id}`}
+                  <div className="grid gap-0.5">
+                    <span>{posting.title || `Posting #${posting.id}`}</span>
+                    {isAdmin && posting.company && (
+                      <span className="text-xs text-foreground-500">{posting.company.name}</span>
+                    )}
+                  </div>
                 </ListBox.Item>
               ))}
             </ListBox>
           </ComboBox.Popover>
         </ComboBox>
 
-        <Select
-          selectedKey={selectedStatusKey}
-          onSelectionChange={(key) => updateFilters({ status: key ? String(key) : allStatusesKey })}
-          fullWidth
-        >
-          <Select.Trigger className="h-10 rounded-lg text-sm">
-            <Select.Value />
-            <Select.Indicator />
-          </Select.Trigger>
-          <Select.Popover>
-            <ListBox aria-label="Application statuses">
-              <ListBox.Item id={allStatusesKey} textValue="All statuses">
-                All statuses
-              </ListBox.Item>
-              {statuses.map((status) => (
-                <ListBox.Item key={status} id={status} textValue={formatStatus(status)}>
-                  {formatStatus(status)}
-                </ListBox.Item>
-              ))}
-            </ListBox>
-          </Select.Popover>
-        </Select>
+        <StatusMultiSelect
+          ariaLabel="Filter applications by status"
+          options={statuses.map((status) => ({ value: status, label: formatStatus(status) }))}
+          selectedValues={selectedStatusKeys}
+          onChange={(values) => updateFilters({ status: values.length === statuses.length ? [] : values })}
+        />
       </section>
 
       <section className="rounded-xl border border-divider bg-content1">

@@ -1,9 +1,20 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
-import { Button, Chip, Input, ListBox, Select, Table } from '@heroui/react';
-import { ChevronLeft, ChevronRight, ChevronsUpDown, RotateCcw, Search } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { Button, Chip, Dropdown, Input, Table } from '@heroui/react';
+import {
+  ArrowDown,
+  ArrowUp,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsUpDown,
+  MoreHorizontal,
+  PanelTopOpen,
+  RotateCcw,
+  Search,
+} from 'lucide-react';
 import { getMyJobApplications, type CandidateJobApplicationListItem } from '../lib/job-applications-api';
 import { formatDate } from '../lib/date-format';
+import { StatusMultiSelect } from '../components/StatusMultiSelect';
 
 const pageSize = 10;
 
@@ -65,6 +76,7 @@ export const CandidateApplicationsPage = () => {
   const currentPage = Math.max(1, Number(searchParams.get('page') || '1'));
   const search = searchParams.get('search') || '';
   const status = searchParams.get('status') || '';
+  const selectedStatuses = useMemo(() => status.split(',').filter(Boolean), [status]);
   const sortEntries = useMemo(() => parseSort(searchParams.get('sort')), [searchParams]);
   const sort = serializeSort(sortEntries);
   const hasFilters = Boolean(search || status || searchParams.get('sort'));
@@ -143,19 +155,22 @@ export const CandidateApplicationsPage = () => {
 
   const renderSortButton = (field: SortField, label: string) => {
     const activeSort = sortEntries.find((entry) => entry.field === field);
+    const directionLabel = activeSort?.direction === 'asc' ? 'ascending' : 'descending';
 
     return (
       <button
         type="button"
-        className="inline-flex items-center gap-1 text-left font-medium text-foreground transition-colors hover:text-foreground-600"
+        aria-label={`Sort by ${label}${activeSort ? `, currently ${directionLabel}` : ''}`}
+        className="inline-flex items-center gap-1.5 text-left font-medium text-foreground transition-colors hover:text-foreground-600"
         onClick={() => toggleSort(field)}
       >
         {label}
-        <ChevronsUpDown className="h-3.5 w-3.5 text-foreground-400" />
-        {activeSort && (
-          <span className="text-xs text-foreground-500">
-            {activeSort.direction === 'asc' ? 'Asc' : 'Desc'}
-          </span>
+        {activeSort?.direction === 'asc' ? (
+          <ArrowUp aria-hidden="true" className="h-3.5 w-3.5 text-foreground" />
+        ) : activeSort?.direction === 'desc' ? (
+          <ArrowDown aria-hidden="true" className="h-3.5 w-3.5 text-foreground" />
+        ) : (
+          <ChevronsUpDown aria-hidden="true" className="h-3.5 w-3.5 text-foreground-400" />
         )}
       </button>
     );
@@ -195,29 +210,17 @@ export const CandidateApplicationsPage = () => {
             />
           </label>
 
-          <Select
-            selectedKey={status || 'all'}
-            onSelectionChange={(key) => {
-              updateQuery({ status: key && String(key) !== 'all' ? String(key) : null, page: 1 });
+          <StatusMultiSelect
+            ariaLabel="Filter applications by status"
+            options={statusOptions.map((option) => ({ value: option, label: getStatusLabel(option) }))}
+            selectedValues={selectedStatuses}
+            onChange={(values) => {
+              updateQuery({
+                status: values.length === 0 || values.length === statusOptions.length ? null : values.join(','),
+                page: 1,
+              });
             }}
-          >
-            <Select.Trigger aria-label="Application status" className="h-10 rounded-lg text-sm">
-              <Select.Value />
-              <Select.Indicator />
-            </Select.Trigger>
-            <Select.Popover>
-              <ListBox aria-label="Application status options">
-                <ListBox.Item id="all" textValue="All statuses">
-                  All statuses
-                </ListBox.Item>
-                {statusOptions.map((option) => (
-                  <ListBox.Item key={option} id={option} textValue={getStatusLabel(option)}>
-                    {getStatusLabel(option)}
-                  </ListBox.Item>
-                ))}
-              </ListBox>
-            </Select.Popover>
-          </Select>
+          />
 
           <Button
             isIconOnly
@@ -239,13 +242,11 @@ export const CandidateApplicationsPage = () => {
         )}
       </section>
 
-      <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
+      <section className="overflow-hidden rounded-xl border border-divider bg-content1">
         {loading ? (
-          <div className="rounded-xl border border-divider bg-content2 p-6 text-sm text-foreground-500">
-            Loading applications...
-          </div>
+          <div className="p-6 text-sm text-foreground-500">Loading applications...</div>
         ) : applications.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-divider bg-content2 p-6 text-sm text-foreground-500">
+          <div className="m-6 rounded-xl border border-dashed border-divider bg-content2 p-6 text-sm text-foreground-500">
             {emptyLabel}
           </div>
         ) : (
@@ -259,7 +260,7 @@ export const CandidateApplicationsPage = () => {
                   <Table.Column>{renderSortButton('createdAt', 'Applied')}</Table.Column>
                   <Table.Column>{renderSortButton('updatedAt', 'Updated')}</Table.Column>
                   <Table.Column>{renderSortButton('expiresAt', 'Expires')}</Table.Column>
-                  <Table.Column>Action</Table.Column>
+                  <Table.Column>Actions</Table.Column>
                 </Table.Header>
                 <Table.Body>
                   {applications.map((application) => (
@@ -300,14 +301,27 @@ export const CandidateApplicationsPage = () => {
                         </span>
                       </Table.Cell>
                       <Table.Cell>
-                        <div className="flex justify-start">
-                          <Link
-                            className="whitespace-nowrap rounded-lg border border-divider bg-content1 px-3 py-2 text-sm font-medium text-foreground"
-                            to={`/panel/applications/${application.id}`}
+                        <Dropdown>
+                          <Dropdown.Trigger
+                            aria-label={`${application.jobPosting.title || 'Application'} actions`}
+                            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-divider bg-content1 text-foreground transition-colors hover:bg-content2"
                           >
-                            View details
-                          </Link>
-                        </div>
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Dropdown.Trigger>
+                          <Dropdown.Popover placement="bottom end">
+                            <Dropdown.Menu aria-label={`${application.jobPosting.title || 'Application'} actions`}>
+                              <Dropdown.Item
+                                href={`/panel/applications/${application.id}`}
+                                textValue="Open detail"
+                              >
+                                <span className="inline-flex w-full items-center gap-2">
+                                  <PanelTopOpen className="h-4 w-4" />
+                                  Open detail
+                                </span>
+                              </Dropdown.Item>
+                            </Dropdown.Menu>
+                          </Dropdown.Popover>
+                        </Dropdown>
                       </Table.Cell>
                     </Table.Row>
                   ))}
@@ -318,7 +332,7 @@ export const CandidateApplicationsPage = () => {
         )}
 
         {totalPages > 1 && (
-          <div className="mt-5 flex items-center justify-end gap-3">
+          <div className="flex items-center justify-end gap-3 border-t border-divider p-5">
             <span className="text-sm text-foreground-500">
               Page {currentPage} of {totalPages}
               {totalItems > 0 ? ` · ${totalItems} total` : ''}

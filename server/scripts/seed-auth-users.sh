@@ -60,5 +60,11 @@ signup_user "Lazar" "Candidate" "lazar.candidate+seed@careerscope.local" "1993-0
 signup_user "Mina" "Candidate" "mina.candidate+seed@careerscope.local" "1996-10-03"
 signup_user "Uros" "Candidate" "uros.candidate+seed@careerscope.local" "1992-06-21"
 signup_user "Katarina" "Candidate" "katarina.candidate+seed@careerscope.local" "1998-01-28"
+signup_user "Aleksa" "Candidate" "aleksa.candidate+seed@careerscope.local" "1995-03-14"
+signup_user "Tamara" "Candidate" "tamara.candidate+seed@careerscope.local" "1997-08-09"
+signup_user "Vuk" "Candidate" "vuk.candidate+seed@careerscope.local" "1993-12-18"
+signup_user "Lena" "Candidate" "lena.candidate+seed@careerscope.local" "1998-04-25"
+signup_user "Dusan" "Candidate" "dusan.candidate+seed@careerscope.local" "1994-09-07"
+signup_user "Sofija" "Candidate" "sofija.candidate+seed@careerscope.local" "1999-06-11"
 
 echo "Seed auth users are ready."

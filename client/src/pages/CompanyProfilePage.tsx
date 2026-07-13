@@ -285,7 +285,15 @@ export const CompanyProfilePage = () => {
         <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <h2 className="text-2xl text-foreground">Company reviews</h2>
+              <div className="flex flex-wrap items-center gap-3">
+                <h2 className="text-2xl text-foreground">Company reviews</h2>
+                {company && company.reviewCount > 0 && (
+                  <Chip className="rounded-full" color="warning" size="sm" variant="soft">
+                    <Star aria-hidden="true" className="h-3.5 w-3.5 fill-current" />
+                    {company.averageRating.toFixed(1)} / 5
+                  </Chip>
+                )}
+              </div>
               <p className="mt-2 text-sm text-foreground-500">Feedback shared by candidates after their applications.</p>
             </div>
             {reviewPagination && (

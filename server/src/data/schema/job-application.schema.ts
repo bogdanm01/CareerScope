@@ -1,4 +1,5 @@
-import { boolean, integer, pgTable, text, timestamp, unique } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
+import { boolean, integer, pgTable, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
 import { enumCheckConstraint, timestamps } from '../util/utils.ts';
 import { jobPosting } from './job-posting.schema.ts';
 
@@ -21,7 +22,9 @@ export const jobApplication = pgTable(
     ...timestamps,
   },
   (table) => [
-    unique('user_id_job_posting_id_unq').on(table.userId, table.jobPostingId),
+    uniqueIndex('user_id_job_posting_id_unq')
+      .on(table.userId, table.jobPostingId)
+      .where(sql`${table.status} <> 'Withdrawn'`),
     enumCheckConstraint('status_check', table.status, JOB_APPLICATION_STATUS),
   ],
 );

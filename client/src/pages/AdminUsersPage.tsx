@@ -7,6 +7,7 @@ import { ConfirmDialog } from '../components/ConfirmDialog';
 import { getAdminUsers, updateAdminUserStatus, type AdminUser } from '../lib/admin-api';
 import { authSessionAtom } from '../store/auth';
 import { getApiBaseUrl } from '../lib/http';
+import { StatusMultiSelect } from '../components/StatusMultiSelect';
 
 const pageSize = 20;
 
@@ -38,24 +39,24 @@ export const AdminUsersPage = () => {
   const [searchDraft, setSearchDraft] = useState('');
   const [search, setSearch] = useState('');
   const [role, setRole] = useState('');
-  const [status, setStatus] = useState('');
+  const [statuses, setStatuses] = useState<string[]>([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pendingStatusUser, setPendingStatusUser] = useState<AdminUser | null>(null);
   const [statusActioning, setStatusActioning] = useState(false);
-  const hasFilters = searchDraft.trim().length > 0 || search.length > 0 || role !== '' || status !== '';
+  const hasFilters = searchDraft.trim().length > 0 || search.length > 0 || role !== '' || statuses.length > 0;
 
   const query = useMemo(() => ({
     page,
     limit: pageSize,
     search: search || undefined,
     role: role || undefined,
-    isDeleted: status === 'Disabled' ? true : status === 'Active' ? false : undefined,
+    isDeleted: statuses.length === 1 ? statuses[0] === 'Disabled' : undefined,
     sort: 'desc',
     orderBy: 'createdAt',
-  }), [page, role, search, status]);
+  }), [page, role, search, statuses]);
 
   useEffect(() => {
     let mounted = true;
@@ -99,7 +100,7 @@ export const AdminUsersPage = () => {
     setSearchDraft('');
     setSearch('');
     setRole('');
-    setStatus('');
+    setStatuses([]);
   };
 
   const updateStatus = async () => {
@@ -111,7 +112,7 @@ export const AdminUsersPage = () => {
 
     try {
       const response = await updateAdminUserStatus(pendingStatusUser.id, nextStatus);
-      const shouldRemainVisible = !status || status === nextStatus;
+      const shouldRemainVisible = statuses.length === 0 || statuses.includes(nextStatus);
       setUsers((current) => shouldRemainVisible
         ? current.map((user) => user.id === response.data.id ? response.data : user)
         : current.filter((user) => user.id !== response.data.id));
@@ -184,22 +185,18 @@ export const AdminUsersPage = () => {
             </Select.Popover>
           </Select>
 
-          <Select selectedKey={status || 'all'} onSelectionChange={(key) => {
-            setPage(1);
-            setStatus(key && String(key) !== 'all' ? String(key) : '');
-          }}>
-            <Select.Trigger aria-label="Status" className="h-10 rounded-lg text-sm">
-              <Select.Value />
-              <Select.Indicator />
-            </Select.Trigger>
-            <Select.Popover>
-              <ListBox aria-label="Status options">
-                <ListBox.Item id="all" textValue="All statuses">All statuses</ListBox.Item>
-                <ListBox.Item id="Active" textValue="Active">Active</ListBox.Item>
-                <ListBox.Item id="Disabled" textValue="Disabled">Disabled</ListBox.Item>
-              </ListBox>
-            </Select.Popover>
-          </Select>
+          <StatusMultiSelect
+            ariaLabel="Filter users by status"
+            options={[
+              { value: 'Active', label: 'Active' },
+              { value: 'Disabled', label: 'Disabled' },
+            ]}
+            selectedValues={statuses}
+            onChange={(values) => {
+              setPage(1);
+              setStatuses(values.length === 2 ? [] : values);
+            }}
+          />
 
           <Button isIconOnly aria-label="Clear filters" className="h-10 w-10 rounded-lg" type="button" variant="outline" isDisabled={!hasFilters} onPress={clearFilters}>
             <X aria-hidden="true" className="h-4 w-4" />

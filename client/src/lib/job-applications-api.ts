@@ -111,6 +111,12 @@ export type JobApplicationDetail = {
   status: JobApplicationStatus;
   createdAt: string;
   updatedAt: string;
+  statusHistory?: {
+    id: number;
+    status: JobApplicationStatus;
+    reason: string | null;
+    createdAt: string;
+  }[];
   user: {
     id: string;
     name: string;

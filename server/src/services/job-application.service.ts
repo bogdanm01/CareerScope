@@ -94,6 +94,19 @@ export class JobApplicationService {
       throw new NotFoundError(`No active job posting found with provided id.`);
     }
 
+    const previousApplication = await this.jobApplicationRepository.findLatestByUserAndJobPosting(
+      user.id,
+      validJobPostingId,
+    );
+
+    if (previousApplication && previousApplication.status !== JOB_APPLICATION_STATUS.WITHDRAWN) {
+      if (previousApplication.status === JOB_APPLICATION_STATUS.REJECTED) {
+        throw new ConflictError('You cannot apply to this job posting again after being rejected.');
+      }
+
+      throw new ConflictError('You have already applied to this job posting.');
+    }
+
     try {
       return await this.jobApplicationRepository.insertWithStatusHistory({
         userId: user.id,
@@ -181,7 +194,10 @@ export class JobApplicationService {
 
     const validId = idValidationResult.data.id;
 
-    const result = await this.jobApplicationRepository.findJobApplicationDetail(validId, { companyId });
+    const result = await this.jobApplicationRepository.findJobApplicationDetail(validId, {
+      companyId,
+      includeStatusHistory: true,
+    });
 
     if (!result) {
       throw new NotFoundError(`No job application found with provided id.`);
