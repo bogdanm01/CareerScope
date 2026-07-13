@@ -21,12 +21,14 @@ const getAdminStatusLabel = (status: string) => (status === 'PendingApproval' ? 
 
 const getStatusClassName = (status: string) => {
   switch (status) {
-    case 'Accepted':
+    case 'Hired':
       return 'status-success';
     case 'Rejected':
       return 'status-danger';
     case 'UnderReview':
       return 'status-warning';
+    case 'Interviewing':
+      return 'border-brand bg-brand text-brand-foreground';
     case 'Submitted':
       return 'status-neutral';
     default:
@@ -252,12 +254,13 @@ export const DashboardPage = () => {
   const applicationStats = useMemo(() => {
     const total = applications.length;
     const underReview = applications.filter((application) => application.status === 'UnderReview').length;
-    const accepted = applications.filter((application) => application.status === 'Accepted').length;
+    const interviewing = applications.filter((application) => application.status === 'Interviewing').length;
+    const hired = applications.filter((application) => application.status === 'Hired').length;
     const latestActivity = [...applications]
       .sort((left, right) => new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime())
       .slice(0, 4);
 
-    return { total, underReview, accepted, latestActivity };
+    return { total, underReview, interviewing, hired, latestActivity };
   }, [applications]);
 
   const recruiterStats = useMemo(() => {
@@ -300,11 +303,12 @@ export const DashboardPage = () => {
         </div>
 
         {role === 'Candidate' ? (
-          <div className="mt-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="mt-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
             {[
               { label: 'Applications', value: applicationStats.total, icon: ClipboardCheck, iconClassName: 'bg-[#aa2d00] text-white' },
               { label: 'Under review', value: applicationStats.underReview, icon: Search, iconClassName: 'bg-status-warning' },
-              { label: 'Accepted', value: applicationStats.accepted, icon: CheckCircle2, iconClassName: 'bg-status-success' },
+              { label: 'Interviewing', value: applicationStats.interviewing, icon: ClipboardCheck, iconClassName: 'bg-brand text-brand-foreground' },
+              { label: 'Hired', value: applicationStats.hired, icon: CheckCircle2, iconClassName: 'bg-status-success' },
               { label: 'Active jobs', value: activeJobsTotal, icon: BriefcaseBusiness, iconClassName: 'bg-status-success-solid' },
             ].map((stat) => {
               const StatIcon = stat.icon;

@@ -1194,7 +1194,7 @@ const applications = [
   {
     userKey: 'candidatePetar',
     jobTitle: 'Senior Fullstack Engineer',
-    status: JOB_APPLICATION_STATUS.UNDER_REVIEW,
+    status: JOB_APPLICATION_STATUS.INTERVIEWING,
   },
   {
     userKey: 'candidateAna',
@@ -1206,13 +1206,13 @@ const applications = [
     jobTitle: 'Backend Platform Engineer',
     status: JOB_APPLICATION_STATUS.SUBMITTED,
   },
-  { userKey: 'candidateJovana', jobTitle: 'Product Designer', status: JOB_APPLICATION_STATUS.ACCEPTED },
+  { userKey: 'candidateJovana', jobTitle: 'Product Designer', status: JOB_APPLICATION_STATUS.HIRED },
   { userKey: 'candidateAna', jobTitle: 'DevOps Engineer', status: JOB_APPLICATION_STATUS.UNDER_REVIEW },
   { userKey: 'candidatePetar', jobTitle: 'DevOps Engineer', status: JOB_APPLICATION_STATUS.REJECTED },
   {
     userKey: 'candidateMilica',
     jobTitle: 'Frontend Platform Engineer',
-    status: JOB_APPLICATION_STATUS.UNDER_REVIEW,
+    status: JOB_APPLICATION_STATUS.INTERVIEWING,
   },
   {
     userKey: 'candidatePetar',
@@ -1222,7 +1222,7 @@ const applications = [
   {
     userKey: 'candidateNikola',
     jobTitle: 'Senior Java Engineer',
-    status: JOB_APPLICATION_STATUS.ACCEPTED,
+    status: JOB_APPLICATION_STATUS.HIRED,
   },
   {
     userKey: 'candidateNikola',
@@ -1232,7 +1232,7 @@ const applications = [
   {
     userKey: 'candidateStefan',
     jobTitle: 'Site Reliability Engineer',
-    status: JOB_APPLICATION_STATUS.ACCEPTED,
+    status: JOB_APPLICATION_STATUS.HIRED,
   },
   {
     userKey: 'candidateStefan',
@@ -1247,7 +1247,7 @@ const applications = [
   {
     userKey: 'candidateTeodora',
     jobTitle: 'Data Analyst',
-    status: JOB_APPLICATION_STATUS.UNDER_REVIEW,
+    status: JOB_APPLICATION_STATUS.INTERVIEWING,
   },
   {
     userKey: 'candidateAna',
@@ -1262,7 +1262,7 @@ const applications = [
   {
     userKey: 'candidateMilica',
     jobTitle: 'QA Automation Engineer',
-    status: JOB_APPLICATION_STATUS.ACCEPTED,
+    status: JOB_APPLICATION_STATUS.HIRED,
   },
   {
     userKey: 'candidateJovana',
@@ -1277,25 +1277,25 @@ const applications = [
   {
     userKey: 'candidateNikola',
     jobTitle: 'Security Software Engineer',
-    status: JOB_APPLICATION_STATUS.UNDER_REVIEW,
+    status: JOB_APPLICATION_STATUS.INTERVIEWING,
   },
-  { userKey: 'candidateLazar', jobTitle: 'Security Software Engineer', status: JOB_APPLICATION_STATUS.ACCEPTED },
+  { userKey: 'candidateLazar', jobTitle: 'Security Software Engineer', status: JOB_APPLICATION_STATUS.HIRED },
   { userKey: 'candidateLazar', jobTitle: 'Cloud Security Engineer', status: JOB_APPLICATION_STATUS.UNDER_REVIEW },
   { userKey: 'candidateLazar', jobTitle: 'Workspace Backend Engineer', status: JOB_APPLICATION_STATUS.SUBMITTED },
-  { userKey: 'candidateMina', jobTitle: 'Product Manager, Collaboration', status: JOB_APPLICATION_STATUS.UNDER_REVIEW },
+  { userKey: 'candidateMina', jobTitle: 'Product Manager, Collaboration', status: JOB_APPLICATION_STATUS.INTERVIEWING },
   { userKey: 'candidateMina', jobTitle: 'Data Analyst', status: JOB_APPLICATION_STATUS.REJECTED },
   { userKey: 'candidateMina', jobTitle: 'Developer Experience Engineer', status: JOB_APPLICATION_STATUS.SUBMITTED },
   { userKey: 'candidateUros', jobTitle: 'Design Systems Engineer', status: JOB_APPLICATION_STATUS.UNDER_REVIEW },
-  { userKey: 'candidateUros', jobTitle: 'Workspace Backend Engineer', status: JOB_APPLICATION_STATUS.ACCEPTED },
+  { userKey: 'candidateUros', jobTitle: 'Workspace Backend Engineer', status: JOB_APPLICATION_STATUS.HIRED },
   { userKey: 'candidateUros', jobTitle: 'Frontend Performance Engineer', status: JOB_APPLICATION_STATUS.SUBMITTED },
-  { userKey: 'candidateKatarina', jobTitle: 'iOS Product Engineer', status: JOB_APPLICATION_STATUS.UNDER_REVIEW },
+  { userKey: 'candidateKatarina', jobTitle: 'iOS Product Engineer', status: JOB_APPLICATION_STATUS.INTERVIEWING },
   { userKey: 'candidateKatarina', jobTitle: 'Junior Product Designer', status: JOB_APPLICATION_STATUS.SUBMITTED },
   { userKey: 'candidateKatarina', jobTitle: 'Design Systems Engineer', status: JOB_APPLICATION_STATUS.REJECTED },
   { userKey: 'candidateAna', jobTitle: 'Revenue Data Engineer', status: JOB_APPLICATION_STATUS.UNDER_REVIEW },
-  { userKey: 'candidateTeodora', jobTitle: 'Revenue Data Engineer', status: JOB_APPLICATION_STATUS.ACCEPTED },
-  { userKey: 'candidatePetar', jobTitle: 'Developer Experience Engineer', status: JOB_APPLICATION_STATUS.UNDER_REVIEW },
+  { userKey: 'candidateTeodora', jobTitle: 'Revenue Data Engineer', status: JOB_APPLICATION_STATUS.HIRED },
+  { userKey: 'candidatePetar', jobTitle: 'Developer Experience Engineer', status: JOB_APPLICATION_STATUS.INTERVIEWING },
   { userKey: 'candidateMilica', jobTitle: 'Design Systems Engineer', status: JOB_APPLICATION_STATUS.SUBMITTED },
-  { userKey: 'candidateStefan', jobTitle: 'Cloud Security Engineer', status: JOB_APPLICATION_STATUS.ACCEPTED },
+  { userKey: 'candidateStefan', jobTitle: 'Cloud Security Engineer', status: JOB_APPLICATION_STATUS.HIRED },
   { userKey: 'candidateJovana', jobTitle: 'Product Manager, Collaboration', status: JOB_APPLICATION_STATUS.SUBMITTED },
   { userKey: 'candidateNikola', jobTitle: 'Workspace Backend Engineer', status: JOB_APPLICATION_STATUS.UNDER_REVIEW },
   { userKey: 'candidateTeodora', jobTitle: 'Product Manager, Collaboration', status: JOB_APPLICATION_STATUS.WITHDRAWN },
@@ -1361,8 +1361,8 @@ const notifications = [
     userKey: 'candidateJovana',
     payload: {
       type: 'application_status_changed',
-      title: 'Application accepted',
-      message: 'Your application for Product Designer was accepted.',
+      title: 'Candidate hired',
+      message: 'You were hired for the Product Designer role.',
     },
   },
   {
@@ -1377,16 +1377,16 @@ const notifications = [
     userKey: 'candidateNikola',
     payload: {
       type: 'application_status_changed',
-      title: 'Application accepted',
-      message: 'Your application for Senior Java Engineer was accepted.',
+      title: 'Candidate hired',
+      message: 'You were hired for the Senior Java Engineer role.',
     },
   },
   {
     userKey: 'candidateStefan',
     payload: {
       type: 'application_status_changed',
-      title: 'Application accepted',
-      message: 'Your application for Site Reliability Engineer was accepted.',
+      title: 'Candidate hired',
+      message: 'You were hired for the Site Reliability Engineer role.',
     },
   },
   {
@@ -1438,6 +1438,9 @@ type ActivityTemplateSeedRecord = {
 type UserKey = (typeof users)[number]['key'];
 type JobSeed = (typeof jobs)[number];
 type ApplicationSeed = (typeof applications)[number];
+
+const isDirectHireApplication = (application: ApplicationSeed) =>
+  application.userKey === 'candidateJovana' && application.jobTitle === 'Product Designer';
 
 const applicationCreatedDaysAgo = [
   57, 57, 56, 54, 54, 54, 51, 49, 49, 45,
@@ -1665,24 +1668,21 @@ const getApplicationActivityStatus = (
   orderIndex: number,
 ): (typeof JOB_APPLICATION_ACTIVITY_STATUS)[keyof typeof JOB_APPLICATION_ACTIVITY_STATUS] => {
   switch (application.status) {
-    case JOB_APPLICATION_STATUS.ACCEPTED:
-      return orderIndex <= 2 ? JOB_APPLICATION_ACTIVITY_STATUS.COMPLETED : JOB_APPLICATION_ACTIVITY_STATUS.PENDING;
-    case JOB_APPLICATION_STATUS.REJECTED:
-      return orderIndex === 0
+    case JOB_APPLICATION_STATUS.HIRED:
+      return !isDirectHireApplication(application) && orderIndex <= 2
         ? JOB_APPLICATION_ACTIVITY_STATUS.COMPLETED
-        : orderIndex === 1
-          ? JOB_APPLICATION_ACTIVITY_STATUS.CANCELLED
-          : JOB_APPLICATION_ACTIVITY_STATUS.PENDING;
-    case JOB_APPLICATION_STATUS.UNDER_REVIEW:
+        : JOB_APPLICATION_ACTIVITY_STATUS.PENDING;
+    case JOB_APPLICATION_STATUS.REJECTED:
+      return JOB_APPLICATION_ACTIVITY_STATUS.PENDING;
+    case JOB_APPLICATION_STATUS.INTERVIEWING:
       return orderIndex === 0
         ? JOB_APPLICATION_ACTIVITY_STATUS.COMPLETED
         : orderIndex === 1
           ? JOB_APPLICATION_ACTIVITY_STATUS.SCHEDULED
           : JOB_APPLICATION_ACTIVITY_STATUS.PENDING;
+    case JOB_APPLICATION_STATUS.UNDER_REVIEW:
     case JOB_APPLICATION_STATUS.WITHDRAWN:
-      return orderIndex === 0
-        ? JOB_APPLICATION_ACTIVITY_STATUS.COMPLETED
-        : JOB_APPLICATION_ACTIVITY_STATUS.CANCELLED;
+      return JOB_APPLICATION_ACTIVITY_STATUS.PENDING;
     default:
       return JOB_APPLICATION_ACTIVITY_STATUS.PENDING;
   }
@@ -1890,16 +1890,45 @@ const seedApplications = async (
       companyId: requireMapValue(companiesByTaxId, jobSeed.companyTaxId, 'company tax id'),
     });
 
-    const statusSequence =
-      item.status === JOB_APPLICATION_STATUS.SUBMITTED
-        ? [JOB_APPLICATION_STATUS.SUBMITTED]
-        : [JOB_APPLICATION_STATUS.SUBMITTED, item.status];
+    const statusSequence = (() => {
+      switch (item.status) {
+        case JOB_APPLICATION_STATUS.SUBMITTED:
+          return [JOB_APPLICATION_STATUS.SUBMITTED];
+        case JOB_APPLICATION_STATUS.UNDER_REVIEW:
+          return [JOB_APPLICATION_STATUS.SUBMITTED, JOB_APPLICATION_STATUS.UNDER_REVIEW];
+        case JOB_APPLICATION_STATUS.INTERVIEWING:
+          return [
+            JOB_APPLICATION_STATUS.SUBMITTED,
+            JOB_APPLICATION_STATUS.UNDER_REVIEW,
+            JOB_APPLICATION_STATUS.INTERVIEWING,
+          ];
+        case JOB_APPLICATION_STATUS.HIRED:
+          return isDirectHireApplication(item)
+            ? [JOB_APPLICATION_STATUS.SUBMITTED, JOB_APPLICATION_STATUS.UNDER_REVIEW, JOB_APPLICATION_STATUS.HIRED]
+            : [
+                JOB_APPLICATION_STATUS.SUBMITTED,
+                JOB_APPLICATION_STATUS.UNDER_REVIEW,
+                JOB_APPLICATION_STATUS.INTERVIEWING,
+                JOB_APPLICATION_STATUS.HIRED,
+              ];
+        case JOB_APPLICATION_STATUS.REJECTED:
+        case JOB_APPLICATION_STATUS.WITHDRAWN:
+          return [JOB_APPLICATION_STATUS.SUBMITTED, JOB_APPLICATION_STATUS.UNDER_REVIEW, item.status];
+      }
+    })();
 
     await db.insert(applicationStatusHistory).values(
       statusSequence.map((status, statusIndex) => ({
         jobApplicationId: createdApplication.id,
         status,
-        reason: statusIndex === 0 ? 'Application submitted.' : `Application moved to ${status}.`,
+        reason:
+          statusIndex === 0
+            ? 'Application submitted.'
+            : status === JOB_APPLICATION_STATUS.HIRED
+              ? 'Candidate hired.'
+              : status === JOB_APPLICATION_STATUS.INTERVIEWING
+                ? 'Candidate moved to interviewing.'
+              : `Application moved to ${status}.`,
         createdAt: daysAgo(Math.max(0, createdDaysAgo - statusIndex * 3)),
       })),
     );

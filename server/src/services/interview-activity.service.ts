@@ -4,11 +4,12 @@ import {
   ApplicationActivityInput,
   ApplicationActivityUpdateInput,
   ApplicationActivityAccess,
+  ApplicationAccess,
   InterviewActivityRepository,
   PostingActivityTemplateInput,
 } from '../data/repositories/interview-activity.repository.ts';
 import { AuthenticatedUser } from '../data/util/utils.ts';
-import { JOB_APPLICATION_ACTIVITY_STATUS, USER_ROLE } from '../data/util/constants.ts';
+import { JOB_APPLICATION_ACTIVITY_STATUS, JOB_APPLICATION_STATUS, USER_ROLE } from '../data/util/constants.ts';
 import { BadRequestError, ForbiddenError, NotFoundError } from '../lib/app-error.ts';
 import { ERROR_CODE } from '../lib/error-codes.ts';
 import { IntegerIdSchema } from '../lib/zod/integer-id.zod-schema.ts';
@@ -106,7 +107,8 @@ export class InterviewActivityService {
       throw new ZodValidationError(validationResult.error);
     }
 
-    await this.ensureApplicationAccess(id, user, { candidateAllowed: false });
+    const access = await this.ensureApplicationAccess(id, user, { candidateAllowed: false });
+    this.ensureApplicationIsInterviewing(access.applicationStatus);
 
     return {
       data: await this.interviewActivityRepository.createApplicationActivity(
@@ -129,6 +131,7 @@ export class InterviewActivityService {
     }
 
     const existingActivity = await this.ensureActivityAccess(id, user);
+    this.ensureApplicationIsInterviewing(existingActivity.applicationStatus);
     const updatedActivity = await this.interviewActivityRepository.updateApplicationActivity(
       id,
       this.normalizeActivityPayload(validationResult.data, existingActivity),
@@ -146,7 +149,8 @@ export class InterviewActivityService {
     user: AuthenticatedUser,
   ): Promise<SingleResult<{ id: number }>> {
     const id = this.parseId(activityId);
-    await this.ensureActivityAccess(id, user);
+    const existingActivity = await this.ensureActivityAccess(id, user);
+    this.ensureApplicationIsInterviewing(existingActivity.applicationStatus);
     const result = await this.interviewActivityRepository.deleteApplicationActivity(id);
 
     if (!result) {
@@ -180,7 +184,7 @@ export class InterviewActivityService {
     jobApplicationId: number,
     user: AuthenticatedUser,
     options: { candidateAllowed?: boolean } = {},
-  ): Promise<void> {
+  ): Promise<ApplicationAccess> {
     const access = await this.interviewActivityRepository.findApplicationCompanyAndUser(jobApplicationId);
 
     if (!access) {
@@ -192,10 +196,11 @@ export class InterviewActivityService {
         throw new ForbiddenError('User is not authorized to perform this action.', ERROR_CODE.FORBIDDEN);
       }
 
-      return;
+      return access;
     }
 
     this.ensureCompanyScope(access.companyId, user);
+    return access;
   }
 
   private async ensureActivityAccess(activityId: number, user: AuthenticatedUser): Promise<ApplicationActivityAccess> {
@@ -223,6 +228,12 @@ export class InterviewActivityService {
     }
 
     throw new ForbiddenError('User is not authorized to perform this action.', ERROR_CODE.FORBIDDEN);
+  }
+
+  private ensureApplicationIsInterviewing(status: string): void {
+    if (status !== JOB_APPLICATION_STATUS.INTERVIEWING) {
+      throw new BadRequestError('Interview activities can only be modified while the application is interviewing.');
+    }
   }
 
   private normalizeActivityPayload<T extends ApplicationActivityInput | ApplicationActivityUpdateInput>(

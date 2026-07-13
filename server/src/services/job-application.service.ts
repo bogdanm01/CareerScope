@@ -29,6 +29,7 @@ import { PaginatedResult, SingleResult } from '../lib/api-response.ts';
 import { AuthenticatedUser } from '../data/util/utils.ts';
 import { ApplicationReview } from '../data/schema/application-review.schema.ts';
 import { resolveCvFilePath } from '../middleware/cv-upload.middleware.ts';
+import { InterviewActivityRepository } from '../data/repositories/interview-activity.repository.ts';
 
 type JobApplicationCvDownload = {
   filePath: string;
@@ -38,12 +39,18 @@ type JobApplicationCvDownload = {
 const DUPLICATE_JOB_APPLICATION_CONSTRAINT = 'user_id_job_posting_id_unq';
 const VALID_REVIEW_TRANSITIONS: Partial<Record<string, string[]>> = {
   [JOB_APPLICATION_STATUS.SUBMITTED]: [JOB_APPLICATION_STATUS.UNDER_REVIEW, JOB_APPLICATION_STATUS.REJECTED],
-  [JOB_APPLICATION_STATUS.UNDER_REVIEW]: [JOB_APPLICATION_STATUS.ACCEPTED, JOB_APPLICATION_STATUS.REJECTED],
+  [JOB_APPLICATION_STATUS.UNDER_REVIEW]: [
+    JOB_APPLICATION_STATUS.INTERVIEWING,
+    JOB_APPLICATION_STATUS.HIRED,
+    JOB_APPLICATION_STATUS.REJECTED,
+  ],
+  [JOB_APPLICATION_STATUS.INTERVIEWING]: [JOB_APPLICATION_STATUS.HIRED, JOB_APPLICATION_STATUS.REJECTED],
 };
 
 const VALID_CANDIDATE_TRANSITIONS: Partial<Record<string, string[]>> = {
   [JOB_APPLICATION_STATUS.SUBMITTED]: [JOB_APPLICATION_STATUS.WITHDRAWN],
   [JOB_APPLICATION_STATUS.UNDER_REVIEW]: [JOB_APPLICATION_STATUS.WITHDRAWN],
+  [JOB_APPLICATION_STATUS.INTERVIEWING]: [JOB_APPLICATION_STATUS.WITHDRAWN],
 };
 
 @injectable()
@@ -51,6 +58,7 @@ export class JobApplicationService {
   constructor(
     @inject(TOKENS.jobApplicationRepository) private jobApplicationRepository: JobApplicationRepository,
     @inject(TOKENS.jobPostingRepository) private jobPostingRepository: JobPostingRepository,
+    @inject(TOKENS.interviewActivityRepository) private interviewActivityRepository: InterviewActivityRepository,
   ) {}
 
   async createJobApplication(
@@ -212,6 +220,20 @@ export class JobApplicationService {
     }
 
     this.validateReviewTransition(existingJobApplication.status, updatePayload);
+
+    if (
+      updatePayload.status === JOB_APPLICATION_STATUS.HIRED &&
+      updatePayload.confirmIncompleteActivities !== true
+    ) {
+      const incompleteActivityCount = await this.interviewActivityRepository.countIncompleteApplicationActivities(validId);
+
+      if (incompleteActivityCount > 0) {
+        throw new ConflictError(
+          `${incompleteActivityCount} interview ${incompleteActivityCount === 1 ? 'activity is' : 'activities are'} not completed. Confirm to mark the candidate as hired anyway.`,
+          ERROR_CODE.INCOMPLETE_INTERVIEW_ACTIVITIES,
+        );
+      }
+    }
 
     const updatedJobApplication = await this.jobApplicationRepository.updateStatusWithHistory(
       validId,

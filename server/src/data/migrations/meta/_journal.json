@@ -29,6 +29,20 @@
       "when": 1782995371601,
       "tag": "0003_interview_activities",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1783944000000,
+      "tag": "0004_hired_application_status",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1783947600000,
+      "tag": "0005_interviewing_application_status",
+      "breakpoints": true
     }
   ]
 }

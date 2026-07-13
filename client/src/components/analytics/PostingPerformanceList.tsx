@@ -40,12 +40,13 @@ export const PostingPerformanceList = ({
 
   return (
     <div className="overflow-hidden rounded-lg border border-divider">
-      <div className="grid grid-cols-[minmax(220px,1fr)_92px_76px_76px_76px_112px] items-center gap-3 border-b border-divider bg-content2/60 px-3 py-2 text-xs font-medium text-default-500 max-lg:hidden">
+      <div className="grid grid-cols-[minmax(200px,1fr)_92px_96px_88px_88px_76px_92px] items-center gap-3 border-b border-divider bg-content2/60 px-3 py-2 text-xs font-medium text-default-500 max-lg:hidden">
         <span>Posting</span>
         <span>Status</span>
-        <span>Apps</span>
-        <span>Review</span>
-        <span>Accepted</span>
+        <span>Applications</span>
+        <span>CV review</span>
+        <span>Interviewing</span>
+        <span>Hired</span>
         <span>Rejected</span>
       </div>
       <div className="divide-y divide-divider">
@@ -58,7 +59,7 @@ export const PostingPerformanceList = ({
               key={postingId}
               type="button"
               onClick={() => onSelect(postingId)}
-              className={`grid w-full cursor-pointer gap-3 px-3 py-2.5 text-left transition-[background-color,box-shadow] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/15 lg:grid-cols-[minmax(220px,1fr)_92px_76px_76px_76px_112px] lg:items-center ${
+              className={`grid w-full cursor-pointer gap-3 px-3 py-2.5 text-left transition-[background-color,box-shadow] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/15 lg:grid-cols-[minmax(200px,1fr)_92px_96px_88px_88px_76px_92px] lg:items-center ${
                 isSelected
                   ? "bg-[#f7e4d8]/50 hover:bg-[#f7e4d8]/70"
                   : "bg-content1 hover:bg-[#f7e4d8]/25 hover:shadow-[inset_3px_0_0_rgba(184,74,27,0.35)]"
@@ -79,11 +80,12 @@ export const PostingPerformanceList = ({
                   {statusLabel(item.status)}
                 </Chip>
               </div>
-              <div className="grid grid-cols-4 gap-3 text-xs lg:contents">
+              <div className="grid grid-cols-5 gap-3 text-xs lg:contents">
                 {[
-                  ["Apps", "applications"],
-                  ["Review", "underReview"],
-                  ["Accepted", "accepted"],
+                  ["Applications", "applications"],
+                  ["CV review", "underReview"],
+                  ["Interviewing", "interviewing"],
+                  ["Hired", "hired"],
                   ["Rejected", "rejected"],
                 ].map(([label, key]) => (
                   <span

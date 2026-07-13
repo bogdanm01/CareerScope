@@ -17,7 +17,8 @@ const statIconMap: Record<
 > = {
   applications: { icon: ClipboardCheck, className: "bg-[#aa2d00] text-white" },
   underReview: { icon: CircleDot, className: "bg-status-warning" },
-  accepted: { icon: CheckCircle2, className: "bg-status-success" },
+  interviewing: { icon: CircleDot, className: "bg-brand text-brand-foreground" },
+  hired: { icon: CheckCircle2, className: "bg-status-success" },
   rejected: { icon: CircleDot, className: "status-danger" },
   selectedSkills: { icon: BarChart3, className: "bg-content2 text-foreground" },
   cvUploaded: { icon: ShieldCheck, className: "bg-status-success" },

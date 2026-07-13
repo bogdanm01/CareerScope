@@ -15,6 +15,7 @@ import { formatDateTime } from '../lib/date-format';
 
 type ApplicationInterviewTimelineProps = {
   applicationId: number;
+  applicationStatus: string;
   mode: 'manage' | 'readonly';
 };
 
@@ -44,7 +45,7 @@ const toLocalInputValue = (value?: string | null) => {
 
 const toApiDate = (value: string) => (value ? new Date(value).toISOString() : null);
 
-export const ApplicationInterviewTimeline = ({ applicationId, mode }: ApplicationInterviewTimelineProps) => {
+export const ApplicationInterviewTimeline = ({ applicationId, applicationStatus, mode }: ApplicationInterviewTimelineProps) => {
   const addActivityModal = useOverlayState();
   const [activities, setActivities] = useState<JobApplicationActivity[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,6 +57,7 @@ export const ApplicationInterviewTimeline = ({ applicationId, mode }: Applicatio
     scheduledAt: '',
     internalNote: '',
   });
+  const canManage = mode === 'manage' && applicationStatus === 'Interviewing';
 
   const loadActivities = async () => {
     setLoading(true);
@@ -152,7 +154,7 @@ export const ApplicationInterviewTimeline = ({ applicationId, mode }: Applicatio
               : 'Track visible milestones for this application.'}
           </p>
         </div>
-        {mode === 'manage' && (
+        {canManage && (
           <Button
             type="button"
             variant="secondary"
@@ -169,6 +171,14 @@ export const ApplicationInterviewTimeline = ({ applicationId, mode }: Applicatio
           </Button>
         )}
       </div>
+
+      {mode === 'manage' && !canManage && (
+        <div className="mt-5 rounded-lg border border-divider bg-content2/50 p-4 text-sm leading-6 text-foreground-500">
+          {applicationStatus === 'UnderReview'
+            ? 'Start interviewing to schedule or update interview activities. This planned timeline is read-only during CV review.'
+            : 'Interview activities can only be changed while the application is interviewing. This timeline is read-only.'}
+        </div>
+      )}
 
       <div className="mt-5 grid gap-3">
         {loading ? (
@@ -207,7 +217,7 @@ export const ApplicationInterviewTimeline = ({ applicationId, mode }: Applicatio
                   )}
                 </div>
 
-                {mode === 'manage' && (
+                {canManage && (
                   <div className="flex flex-wrap gap-2">
                     <Select
                       selectedKey={activity.status}
@@ -256,7 +266,7 @@ export const ApplicationInterviewTimeline = ({ applicationId, mode }: Applicatio
         )}
       </div>
 
-      {mode === 'manage' && (
+      {canManage && (
         <Modal state={addActivityModal}>
           <Modal.Backdrop>
             <Modal.Container size="lg" placement="center" scroll="inside">

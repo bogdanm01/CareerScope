@@ -34,7 +34,6 @@ import { PieStatusChart } from "../components/analytics/PieStatusChart";
 import { TopList } from "../components/analytics/TopList";
 import { TrendLineChart } from "../components/analytics/TrendLineChart";
 import { ChartCard } from "../components/analytics/ChartCard";
-import { RequiredSkillsList } from "../components/analytics/RequiredSkillsList";
 import { PostingTrendChart } from "../components/analytics/PostingTrendChart";
 import { PostingPerformanceList } from "../components/analytics/PostingPerformanceList";
 import { DailyApplicationsBarChart } from "../components/analytics/DailyApplicationsBarChart";
@@ -42,6 +41,7 @@ import { ApplicationsTreemap } from "../components/analytics/ApplicationsTreemap
 import { CategoryBarChart } from "../components/analytics/CategoryBarChart";
 import { getRecordNumber, getRecordString, statusLabel } from "../lib/analytics-utils";
 import { CompactStatCard } from "../components/analytics/CompactStatCard";
+import { CandidatePipelineTable } from "../components/analytics/CandidatePipelineTable";
 
 const todayIso = () => new Date().toISOString().slice(0, 10);
 
@@ -332,9 +332,28 @@ const RecruiterCharts = ({
                     >
                       <ApplicationFunnel stats={postingDetail.stats} />
                     </ChartCard>
-                    <ChartCard title="Required skills" icon={BriefcaseBusiness}>
-                      <RequiredSkillsList
-                        data={postingDetail.charts.requiredSkills ?? []}
+                    <ChartCard
+                      title="Candidates by interview stage"
+                      subtitle="Current stages for this posting."
+                      icon={Users}
+                    >
+                      <CategoryBarChart
+                        data={postingDetail.charts.interviewStages ?? []}
+                        labelKey="stage"
+                        emptyLabel="No candidates are currently in interview stages."
+                        valueLabel="Candidates"
+                      />
+                    </ChartCard>
+                  </div>
+                  <div className="grid gap-4">
+                    <ChartCard
+                      title="Candidate pipeline"
+                      subtitle="Application outcomes and recorded interview progress."
+                      icon={Users}
+                    >
+                      <CandidatePipelineTable
+                        data={postingDetail.charts.candidatePipeline ?? []}
+                        showPosting={false}
                       />
                     </ChartCard>
                   </div>

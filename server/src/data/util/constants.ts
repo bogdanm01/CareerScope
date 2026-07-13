@@ -32,8 +32,9 @@ export const JOB_POSTING_EMPLOYMENT_TYPE = {
 export const JOB_APPLICATION_STATUS = {
   SUBMITTED: 'Submitted',
   UNDER_REVIEW: 'UnderReview',
+  INTERVIEWING: 'Interviewing',
   REJECTED: 'Rejected',
-  ACCEPTED: 'Accepted',
+  HIRED: 'Hired',
   WITHDRAWN: 'Withdrawn',
 } as const;
 

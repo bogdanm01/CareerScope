@@ -1,4 +1,4 @@
-import { and, asc, eq, max, SQL } from 'drizzle-orm';
+import { and, asc, count, eq, max, ne, SQL } from 'drizzle-orm';
 import { inject, injectable } from 'tsyringe';
 import { TOKENS } from '../../config/dependency-tokens.ts';
 import { DbClient } from '../../config/db-client.ts';
@@ -44,8 +44,16 @@ export type ApplicationActivityAccess = {
   companyId: number;
   userId: string;
   jobApplicationId: number;
+  applicationStatus: string;
   scheduledAt: Date | null;
   status: string;
+};
+
+export type ApplicationAccess = {
+  companyId: number;
+  userId: string;
+  candidateDeletedAt: Date | null;
+  applicationStatus: string;
 };
 
 @injectable()
@@ -64,12 +72,13 @@ export class InterviewActivityRepository {
 
   async findApplicationCompanyAndUser(
     jobApplicationId: number,
-  ): Promise<{ companyId: number; userId: string; candidateDeletedAt: Date | null } | null> {
+  ): Promise<ApplicationAccess | null> {
     const [record] = await this.db
       .select({
         companyId: jobPosting.companyId,
         userId: jobApplication.userId,
         candidateDeletedAt: jobApplication.candidateDeletedAt,
+        applicationStatus: jobApplication.status,
       })
       .from(jobApplication)
       .innerJoin(jobPosting, eq(jobApplication.jobPostingId, jobPosting.id))
@@ -95,6 +104,7 @@ export class InterviewActivityRepository {
         companyId: jobPosting.companyId,
         userId: jobApplication.userId,
         jobApplicationId: jobApplication.id,
+        applicationStatus: jobApplication.status,
         scheduledAt: jobApplicationHiringStage.scheduledAt,
         status: jobApplicationHiringStage.status,
       })
@@ -221,6 +231,21 @@ export class InterviewActivityRepository {
         ),
       )
       .orderBy(asc(jobApplicationHiringStage.orderIndex), asc(jobApplicationHiringStage.id));
+  }
+
+  async countIncompleteApplicationActivities(jobApplicationId: number): Promise<number> {
+    const [record] = await this.db
+      .select({ value: count() })
+      .from(jobApplicationHiringStage)
+      .where(
+        and(
+          eq(jobApplicationHiringStage.jobApplicationId, jobApplicationId),
+          eq(jobApplicationHiringStage.isDeleted, false),
+          ne(jobApplicationHiringStage.status, JOB_APPLICATION_ACTIVITY_STATUS.COMPLETED),
+        ),
+      );
+
+    return record?.value ?? 0;
   }
 
   async createApplicationActivity(

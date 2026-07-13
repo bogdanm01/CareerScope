@@ -1,4 +1,4 @@
-import { and, count, desc, eq, gte, lte, sql, SQL } from 'drizzle-orm';
+import { and, asc, count, desc, eq, gte, lte, sql, SQL } from 'drizzle-orm';
 import { inject, injectable } from 'tsyringe';
 import { DbClient } from '../../config/db-client.ts';
 import { TOKENS } from '../../config/dependency-tokens.ts';
@@ -9,11 +9,26 @@ import skill from '../schema/skill.schema.ts';
 import { user } from '../schema/auth.schema.ts';
 import { userSkill } from '../schema/user-skill.schema.ts';
 import { jobPostingSkill } from '../schema/job-posting-skill.schema.ts';
-import { COMPANY_APPROVAL_STATUS, JOB_APPLICATION_STATUS, JOB_POSTING_STATUS, USER_ROLE } from '../util/constants.ts';
+import { jobApplicationHiringStage } from '../schema/job-application-hiring-stage.schema.ts';
+import {
+  COMPANY_APPROVAL_STATUS,
+  JOB_APPLICATION_ACTIVITY_STATUS,
+  JOB_APPLICATION_STATUS,
+  JOB_POSTING_STATUS,
+  USER_ROLE,
+} from '../util/constants.ts';
 
 type DateRange = {
   from: Date;
   to: Date;
+};
+
+type CandidatePipelineStage = {
+  title: string;
+  status: string;
+  orderIndex: number;
+  scheduledAt: Date | null;
+  completedAt: Date | null;
 };
 
 const dayExpression = (column: unknown) => sql<string>`to_char(date_trunc('day', ${column}), 'YYYY-MM-DD')`;
@@ -39,7 +54,8 @@ export class AnalyticsRepository {
           totalApplications: sql<number>`count(*)::int`,
           submittedApplications: sql<number>`count(*) filter (where ${jobApplication.status} = ${JOB_APPLICATION_STATUS.SUBMITTED})::int`,
           underReviewApplications: sql<number>`count(*) filter (where ${jobApplication.status} = ${JOB_APPLICATION_STATUS.UNDER_REVIEW})::int`,
-          acceptedApplications: sql<number>`count(*) filter (where ${jobApplication.status} = ${JOB_APPLICATION_STATUS.ACCEPTED})::int`,
+          interviewingApplications: sql<number>`count(*) filter (where ${jobApplication.status} = ${JOB_APPLICATION_STATUS.INTERVIEWING})::int`,
+          hiredApplications: sql<number>`count(*) filter (where ${jobApplication.status} = ${JOB_APPLICATION_STATUS.HIRED})::int`,
           rejectedApplications: sql<number>`count(*) filter (where ${jobApplication.status} = ${JOB_APPLICATION_STATUS.REJECTED})::int`,
         })
         .from(jobApplication)
@@ -77,7 +93,8 @@ export class AnalyticsRepository {
       stats: [
         { key: 'applications', label: 'Applications', value: applicationStats?.totalApplications ?? 0 },
         { key: 'underReview', label: 'Under review', value: applicationStats?.underReviewApplications ?? 0 },
-        { key: 'accepted', label: 'Accepted', value: applicationStats?.acceptedApplications ?? 0 },
+        { key: 'interviewing', label: 'Interviewing', value: applicationStats?.interviewingApplications ?? 0 },
+        { key: 'hired', label: 'Hired', value: applicationStats?.hiredApplications ?? 0 },
         { key: 'selectedSkills', label: 'Selected skills', value: profileStats?.selectedSkills ?? 0 },
         { key: 'cvUploaded', label: 'CV uploaded', value: profileStats?.cvUploaded ?? 0 },
         { key: 'profileCompleted', label: 'Profile completed', value: profileStats?.onboardingCompleted ?? 0 },
@@ -122,6 +139,9 @@ export class AnalyticsRepository {
         .select({
           totalApplications: sql<number>`count(${jobApplication.id})::int`,
           underReviewApplications: sql<number>`count(${jobApplication.id}) filter (where ${jobApplication.status} = ${JOB_APPLICATION_STATUS.UNDER_REVIEW})::int`,
+          interviewingApplications: sql<number>`count(${jobApplication.id}) filter (where ${jobApplication.status} = ${JOB_APPLICATION_STATUS.INTERVIEWING})::int`,
+          hiredApplications: sql<number>`count(${jobApplication.id}) filter (where ${jobApplication.status} = ${JOB_APPLICATION_STATUS.HIRED})::int`,
+          rejectedApplications: sql<number>`count(${jobApplication.id}) filter (where ${jobApplication.status} = ${JOB_APPLICATION_STATUS.REJECTED})::int`,
         })
         .from(jobApplication)
         .innerJoin(jobPosting, eq(jobPosting.id, jobApplication.jobPostingId))
@@ -164,7 +184,8 @@ export class AnalyticsRepository {
             expiresAt: sql<string | null>`to_char(${jobPosting.expiresAt}, 'YYYY-MM-DD')`,
             applications: sql<number>`count(${jobApplication.id})::int`,
             underReview: sql<number>`count(${jobApplication.id}) filter (where ${jobApplication.status} = ${JOB_APPLICATION_STATUS.UNDER_REVIEW})::int`,
-            accepted: sql<number>`count(${jobApplication.id}) filter (where ${jobApplication.status} = ${JOB_APPLICATION_STATUS.ACCEPTED})::int`,
+            interviewing: sql<number>`count(${jobApplication.id}) filter (where ${jobApplication.status} = ${JOB_APPLICATION_STATUS.INTERVIEWING})::int`,
+            hired: sql<number>`count(${jobApplication.id}) filter (where ${jobApplication.status} = ${JOB_APPLICATION_STATUS.HIRED})::int`,
             rejected: sql<number>`count(${jobApplication.id}) filter (where ${jobApplication.status} = ${JOB_APPLICATION_STATUS.REJECTED})::int`,
           })
           .from(jobPosting)
@@ -189,6 +210,9 @@ export class AnalyticsRepository {
         { key: 'pendingPostings', label: 'Pending postings', value: postingStats?.pendingPostings ?? 0 },
         { key: 'applications', label: 'Applications', value: applicationStats?.totalApplications ?? 0 },
         { key: 'underReview', label: 'Under review', value: applicationStats?.underReviewApplications ?? 0 },
+        { key: 'interviewing', label: 'Interviewing', value: applicationStats?.interviewingApplications ?? 0 },
+        { key: 'hired', label: 'Hired', value: applicationStats?.hiredApplications ?? 0 },
+        { key: 'rejected', label: 'Rejected', value: applicationStats?.rejectedApplications ?? 0 },
       ],
       charts: {
         postingsByStatus,
@@ -227,12 +251,13 @@ export class AnalyticsRepository {
       ...this.getRangeConditions(jobApplication.createdAt, range),
     ];
 
-    const [[applicationStats], applicationsByStatus, applicationsOverTime, requiredSkills] = await Promise.all([
+    const [[applicationStats], applicationsByStatus, applicationsOverTime, candidatePipeline] = await Promise.all([
       this.db
         .select({
           totalApplications: sql<number>`count(*)::int`,
           underReviewApplications: sql<number>`count(*) filter (where ${jobApplication.status} = ${JOB_APPLICATION_STATUS.UNDER_REVIEW})::int`,
-          acceptedApplications: sql<number>`count(*) filter (where ${jobApplication.status} = ${JOB_APPLICATION_STATUS.ACCEPTED})::int`,
+          interviewingApplications: sql<number>`count(*) filter (where ${jobApplication.status} = ${JOB_APPLICATION_STATUS.INTERVIEWING})::int`,
+          hiredApplications: sql<number>`count(*) filter (where ${jobApplication.status} = ${JOB_APPLICATION_STATUS.HIRED})::int`,
           rejectedApplications: sql<number>`count(*) filter (where ${jobApplication.status} = ${JOB_APPLICATION_STATUS.REJECTED})::int`,
         })
         .from(jobApplication)
@@ -255,32 +280,174 @@ export class AnalyticsRepository {
         .where(and(...applicationConditions))
         .groupBy(dayExpression(jobApplication.createdAt))
         .orderBy(dayExpression(jobApplication.createdAt)),
-      this.db
-        .select({
-          skill: skill.name,
-          yoe: jobPostingSkill.yoe,
-          value: sql<number>`coalesce(${jobPostingSkill.yoe}, 0)::int`,
-        })
-        .from(jobPostingSkill)
-        .innerJoin(skill, eq(skill.id, jobPostingSkill.skillId))
-        .where(eq(jobPostingSkill.jobPostingId, jobPostingId))
-        .orderBy(skill.name),
+      this.getCandidatePipeline(companyId, range, jobPostingId),
     ]);
+
+    const interviewStages = this.getInterviewStageBreakdown(candidatePipeline);
 
     return {
       jobPosting: posting,
       stats: [
         { key: 'applications', label: 'Applications', value: applicationStats?.totalApplications ?? 0 },
         { key: 'underReview', label: 'Under review', value: applicationStats?.underReviewApplications ?? 0 },
-        { key: 'accepted', label: 'Accepted', value: applicationStats?.acceptedApplications ?? 0 },
+        { key: 'interviewing', label: 'Interviewing', value: applicationStats?.interviewingApplications ?? 0 },
+        { key: 'hired', label: 'Hired', value: applicationStats?.hiredApplications ?? 0 },
         { key: 'rejected', label: 'Rejected', value: applicationStats?.rejectedApplications ?? 0 },
       ],
       charts: {
         applicationsByStatus,
         applicationsOverTime,
-        requiredSkills,
+        candidatePipeline,
+        interviewStages,
       },
     };
+  }
+
+  private async getCandidatePipeline(companyId: number, range: DateRange, jobPostingId?: number) {
+    const conditions: SQL[] = [
+      eq(jobPosting.companyId, companyId),
+      eq(jobPosting.isDeleted, false),
+      eq(jobApplication.isDeleted, false),
+      eq(company.isDeleted, false),
+      eq(user.isDeleted, false),
+      ...this.getRangeConditions(jobApplication.createdAt, range),
+    ];
+
+    if (jobPostingId !== undefined) {
+      conditions.push(eq(jobPosting.id, jobPostingId));
+    }
+
+    const rows = await this.db
+      .select({
+        applicationId: jobApplication.id,
+        applicationStatus: jobApplication.status,
+        applicationUpdatedAt: jobApplication.updatedAt,
+        candidateId: user.id,
+        candidateName: sql<string>`trim(concat(${user.firstName}, ' ', ${user.lastName}))`,
+        candidateEmail: user.email,
+        companyId: company.id,
+        companyName: company.name,
+        jobPostingId: jobPosting.id,
+        jobPostingTitle: jobPosting.title,
+        stageTitle: jobApplicationHiringStage.title,
+        stageStatus: jobApplicationHiringStage.status,
+        stageOrderIndex: jobApplicationHiringStage.orderIndex,
+        stageScheduledAt: jobApplicationHiringStage.scheduledAt,
+        stageCompletedAt: jobApplicationHiringStage.completedAt,
+      })
+      .from(jobApplication)
+      .innerJoin(jobPosting, eq(jobApplication.jobPostingId, jobPosting.id))
+      .innerJoin(company, eq(jobPosting.companyId, company.id))
+      .innerJoin(user, eq(jobApplication.userId, user.id))
+      .leftJoin(
+        jobApplicationHiringStage,
+        and(
+          eq(jobApplicationHiringStage.jobApplicationId, jobApplication.id),
+          eq(jobApplicationHiringStage.isDeleted, false),
+        ),
+      )
+      .where(and(...conditions))
+      .orderBy(desc(jobApplication.updatedAt), asc(jobApplicationHiringStage.orderIndex), asc(jobApplicationHiringStage.id));
+
+    const applications = new Map<number, {
+      applicationId: number;
+      applicationStatus: string;
+      applicationUpdatedAt: Date;
+      candidateId: string;
+      candidateName: string;
+      candidateEmail: string;
+      companyId: number;
+      companyName: string;
+      jobPostingId: number;
+      jobPostingTitle: string | null;
+      stages: CandidatePipelineStage[];
+    }>();
+
+    for (const row of rows) {
+      let application = applications.get(row.applicationId);
+
+      if (!application) {
+        application = {
+          applicationId: row.applicationId,
+          applicationStatus: row.applicationStatus,
+          applicationUpdatedAt: row.applicationUpdatedAt,
+          candidateId: row.candidateId,
+          candidateName: row.candidateName,
+          candidateEmail: row.candidateEmail,
+          companyId: row.companyId,
+          companyName: row.companyName,
+          jobPostingId: row.jobPostingId,
+          jobPostingTitle: row.jobPostingTitle,
+          stages: [],
+        };
+        applications.set(row.applicationId, application);
+      }
+
+      if (row.stageTitle && row.stageStatus !== null && row.stageOrderIndex !== null) {
+        application.stages.push({
+          title: row.stageTitle,
+          status: row.stageStatus,
+          orderIndex: row.stageOrderIndex,
+          scheduledAt: row.stageScheduledAt,
+          completedAt: row.stageCompletedAt,
+        });
+      }
+    }
+
+    return Array.from(applications.values()).map((application) => {
+      const activeStage =
+        application.stages.find((stage) => stage.status === JOB_APPLICATION_ACTIVITY_STATUS.SCHEDULED) ??
+        application.stages.find((stage) => stage.status === JOB_APPLICATION_ACTIVITY_STATUS.PENDING);
+      const lastFinishedStage = [...application.stages]
+        .reverse()
+        .find((stage) =>
+          stage.status === JOB_APPLICATION_ACTIVITY_STATUS.COMPLETED ||
+          stage.status === JOB_APPLICATION_ACTIVITY_STATUS.SKIPPED ||
+          stage.status === JOB_APPLICATION_ACTIVITY_STATUS.CANCELLED,
+        );
+      const selectedStage =
+        application.applicationStatus === JOB_APPLICATION_STATUS.INTERVIEWING
+          ? activeStage ?? lastFinishedStage
+          : application.applicationStatus === JOB_APPLICATION_STATUS.SUBMITTED ||
+              application.applicationStatus === JOB_APPLICATION_STATUS.UNDER_REVIEW
+            ? null
+            : lastFinishedStage;
+
+      return {
+        applicationId: application.applicationId,
+        applicationStatus: application.applicationStatus,
+        applicationUpdatedAt: application.applicationUpdatedAt,
+        candidateId: application.candidateId,
+        candidateName: application.candidateName,
+        candidateEmail: application.candidateEmail,
+        companyId: application.companyId,
+        companyName: application.companyName,
+        jobPostingId: application.jobPostingId,
+        jobPostingTitle: application.jobPostingTitle,
+        stageTitle: selectedStage?.title ?? null,
+        stageStatus: selectedStage?.status ?? null,
+        stageOrderIndex: selectedStage?.orderIndex ?? null,
+        stageScheduledAt: selectedStage?.scheduledAt ?? null,
+        stageCompletedAt: selectedStage?.completedAt ?? null,
+      };
+    });
+  }
+
+  private getInterviewStageBreakdown(
+    candidatePipeline: Array<{ applicationStatus: string; stageTitle: string | null }>,
+  ) {
+    const counts = new Map<string, number>();
+
+    for (const application of candidatePipeline) {
+      if (application.applicationStatus !== JOB_APPLICATION_STATUS.INTERVIEWING || !application.stageTitle) {
+        continue;
+      }
+
+      counts.set(application.stageTitle, (counts.get(application.stageTitle) ?? 0) + 1);
+    }
+
+    return Array.from(counts, ([stage, value]) => ({ stage, value }))
+      .sort((left, right) => right.value - left.value || left.stage.localeCompare(right.stage));
   }
 
   async getAdminOverview(range: DateRange) {
@@ -334,6 +501,9 @@ export class AnalyticsRepository {
         .select({
           totalApplications: sql<number>`count(*) filter (where ${jobApplication.isDeleted} = false)::int`,
           underReviewApplications: sql<number>`count(*) filter (where ${jobApplication.status} = ${JOB_APPLICATION_STATUS.UNDER_REVIEW} and ${jobApplication.isDeleted} = false)::int`,
+          interviewingApplications: sql<number>`count(*) filter (where ${jobApplication.status} = ${JOB_APPLICATION_STATUS.INTERVIEWING} and ${jobApplication.isDeleted} = false)::int`,
+          hiredApplications: sql<number>`count(*) filter (where ${jobApplication.status} = ${JOB_APPLICATION_STATUS.HIRED} and ${jobApplication.isDeleted} = false)::int`,
+          rejectedApplications: sql<number>`count(*) filter (where ${jobApplication.status} = ${JOB_APPLICATION_STATUS.REJECTED} and ${jobApplication.isDeleted} = false)::int`,
         })
         .from(jobApplication),
       this.db
@@ -492,6 +662,13 @@ export class AnalyticsRepository {
           label: 'Under review',
           value: applicationStats?.underReviewApplications ?? 0,
         },
+        {
+          key: 'interviewing',
+          label: 'Interviewing',
+          value: applicationStats?.interviewingApplications ?? 0,
+        },
+        { key: 'hired', label: 'Hired', value: applicationStats?.hiredApplications ?? 0 },
+        { key: 'rejected', label: 'Rejected', value: applicationStats?.rejectedApplications ?? 0 },
       ],
       charts: {
         companiesByStatus,

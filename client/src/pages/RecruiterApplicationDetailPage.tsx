@@ -12,6 +12,8 @@ import {
 } from '../lib/job-applications-api';
 import { formatDate } from '../lib/date-format';
 import { ApplicationInterviewTimeline } from '../components/ApplicationInterviewTimeline';
+import { updateJobPosting } from '../lib/job-postings-api';
+import { HttpError } from '../lib/http';
 
 const getReviewActions = (status?: string): { status: JobApplicationReviewStatus; label: string }[] => {
   if (status === 'Submitted') {
@@ -23,7 +25,15 @@ const getReviewActions = (status?: string): { status: JobApplicationReviewStatus
 
   if (status === 'UnderReview') {
     return [
-      { status: 'Accepted', label: 'Accept' },
+      { status: 'Interviewing', label: 'Start interviewing' },
+      { status: 'Hired', label: 'Mark as hired' },
+      { status: 'Rejected', label: 'Reject' },
+    ];
+  }
+
+  if (status === 'Interviewing') {
+    return [
+      { status: 'Hired', label: 'Mark as hired' },
       { status: 'Rejected', label: 'Reject' },
     ];
   }
@@ -34,7 +44,7 @@ const getReviewActions = (status?: string): { status: JobApplicationReviewStatus
 const getReviewActionClassName = (status: JobApplicationReviewStatus, isSelected: boolean) => {
   const baseClassName = 'w-full justify-center !rounded-lg';
 
-  if (status === 'Accepted') {
+  if (status === 'Hired') {
     return isSelected
       ? `${baseClassName} status-success-solid border`
       : `${baseClassName} status-success border`;
@@ -61,12 +71,14 @@ const formatStatus = (status?: string) => {
 
 const getStatusColor = (status?: string): 'accent' | 'danger' | 'default' | 'success' | 'warning' => {
   switch (status) {
-    case 'Accepted':
+    case 'Hired':
       return 'success';
     case 'Rejected':
       return 'danger';
     case 'UnderReview':
       return 'warning';
+    case 'Interviewing':
+      return 'accent';
     case 'Submitted':
       return 'accent';
     default:
@@ -111,17 +123,23 @@ export const RecruiterApplicationDetailPage = () => {
   const [reviewing, setReviewing] = useState(false);
   const [downloadingCv, setDownloadingCv] = useState(false);
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [hireFlowDialogOpen, setHireFlowDialogOpen] = useState(false);
+  const [hireFlowStep, setHireFlowStep] = useState<'incomplete-activities' | 'posting-decision'>('incomplete-activities');
+  const [closingPosting, setClosingPosting] = useState(false);
+  const [incompleteActivitiesMessage, setIncompleteActivitiesMessage] = useState('');
 
   const applicationId = Number(id);
 
-  const loadDetail = async () => {
+  const loadDetail = async (showLoading = true) => {
     if (!Number.isFinite(applicationId)) {
       setError('Invalid application id.');
       setLoading(false);
       return;
     }
 
-    setLoading(true);
+    if (showLoading) {
+      setLoading(true);
+    }
     setError(null);
 
     try {
@@ -133,7 +151,9 @@ export const RecruiterApplicationDetailPage = () => {
       setError(loadError instanceof Error ? loadError.message : 'Unable to load application');
       setDetail(null);
     } finally {
-      setLoading(false);
+      if (showLoading) {
+        setLoading(false);
+      }
     }
   };
 
@@ -144,7 +164,7 @@ export const RecruiterApplicationDetailPage = () => {
   }, [applicationId]);
 
   useEffect(() => {
-    if (!rejectDialogOpen) {
+    if (!rejectDialogOpen && !hireFlowDialogOpen) {
       return;
     }
 
@@ -152,15 +172,24 @@ export const RecruiterApplicationDetailPage = () => {
       if (event.key === 'Escape' && !reviewing) {
         setRejectDialogOpen(false);
       }
+
+      if (event.key === 'Escape' && !reviewing && !closingPosting) {
+        setHireFlowDialogOpen(false);
+      }
     };
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [rejectDialogOpen, reviewing]);
+  }, [closingPosting, hireFlowDialogOpen, rejectDialogOpen, reviewing]);
 
   const reviewActions = getReviewActions(detail?.status);
+  const postingCanBeClosed = detail?.jobPosting.status === 'Active' || detail?.jobPosting.status === 'Paused';
 
-  const submitReviewDecision = async (status: JobApplicationReviewStatus, rejectionReason?: string) => {
+  const submitReviewDecision = async (
+    status: JobApplicationReviewStatus,
+    rejectionReason?: string,
+    confirmIncompleteActivities = false,
+  ) => {
     if (status === 'Rejected' && (rejectionReason?.trim().length ?? 0) < 3) {
       toast.danger('Reason required', {
         description: 'Add a rejection reason before rejecting this application.',
@@ -169,23 +198,68 @@ export const RecruiterApplicationDetailPage = () => {
     }
 
     setReviewing(true);
+    const shouldPromptToClosePosting = status === 'Hired' && postingCanBeClosed;
 
     try {
       await updateJobApplication(applicationId, {
         status,
         reason: status === 'Rejected' ? rejectionReason?.trim() : undefined,
+        confirmIncompleteActivities: status === 'Hired' ? confirmIncompleteActivities : undefined,
       });
       toast.success('Application updated', {
         description: `Status changed to ${formatStatus(status)}.`,
       });
+      setSelectedStatus(null);
       setRejectDialogOpen(false);
-      await loadDetail();
+      setIncompleteActivitiesMessage('');
+      await loadDetail(false);
+
+      if (shouldPromptToClosePosting) {
+        setHireFlowStep('posting-decision');
+        setHireFlowDialogOpen(true);
+      } else {
+        setHireFlowDialogOpen(false);
+      }
     } catch (reviewError) {
+      if (
+        status === 'Hired' &&
+        reviewError instanceof HttpError &&
+        (reviewError.code === 'INCOMPLETE_INTERVIEW_ACTIVITIES' || reviewError.status === 409)
+      ) {
+        setIncompleteActivitiesMessage(reviewError.message);
+        setHireFlowStep('incomplete-activities');
+        setHireFlowDialogOpen(true);
+        return;
+      }
+
       toast.danger('Unable to update application', {
         description: reviewError instanceof Error ? reviewError.message : 'The application status could not be updated.',
       });
     } finally {
       setReviewing(false);
+    }
+  };
+
+  const closeJobPosting = async () => {
+    if (!detail) {
+      return;
+    }
+
+    setClosingPosting(true);
+
+    try {
+      await updateJobPosting(detail.jobPosting.id, { status: 'Closed' });
+      toast.success('Job posting closed', {
+        description: 'The role is no longer accepting new applications.',
+      });
+      setHireFlowDialogOpen(false);
+      await loadDetail(false);
+    } catch (closeError) {
+      toast.danger('Candidate hired, but posting is still open', {
+        description: closeError instanceof Error ? closeError.message : 'The job posting could not be closed.',
+      });
+    } finally {
+      setClosingPosting(false);
     }
   };
 
@@ -312,6 +386,90 @@ export const RecruiterApplicationDetailPage = () => {
           document.body,
         )}
 
+      {hireFlowDialogOpen &&
+        createPortal(
+          <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6">
+            <button
+              aria-label={hireFlowStep === 'incomplete-activities' ? 'Return to interview activities' : 'Keep job posting open'}
+              className="absolute inset-0 bg-black/40"
+              type="button"
+              disabled={reviewing || closingPosting}
+              onClick={() => setHireFlowDialogOpen(false)}
+            />
+            <div
+              aria-modal="true"
+              role="dialog"
+              className="relative z-10 w-full max-w-lg rounded-xl border border-divider bg-content1 p-6 shadow-2xl outline-none"
+            >
+              <p className="text-xs font-medium uppercase tracking-[0.14em] text-foreground-400">
+                Step {hireFlowStep === 'incomplete-activities' ? '1' : '2'} of {postingCanBeClosed ? '2' : '1'}
+              </p>
+
+              {hireFlowStep === 'incomplete-activities' ? (
+                <>
+                  <h2 className="mt-2 text-2xl text-foreground">Interview activities are incomplete</h2>
+                  <p className="mt-3 text-sm leading-6 text-foreground-500">
+                    {incompleteActivitiesMessage || 'Not every interview activity is marked as completed.'}
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-foreground-500">
+                    You can return to the timeline and complete the remaining activities, or continue and finalize this application now.
+                  </p>
+
+                  <div className="mt-6 flex flex-wrap justify-end gap-3">
+                    <Button
+                      className="rounded-lg"
+                      type="button"
+                      variant="outline"
+                      isDisabled={reviewing}
+                      onPress={() => setHireFlowDialogOpen(false)}
+                    >
+                      Go back
+                    </Button>
+                    <Button
+                      className="rounded-lg"
+                      type="button"
+                      variant="primary"
+                      isDisabled={reviewing}
+                      onPress={() => void submitReviewDecision('Hired', undefined, true)}
+                    >
+                      {reviewing ? 'Marking as hired...' : 'Mark as hired anyway'}
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <h2 className="mt-2 text-2xl text-foreground">Is this role filled?</h2>
+                  <p className="mt-3 text-sm leading-6 text-foreground-500">
+                    The candidate was marked as hired. Close the job posting if you are no longer hiring for this role, or keep it open to hire more people.
+                  </p>
+
+                  <div className="mt-6 flex flex-wrap justify-end gap-3">
+                    <Button
+                      className="rounded-lg"
+                      type="button"
+                      variant="outline"
+                      isDisabled={closingPosting}
+                      onPress={() => setHireFlowDialogOpen(false)}
+                    >
+                      Keep open for more hires
+                    </Button>
+                    <Button
+                      className="rounded-lg"
+                      type="button"
+                      variant="primary"
+                      isDisabled={closingPosting}
+                      onPress={() => void closeJobPosting()}
+                    >
+                      {closingPosting ? 'Closing...' : 'Close job posting'}
+                    </Button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>,
+          document.body,
+        )}
+
       <section className="flex flex-wrap items-start justify-between gap-4 pt-2">
         <div className="min-w-0">
           <p className="text-sm font-medium text-foreground-500">Application #{detail?.id}</p>
@@ -419,7 +577,11 @@ export const RecruiterApplicationDetailPage = () => {
             </section>
           )}
 
-          <ApplicationInterviewTimeline applicationId={applicationId} mode="manage" />
+          <ApplicationInterviewTimeline
+            applicationId={applicationId}
+            applicationStatus={detail?.status ?? ''}
+            mode="manage"
+          />
         </main>
 
         <aside className="grid gap-6 lg:sticky lg:top-6">

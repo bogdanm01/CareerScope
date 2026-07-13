@@ -11,8 +11,13 @@ export const ApplicationFunnel = ({ stats }: { stats: AnalyticsStat[] }) => {
       color: "var(--status-warning)",
     },
     {
-      label: "Accepted",
-      value: getStatValue(stats, "accepted"),
+      label: "Interviewing",
+      value: getStatValue(stats, "interviewing"),
+      color: "var(--brand)",
+    },
+    {
+      label: "Hired",
+      value: getStatValue(stats, "hired"),
       color: "var(--chart-positive)",
     },
     {

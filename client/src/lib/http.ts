@@ -53,23 +53,27 @@ export const getSafeErrorMessage = (text: string, fallback: string) => {
   return trimmedText;
 };
 
-const readErrorMessage = async (response: Response) => {
+const readError = async (response: Response): Promise<{ message: string; code?: string }> => {
   const text = await response.text().catch(() => '');
 
   if (text) {
     try {
       const payload = JSON.parse(text) as Record<string, unknown>;
       const message = payload.message;
+      const code = payload.code;
 
       if (typeof message === 'string' && message.trim()) {
-        return message;
+        return {
+          message,
+          code: typeof code === 'string' ? code : undefined,
+        };
       }
     } catch {
       // Fall through to the sanitized response text.
     }
   }
 
-  return getSafeErrorMessage(text, response.statusText);
+  return { message: getSafeErrorMessage(text, response.statusText) };
 };
 
 export type FetchJsonOptions = Omit<RequestInit, 'body'> & {
@@ -107,7 +111,8 @@ export const fetchJson = async <T>(path: string, options: FetchJsonOptions = {})
   });
 
   if (!response.ok) {
-    throw new HttpError(await readErrorMessage(response), response.status);
+    const error = await readError(response);
+    throw new HttpError(error.message, response.status, error.code);
   }
 
   if (response.status === 204) {

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Button, Chip, Table } from '@heroui/react';
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Button, Chip, Dropdown, Input, ListBox, Select, Table } from '@heroui/react';
+import { ChevronLeft, ChevronRight, MoreHorizontal, PanelTopOpen, Plus, RotateCcw, Search } from 'lucide-react';
 import { getRecruiterJobPostings, type JobPostingListItem } from '../lib/job-postings-api';
 import { formatDate } from '../lib/date-format';
 
@@ -36,29 +36,56 @@ export const RecruiterJobPostingsPage = () => {
   const [postings, setPostings] = useState<JobPostingListItem[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-
-  const loadPostings = async () => {
-    try {
-      const response = await getRecruiterJobPostings();
-      setPostings(response.data);
-    } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : 'Unable to load job postings');
-    }
-  };
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
 
   useEffect(() => {
-    void loadPostings();
+    let cancelled = false;
+
+    getRecruiterJobPostings().then(
+      (response) => {
+        if (!cancelled) {
+          setPostings(response.data);
+        }
+      },
+      (loadError: unknown) => {
+        if (!cancelled) {
+          setError(loadError instanceof Error ? loadError.message : 'Unable to load job postings');
+        }
+      },
+    );
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const totalPages = Math.max(1, Math.ceil(postings.length / pageSize));
-  const paginatedPostings = useMemo(
-    () => postings.slice((currentPage - 1) * pageSize, currentPage * pageSize),
-    [postings, currentPage],
+  const statusOptions = useMemo(
+    () => Array.from(new Set(postings.map((posting) => posting.status))).sort(),
+    [postings],
   );
+  const filteredPostings = useMemo(() => {
+    const query = search.trim().toLowerCase();
 
-  useEffect(() => {
-    setCurrentPage((page) => Math.min(page, totalPages));
-  }, [totalPages]);
+    return postings.filter((posting) => {
+      const matchesStatus = statusFilter === 'all' || posting.status === statusFilter;
+      const matchesSearch =
+        !query ||
+        [posting.title, posting.shortDescription]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase()
+          .includes(query);
+
+      return matchesStatus && matchesSearch;
+    });
+  }, [postings, search, statusFilter]);
+  const totalPages = Math.max(1, Math.ceil(filteredPostings.length / pageSize));
+  const visiblePage = Math.min(currentPage, totalPages);
+  const paginatedPostings = useMemo(
+    () => filteredPostings.slice((visiblePage - 1) * pageSize, visiblePage * pageSize),
+    [filteredPostings, visiblePage],
+  );
 
   return (
     <div className="grid gap-8">
@@ -92,98 +119,174 @@ export const RecruiterJobPostingsPage = () => {
             No job postings yet. Create your first posting to start collecting applicants.
           </div>
         ) : (
-          <div className="mt-5 overflow-hidden rounded-xl border border-divider bg-content1">
-            <Table variant="secondary">
-              <Table.ScrollContainer>
-                <Table.Content aria-label="Recruiter job postings">
-                  <Table.Header>
-                    <Table.Column isRowHeader>Role</Table.Column>
-                    <Table.Column>Status</Table.Column>
-                    <Table.Column>Company</Table.Column>
-                    <Table.Column>Expires</Table.Column>
-                    <Table.Column>Created</Table.Column>
-                    <Table.Column>Action</Table.Column>
-                  </Table.Header>
-                  <Table.Body>
-                    {paginatedPostings.map((posting) => (
-                      <Table.Row key={posting.id} id={posting.id}>
-                        <Table.Cell>
-                          <div className="min-w-64">
-                            <span className="block font-medium text-foreground">{posting.title || 'Untitled role'}</span>
-                            <span className="mt-1 block line-clamp-2 text-sm text-foreground-500">
-                              {posting.shortDescription || 'No description yet.'}
-                            </span>
-                          </div>
-                        </Table.Cell>
-                        <Table.Cell>
-                          <Chip
-                            className="rounded-md"
-                            color={getStatusColor(posting.status)}
-                            size="sm"
-                            variant="soft"
-                          >
-                            {getStatusLabel(posting.status)}
-                          </Chip>
-                        </Table.Cell>
-                        <Table.Cell>
-                          <span className="whitespace-nowrap text-foreground-500">{posting.company?.name || 'Unknown'}</span>
-                        </Table.Cell>
-                        <Table.Cell>
-                          <span className="whitespace-nowrap text-foreground-500">
-                            {formatDate(posting.expiresAt, 'No expiry')}
-                          </span>
-                        </Table.Cell>
-                        <Table.Cell>
-                          <span className="whitespace-nowrap text-foreground-500">
-                            {formatDate(posting.createdAt)}
-                          </span>
-                        </Table.Cell>
-                        <Table.Cell>
-                          <div className="flex justify-start">
-                            <Link
-                              className="whitespace-nowrap rounded-lg border border-divider bg-content1 px-3 py-2 text-sm font-medium text-foreground"
-                              to={`/panel/job-postings/${posting.id}`}
-                            >
-                              Open detail
-                            </Link>
-                          </div>
-                        </Table.Cell>
-                      </Table.Row>
+          <>
+            <div className="mt-5 grid gap-3 lg:grid-cols-[minmax(0,1fr)_220px_40px]">
+              <label className="relative block">
+                <span className="sr-only">Search job postings</span>
+                <Search className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-foreground-500" />
+                <Input
+                  aria-label="Search job postings"
+                  className="h-10 w-full rounded-lg pl-9 text-sm"
+                  fullWidth
+                  placeholder="Search by role or description"
+                  value={search}
+                  onChange={(event) => {
+                    setSearch(event.target.value);
+                    setCurrentPage(1);
+                  }}
+                />
+              </label>
+
+              <Select
+                selectedKey={statusFilter}
+                onSelectionChange={(key) => {
+                  setStatusFilter(key ? String(key) : 'all');
+                  setCurrentPage(1);
+                }}
+              >
+                <Select.Trigger aria-label="Job posting status" className="h-10 rounded-lg text-sm">
+                  <Select.Value />
+                  <Select.Indicator />
+                </Select.Trigger>
+                <Select.Popover>
+                  <ListBox aria-label="Job posting status options">
+                    <ListBox.Item id="all" textValue="All statuses">
+                      All statuses
+                    </ListBox.Item>
+                    {statusOptions.map((status) => (
+                      <ListBox.Item key={status} id={status} textValue={getStatusLabel(status)}>
+                        {getStatusLabel(status)}
+                      </ListBox.Item>
                     ))}
-                  </Table.Body>
-                </Table.Content>
-              </Table.ScrollContainer>
-            </Table>
-            {totalPages > 1 && (
-              <div className="flex items-center justify-end gap-3 border-t border-divider p-5">
-                <span className="text-sm text-foreground-500">
-                  Page {currentPage} of {totalPages}
-                </span>
-                <Button
-                  isIconOnly
-                  aria-label="Previous page"
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onPress={() => setCurrentPage((page) => Math.max(1, page - 1))}
-                  isDisabled={currentPage <= 1}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <Button
-                  isIconOnly
-                  aria-label="Next page"
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onPress={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
-                  isDisabled={currentPage >= totalPages}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
+                  </ListBox>
+                </Select.Popover>
+              </Select>
+
+              <Button
+                isIconOnly
+                aria-label="Reset job posting filters"
+                className="h-10 w-10 min-w-10 border border-divider text-foreground-500"
+                type="button"
+                variant="ghost"
+                isDisabled={!search && statusFilter === 'all'}
+                onPress={() => {
+                  setSearch('');
+                  setStatusFilter('all');
+                  setCurrentPage(1);
+                }}
+              >
+                <RotateCcw aria-hidden="true" className="h-4 w-4" strokeWidth={1.8} />
+              </Button>
+            </div>
+
+            {filteredPostings.length === 0 ? (
+              <div className="mt-6 rounded-xl border border-dashed border-divider bg-content2/50 p-6 text-sm text-foreground-500">
+                No job postings match the current filters.
+              </div>
+            ) : (
+              <div className="mt-6 overflow-hidden rounded-xl border border-divider bg-content1">
+                <Table variant="secondary">
+                  <Table.ScrollContainer>
+                    <Table.Content aria-label="Recruiter job postings">
+                      <Table.Header>
+                        <Table.Column isRowHeader>Role</Table.Column>
+                        <Table.Column>Status</Table.Column>
+                        <Table.Column>Expires</Table.Column>
+                        <Table.Column>Created</Table.Column>
+                        <Table.Column>Action</Table.Column>
+                      </Table.Header>
+                      <Table.Body>
+                        {paginatedPostings.map((posting) => (
+                          <Table.Row key={posting.id} id={posting.id}>
+                            <Table.Cell>
+                              <div className="min-w-64">
+                                <span className="block font-medium text-foreground">{posting.title || 'Untitled role'}</span>
+                                <span className="mt-1 block line-clamp-2 text-sm text-foreground-500">
+                                  {posting.shortDescription || 'No description yet.'}
+                                </span>
+                              </div>
+                            </Table.Cell>
+                            <Table.Cell>
+                              <Chip
+                                className="rounded-md"
+                                color={getStatusColor(posting.status)}
+                                size="sm"
+                                variant="soft"
+                              >
+                                {getStatusLabel(posting.status)}
+                              </Chip>
+                            </Table.Cell>
+                            <Table.Cell>
+                              <span className="whitespace-nowrap text-foreground-500">
+                                {formatDate(posting.expiresAt, 'No expiry')}
+                              </span>
+                            </Table.Cell>
+                            <Table.Cell>
+                              <span className="whitespace-nowrap text-foreground-500">
+                                {formatDate(posting.createdAt)}
+                              </span>
+                            </Table.Cell>
+                            <Table.Cell>
+                              <Dropdown>
+                                <Dropdown.Trigger
+                                  aria-label={`${posting.title || 'Job posting'} actions`}
+                                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-divider bg-content1 text-foreground transition-colors hover:bg-content2"
+                                >
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Dropdown.Trigger>
+                                <Dropdown.Popover placement="bottom end">
+                                  <Dropdown.Menu aria-label={`${posting.title || 'Job posting'} actions`}>
+                                    <Dropdown.Item
+                                      href={`/panel/job-postings/${posting.id}`}
+                                      textValue="Open detail"
+                                    >
+                                      <span className="inline-flex w-full items-center gap-2">
+                                        <PanelTopOpen className="h-4 w-4" />
+                                        Open detail
+                                      </span>
+                                    </Dropdown.Item>
+                                  </Dropdown.Menu>
+                                </Dropdown.Popover>
+                              </Dropdown>
+                            </Table.Cell>
+                          </Table.Row>
+                        ))}
+                      </Table.Body>
+                    </Table.Content>
+                  </Table.ScrollContainer>
+                </Table>
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-end gap-3 border-t border-divider p-5">
+                    <span className="text-sm text-foreground-500">
+                      Page {visiblePage} of {totalPages}
+                    </span>
+                    <Button
+                      isIconOnly
+                      aria-label="Previous page"
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onPress={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                      isDisabled={visiblePage <= 1}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      isIconOnly
+                      aria-label="Next page"
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onPress={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+                      isDisabled={visiblePage >= totalPages}
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
-          </div>
+          </>
         )}
       </section>
     </div>

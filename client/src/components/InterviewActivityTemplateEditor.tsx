@@ -1,5 +1,5 @@
-import { Button, Input, TextArea } from '@heroui/react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Button, Chip, Input, TextArea } from '@heroui/react';
+import { ArrowDown, ArrowUp, Plus, Trash2 } from 'lucide-react';
 import type { InterviewActivityTemplatePayload } from '../lib/job-postings-api';
 
 type InterviewActivityTemplateEditorProps = {
@@ -74,61 +74,69 @@ export const InterviewActivityTemplateEditor = ({
       ) : (
         <div className="grid gap-3">
           {normalizedActivities.map((activity, index) => (
-            <div key={index} className="rounded-xl border border-divider bg-content1 p-4">
-              <div className="grid gap-3 lg:grid-cols-[40px_minmax(0,1fr)_auto] lg:items-start">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-content2 text-sm font-semibold text-foreground">
-                  {index + 1}
-                </div>
-                <div className="grid gap-3">
-                  <Input
-                    value={activity.title}
-                    onChange={(event) => updateActivity(index, { title: event.target.value })}
-                    placeholder="HR call"
-                    aria-label={`Activity ${index + 1} title`}
-                  />
-                  <TextArea
-                    value={activity.description ?? ''}
-                    onChange={(event) => updateActivity(index, { description: event.target.value })}
-                    placeholder="Optional details for recruiters and candidates."
-                    aria-label={`Activity ${index + 1} description`}
-                  />
-                  <label className="inline-flex w-fit cursor-pointer items-center gap-2 text-sm text-foreground-600">
-                    <input
-                      type="checkbox"
-                      checked={activity.isRequired ?? true}
-                      onChange={(event) => updateActivity(index, { isRequired: event.target.checked })}
-                    />
-                    Required step
-                  </label>
-                </div>
-                <div className="flex gap-2">
+            <div
+              key={index}
+              className="rounded-xl border border-divider bg-content1 p-4 transition-colors hover:border-default-300"
+            >
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                <Chip className="rounded-md" size="sm" variant="secondary">
+                  Stage {index + 1}
+                </Chip>
+
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center rounded-lg border border-divider bg-content2/50 p-0.5">
+                    <Button
+                      isIconOnly
+                      aria-label={`Move activity ${index + 1} up`}
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      className="h-8 w-8 rounded-md"
+                      isDisabled={index === 0}
+                      onPress={() => moveActivity(index, -1)}
+                    >
+                      <ArrowUp className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      isIconOnly
+                      aria-label={`Move activity ${index + 1} down`}
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      className="h-8 w-8 rounded-md"
+                      isDisabled={index === normalizedActivities.length - 1}
+                      onPress={() => moveActivity(index, 1)}
+                    >
+                      <ArrowDown className="h-4 w-4" />
+                    </Button>
+                  </div>
                   <Button
+                    isIconOnly
+                    aria-label={`Delete activity ${index + 1}`}
                     type="button"
-                    variant="outline"
-                    className="rounded-lg"
-                    isDisabled={index === 0}
-                    onPress={() => moveActivity(index, -1)}
-                  >
-                    Up
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="rounded-lg"
-                    isDisabled={index === normalizedActivities.length - 1}
-                    onPress={() => moveActivity(index, 1)}
-                  >
-                    Down
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="danger"
-                    className="rounded-lg"
+                    size="sm"
+                    variant="ghost"
+                    className="h-9 w-9 rounded-lg text-danger hover:bg-danger/10"
                     onPress={() => removeActivity(index)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
+              </div>
+
+              <div className="grid gap-3">
+                <Input
+                  value={activity.title}
+                  onChange={(event) => updateActivity(index, { title: event.target.value })}
+                  placeholder="HR call"
+                  aria-label={`Activity ${index + 1} title`}
+                />
+                <TextArea
+                  value={activity.description ?? ''}
+                  onChange={(event) => updateActivity(index, { description: event.target.value })}
+                  placeholder="Optional details for recruiters and candidates."
+                  aria-label={`Activity ${index + 1} description`}
+                />
               </div>
             </div>
           ))}

@@ -104,7 +104,8 @@ export const CandidateApplicationDetailPage = () => {
     }
   };
 
-  const canWithdraw = detail?.status === 'Submitted' || detail?.status === 'UnderReview';
+  const canWithdraw =
+    detail?.status === 'Submitted' || detail?.status === 'UnderReview' || detail?.status === 'Interviewing';
 
   const handleApplicationAction = async () => {
     if (!detail || !pendingAction) {
@@ -238,7 +239,11 @@ export const CandidateApplicationDetailPage = () => {
         </div>
       </section>
 
-      <ApplicationInterviewTimeline applicationId={applicationId} mode="readonly" />
+      <ApplicationInterviewTimeline
+        applicationId={applicationId}
+        applicationStatus={detail?.status ?? ''}
+        mode="readonly"
+      />
 
       <section className="grid gap-6 lg:grid-cols-[1fr_0.9fr]">
         <div className="grid gap-8">

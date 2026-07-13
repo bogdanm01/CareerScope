@@ -24,7 +24,7 @@ export const auth = betterAuth({
       role: {
         type: [USER_ROLE.ADMIN, USER_ROLE.RECRUITER, USER_ROLE.CANDIDATE],
         required: true,
-        input: false, // TODO: Check this
+        input: false,
         defaultValue: USER_ROLE.CANDIDATE,
       },
       firstName: {

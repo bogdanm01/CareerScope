@@ -7,7 +7,7 @@ import { formatDate } from '../lib/date-format';
 
 const pageSize = 10;
 
-const statusOptions = ['Submitted', 'UnderReview', 'Accepted', 'Rejected', 'Withdrawn'];
+const statusOptions = ['Submitted', 'UnderReview', 'Interviewing', 'Hired', 'Rejected', 'Withdrawn'];
 const sortableFields = ['title', 'company', 'status', 'createdAt', 'updatedAt', 'expiresAt'] as const;
 type SortField = typeof sortableFields[number];
 type SortDirection = 'asc' | 'desc';
@@ -15,13 +15,15 @@ type SortEntry = { field: SortField; direction: SortDirection };
 
 const getStatusColor = (status: string): 'accent' | 'danger' | 'default' | 'success' | 'warning' => {
   switch (status) {
-    case 'Accepted':
+    case 'Hired':
       return 'success';
     case 'Rejected':
     case 'Withdrawn':
       return 'danger';
     case 'UnderReview':
       return 'warning';
+    case 'Interviewing':
+      return 'accent';
     case 'Submitted':
       return 'accent';
     default:

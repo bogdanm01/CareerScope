@@ -11,7 +11,6 @@ type ApplicationRow = RecruiterJobApplicationListItem & {
 };
 
 const allPostingsKey = 'all';
-const allCompaniesKey = 'all';
 const allStatusesKey = 'all';
 const pageSize = 10;
 
@@ -19,12 +18,14 @@ const formatStatus = (status: string) => (status === 'UnderReview' ? 'Under Revi
 
 const getStatusColor = (status: string): 'accent' | 'danger' | 'default' | 'success' | 'warning' => {
   switch (status) {
-    case 'Accepted':
+    case 'Hired':
       return 'success';
     case 'Rejected':
       return 'danger';
     case 'UnderReview':
       return 'warning';
+    case 'Interviewing':
+      return 'accent';
     case 'Submitted':
       return 'accent';
     default:
@@ -48,7 +49,6 @@ export const RecruiterApplicationsPage = () => {
   const [search, setSearch] = useState(searchParams.get('search') || '');
   const [currentPage, setCurrentPage] = useState(1);
   const selectedPostingKey = searchParams.get('postingId') || allPostingsKey;
-  const selectedCompanyKey = searchParams.get('companyId') || allCompaniesKey;
   const selectedStatusKey = searchParams.get('status') || allStatusesKey;
 
   useEffect(() => {
@@ -108,34 +108,12 @@ export const RecruiterApplicationsPage = () => {
     [applications],
   );
 
-  const companies = useMemo(() => {
-    const byId = new Map<number, NonNullable<JobPostingListItem['company']>>();
-    postings.forEach((posting) => {
-      if (posting.company) byId.set(posting.company.id, posting.company);
-    });
-    return Array.from(byId.values()).sort((left, right) => left.name.localeCompare(right.name));
-  }, [postings]);
-
-  const visiblePostings = useMemo(
-    () => postings.filter((posting) => selectedCompanyKey === allCompaniesKey || String(posting.company?.id) === selectedCompanyKey),
-    [postings, selectedCompanyKey],
-  );
-
-  const postingCompanyById = useMemo(
-    () => new Map(postings.map((posting) => [posting.id, posting.company?.id])),
-    [postings],
-  );
-
   const filteredApplications = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
 
     return applications
       .filter((application) => {
         if (selectedPostingKey !== allPostingsKey && String(application.jobPostingId) !== selectedPostingKey) {
-          return false;
-        }
-
-        if (selectedCompanyKey !== allCompaniesKey && String(postingCompanyById.get(application.jobPostingId)) !== selectedCompanyKey) {
           return false;
         }
 
@@ -153,7 +131,7 @@ export const RecruiterApplicationsPage = () => {
         );
       })
       .sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime());
-  }, [applications, postingCompanyById, search, selectedCompanyKey, selectedPostingKey, selectedStatusKey]);
+  }, [applications, search, selectedPostingKey, selectedStatusKey]);
 
   const totalPages = Math.max(1, Math.ceil(filteredApplications.length / pageSize));
   const paginatedApplications = useMemo(
@@ -168,8 +146,9 @@ export const RecruiterApplicationsPage = () => {
     return () => window.clearTimeout(timeout);
   }, [totalPages]);
 
-  const updateFilters = (updates: { companyId?: string; postingId?: string; status?: string; search?: string }) => {
+  const updateFilters = (updates: { postingId?: string; status?: string; search?: string }) => {
     const next = new URLSearchParams(searchParams);
+    next.delete('companyId');
     setCurrentPage(1);
 
     if (updates.postingId !== undefined) {
@@ -177,14 +156,6 @@ export const RecruiterApplicationsPage = () => {
         next.delete('postingId');
       } else {
         next.set('postingId', updates.postingId);
-      }
-    }
-
-    if (updates.companyId !== undefined) {
-      if (!updates.companyId || updates.companyId === allCompaniesKey) {
-        next.delete('companyId');
-      } else {
-        next.set('companyId', updates.companyId);
       }
     }
 
@@ -220,7 +191,7 @@ export const RecruiterApplicationsPage = () => {
         </div>
       </section>
 
-      <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-[400px_220px_minmax(280px,1fr)_200px]">
+      <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-[400px_minmax(280px,1fr)_200px]">
         <div className="relative">
           <Search aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-foreground-500" />
           <Input
@@ -233,28 +204,6 @@ export const RecruiterApplicationsPage = () => {
             className="h-10 w-100 pl-9 text-sm"
           />
         </div>
-
-        <ComboBox
-          selectedKey={selectedCompanyKey}
-          onSelectionChange={(key) => {
-            const companyId = key ? String(key) : allCompaniesKey;
-            updateFilters({ companyId, postingId: allPostingsKey });
-          }}
-          fullWidth
-        >
-          <ComboBox.InputGroup className="flex h-10 items-center">
-            <Input aria-label="Filter by company" className="!text-sm !font-medium" placeholder="Search companies" />
-            <ComboBox.Trigger />
-          </ComboBox.InputGroup>
-          <ComboBox.Popover>
-            <ListBox aria-label="Companies" className="max-h-64 overflow-auto py-1">
-              <ListBox.Item id={allCompaniesKey} textValue="All companies">All companies</ListBox.Item>
-              {companies.map((company) => (
-                <ListBox.Item key={company.id} id={String(company.id)} textValue={company.name}>{company.name}</ListBox.Item>
-              ))}
-            </ListBox>
-          </ComboBox.Popover>
-        </ComboBox>
 
         <ComboBox
           selectedKey={selectedPostingKey}
@@ -270,12 +219,9 @@ export const RecruiterApplicationsPage = () => {
               <ListBox.Item id={allPostingsKey} textValue="All postings">
                 All postings
               </ListBox.Item>
-              {visiblePostings.map((posting) => (
+              {postings.map((posting) => (
                 <ListBox.Item key={posting.id} id={String(posting.id)} textValue={posting.title || `Posting #${posting.id}`}>
-                  <div className="grid gap-0.5">
-                    <span>{posting.title || `Posting #${posting.id}`}</span>
-                    {posting.company && <span className="text-xs text-foreground-500">{posting.company.name}</span>}
-                  </div>
+                  {posting.title || `Posting #${posting.id}`}
                 </ListBox.Item>
               ))}
             </ListBox>

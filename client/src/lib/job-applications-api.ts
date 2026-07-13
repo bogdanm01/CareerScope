@@ -1,14 +1,15 @@
 import { apiDelete, apiGet, apiPatch, apiPost } from './panel-api';
 import { getApiBaseUrl, getSafeErrorMessage, HttpError } from './http';
 
-export type JobApplicationStatus = string;
+export type JobApplicationStatus = 'Submitted' | 'UnderReview' | 'Interviewing' | 'Hired' | 'Rejected' | 'Withdrawn';
 
-export type JobApplicationReviewStatus = 'UnderReview' | 'Accepted' | 'Rejected';
+export type JobApplicationReviewStatus = 'UnderReview' | 'Interviewing' | 'Hired' | 'Rejected';
 export type JobApplicationHiringStageStatus = 'Pending' | 'Scheduled' | 'Completed' | 'Skipped' | 'Cancelled';
 
 export type JobApplicationUpdatePayload = {
   status: JobApplicationReviewStatus;
   reason?: string;
+  confirmIncompleteActivities?: boolean;
 };
 
 export type CandidateJobApplicationUpdatePayload = {

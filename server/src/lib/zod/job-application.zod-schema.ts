@@ -3,7 +3,8 @@ import { JOB_APPLICATION_STATUS } from '../../data/util/constants.ts';
 
 const JOB_APPLICATION_REVIEW_STATUS = [
   JOB_APPLICATION_STATUS.UNDER_REVIEW,
-  JOB_APPLICATION_STATUS.ACCEPTED,
+  JOB_APPLICATION_STATUS.INTERVIEWING,
+  JOB_APPLICATION_STATUS.HIRED,
   JOB_APPLICATION_STATUS.REJECTED,
 ] as const;
 
@@ -80,9 +81,10 @@ export const CandidateJobApplicationListRequestSchema = JobApplicationListReques
 export const JobApplicationUpdateRequestSchema = z
   .object({
     status: z.enum(JOB_APPLICATION_REVIEW_STATUS, {
-      error: 'Status must be one of: UnderReview, Accepted, Rejected.',
+      error: 'Status must be one of: UnderReview, Interviewing, Hired, Rejected.',
     }),
     reason: z.string().trim().min(3, 'Reason must contain at least 3 characters.').max(500).optional(),
+    confirmIncompleteActivities: z.boolean().optional(),
   })
   .strict()
   .superRefine((data, ctx) => {
