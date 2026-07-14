@@ -8,6 +8,8 @@ import { getRecruiterJobApplications, type RecruiterJobApplicationListItem } fro
 import { formatDate } from '../lib/date-format';
 import { authSessionAtom } from '../store/auth';
 import { StatusMultiSelect } from '../components/StatusMultiSelect';
+import { useRecruiterPostingAccess } from '../hooks/useRecruiterPostingAccess';
+import { CompanyApprovalRequiredCard } from '../components/CompanyApprovalRequiredCard';
 
 type ApplicationRow = RecruiterJobApplicationListItem & {
   postingTitle: string;
@@ -54,6 +56,12 @@ export const RecruiterApplicationsPage = () => {
   const [search, setSearch] = useState(searchParams.get('search') || '');
   const [currentPage, setCurrentPage] = useState(1);
   const isAdmin = session?.user.role === 'Admin';
+  const {
+    company: recruiterCompany,
+    loading: companyApprovalLoading,
+    error: companyApprovalError,
+    isBlocked: recruiterApplicationsBlocked,
+  } = useRecruiterPostingAccess(!isAdmin);
   const selectedPostingKey = searchParams.get('postingId') || allPostingsKey;
   const selectedCompanyKey = isAdmin ? searchParams.get('companyId') || allCompaniesKey : allCompaniesKey;
   const selectedStatusKeys = useMemo(
@@ -62,6 +70,10 @@ export const RecruiterApplicationsPage = () => {
   );
 
   useEffect(() => {
+    if (!isAdmin && (companyApprovalLoading || recruiterApplicationsBlocked)) {
+      return;
+    }
+
     let isMounted = true;
 
     const load = async () => {
@@ -112,7 +124,7 @@ export const RecruiterApplicationsPage = () => {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [companyApprovalLoading, isAdmin, recruiterApplicationsBlocked]);
 
   const statuses = useMemo(
     () => Array.from(new Set(applications.map((application) => application.status))).sort(),
@@ -236,6 +248,18 @@ export const RecruiterApplicationsPage = () => {
         </div>
       </section>
 
+      {!isAdmin && companyApprovalLoading ? (
+        <div className="rounded-xl border border-divider bg-content1 p-6 text-sm text-foreground-500">
+          Checking company approval...
+        </div>
+      ) : recruiterApplicationsBlocked ? (
+        <CompanyApprovalRequiredCard
+          area="applications"
+          company={recruiterCompany}
+          verificationError={companyApprovalError}
+        />
+      ) : (
+        <>
       <section
         className={`grid gap-3 md:grid-cols-2 ${
           isAdmin
@@ -446,6 +470,8 @@ export const RecruiterApplicationsPage = () => {
           </div>
         )}
       </section>
+        </>
+      )}
     </div>
   );
 };

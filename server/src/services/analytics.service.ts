@@ -1,6 +1,7 @@
 import { inject, injectable } from 'tsyringe';
 import { TOKENS } from '../config/dependency-tokens.ts';
 import { AnalyticsRepository } from '../data/repositories/analytics.repository.ts';
+import { CompanyRepository } from '../data/repositories/company.repository.ts';
 import { USER_ROLE, type UserRole } from '../data/util/constants.ts';
 import { AnalyticsOverviewRequestSchema } from '../lib/zod/analytics.zod-schema.ts';
 import { IntegerIdSchema } from '../lib/zod/integer-id.zod-schema.ts';
@@ -36,7 +37,18 @@ type ApplicationsOverTimeRecord = {
 
 @injectable()
 export class AnalyticsService {
-  constructor(@inject(TOKENS.analyticsRepository) private analyticsRepository: AnalyticsRepository) {}
+  constructor(
+    @inject(TOKENS.analyticsRepository) private analyticsRepository: AnalyticsRepository,
+    @inject(TOKENS.companyRepository) private companyRepository: CompanyRepository,
+  ) {}
+
+  private async requireApprovedRecruiterCompany(companyId: number) {
+    const companyApproval = await this.companyRepository.findApprovalStatus(companyId);
+
+    if (!companyApproval?.isApproved) {
+      throw new ForbiddenError('Company analytics are available after the company is approved by an admin.');
+    }
+  }
 
   private getRange(payload: unknown) {
     const validationResult = AnalyticsOverviewRequestSchema.safeParse(payload);
@@ -72,6 +84,8 @@ export class AnalyticsService {
       if (!user.companyId) {
         throw new ForbiddenError('Recruiter is not assigned to a company.');
       }
+
+      await this.requireApprovedRecruiterCompany(user.companyId);
 
       const overview = await this.analyticsRepository.getRecruiterOverview(
         user.companyId,
@@ -111,6 +125,8 @@ export class AnalyticsService {
     if (user.role !== USER_ROLE.RECRUITER || !user.companyId) {
       throw new ForbiddenError();
     }
+
+    await this.requireApprovedRecruiterCompany(user.companyId);
 
     const rangeWithView = this.getRange(payload);
     const range = { from: rangeWithView.from, to: rangeWithView.to };

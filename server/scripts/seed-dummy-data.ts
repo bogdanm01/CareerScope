@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { and, eq, inArray, isNull } from 'drizzle-orm';
+import { and, eq, inArray, isNull, or } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 import { user } from '../src/data/schema/auth.schema.ts';
@@ -1057,34 +1057,6 @@ Work with platform and application teams to make reliability measurable and oper
     ],
   },
   {
-    title: 'Junior Product Designer',
-    companyTaxId: 'RS-510936284',
-    createdByUserKey: 'admin',
-    shortDescription: 'Support patient and clinic workflow design across web products.',
-    description: `## Design clearer healthcare workflows
-
-Support research, wireframing, prototyping, and design-system work for clinic operations software.
-
-### This role is suited for someone who
-
-- Enjoys simplifying complex forms and workflows
-- Can explain design decisions clearly
-- Values accessibility and inclusive research
-- Wants close collaboration with engineering`,
-    workLocation: 'Hybrid',
-    employmentType: 'Internship',
-    salaryRange: '$45k - $60k',
-    status: JOB_POSTING_STATUS.DRAFT,
-    expiresAt: daysFromNow(90),
-    skills: [
-      { slug: 'ui-ux-design', yoe: 1 },
-      { slug: 'figma', yoe: 1 },
-      { slug: 'wireframing', yoe: 1 },
-      { slug: 'prototyping', yoe: 1 },
-      { slug: 'user-research', yoe: 1 },
-    ],
-  },
-  {
     title: 'Product Manager, Collaboration',
     companyTaxId: 'RS-740193625',
     createdByUserKey: 'recruiterAtlassian',
@@ -1533,7 +1505,6 @@ const applications = [
   { userKey: 'candidateUros', jobTitle: 'Workspace Backend Engineer', status: JOB_APPLICATION_STATUS.HIRED },
   { userKey: 'candidateUros', jobTitle: 'Frontend Performance Engineer', status: JOB_APPLICATION_STATUS.SUBMITTED },
   { userKey: 'candidateKatarina', jobTitle: 'iOS Product Engineer', status: JOB_APPLICATION_STATUS.INTERVIEWING },
-  { userKey: 'candidateKatarina', jobTitle: 'Junior Product Designer', status: JOB_APPLICATION_STATUS.SUBMITTED },
   { userKey: 'candidateKatarina', jobTitle: 'Design Systems Engineer', status: JOB_APPLICATION_STATUS.REJECTED },
   { userKey: 'candidateAna', jobTitle: 'Revenue Data Engineer', status: JOB_APPLICATION_STATUS.UNDER_REVIEW },
   { userKey: 'candidateTeodora', jobTitle: 'Revenue Data Engineer', status: JOB_APPLICATION_STATUS.HIRED },
@@ -1569,11 +1540,6 @@ const applications = [
     status: JOB_APPLICATION_STATUS.INTERVIEWING,
   },
   { userKey: 'candidateTamara', jobTitle: 'Product Designer', status: JOB_APPLICATION_STATUS.HIRED },
-  {
-    userKey: 'candidateTamara',
-    jobTitle: 'Junior Product Designer',
-    status: JOB_APPLICATION_STATUS.UNDER_REVIEW,
-  },
   {
     userKey: 'candidateTamara',
     jobTitle: 'Product Operations Manager',
@@ -2251,7 +2217,8 @@ const removeSeedJobs = async () => {
   const existingJobs = await db
     .select({ id: jobPosting.id })
     .from(jobPosting)
-    .where(inArray(jobPosting.title, seedJobTitles));
+    .innerJoin(company, eq(jobPosting.companyId, company.id))
+    .where(or(inArray(jobPosting.title, seedJobTitles), eq(company.isApproved, false)));
 
   const jobIds = existingJobs.map((item) => item.id);
 
@@ -2311,6 +2278,16 @@ const seedJobs = async (userByKey: Map<UserKey, string>) => {
   const skillBySlug = await getBySlug();
   const jobByTitle = new Map<string, number>();
   const activityTemplatesByJobTitle = new Map<string, ActivityTemplateSeedRecord[]>();
+  const companyApprovalStatusByTaxId = new Map(companies.map((item) => [item.taxId, item.approvalStatus]));
+  const unapprovedJob = jobs.find(
+    (item) => companyApprovalStatusByTaxId.get(item.companyTaxId) !== COMPANY_APPROVAL_STATUS.APPROVED,
+  );
+
+  if (unapprovedJob) {
+    throw new Error(
+      `Seed job "${unapprovedJob.title}" belongs to an unapproved company (${unapprovedJob.companyTaxId}).`,
+    );
+  }
 
   await removeSeedJobs();
 

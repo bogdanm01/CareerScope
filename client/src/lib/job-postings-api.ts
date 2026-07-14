@@ -58,6 +58,12 @@ export type JobPostingListItem = {
   createdAt: string;
   updatedAt: string;
   company?: JobPostingCompany;
+  match?: {
+    score: number | null;
+    matchedSkillCount: number;
+    requiredSkillCount: number;
+    experienceQualifiedCount: number;
+  };
 };
 
 export type JobPostingDetail = JobPostingListItem & {
@@ -105,6 +111,9 @@ export type JobPostingUpdatePayload = {
 
 export const getActiveJobPostings = async (query?: Record<string, string | number | boolean | null | undefined>) =>
   apiGet<JobPostingListItem[]>('/api/job-postings/active', { query });
+
+export const getMatchedJobPostings = async (query?: Record<string, string | number | boolean | null | undefined>) =>
+  apiGet<JobPostingListItem[]>('/api/job-postings/matches', { query });
 
 export const getRecruiterJobPostings = async (query?: Record<string, string | number | boolean | null | undefined>) =>
   apiGet<JobPostingListItem[]>('/api/job-postings', { query });

@@ -39,6 +39,14 @@ export class JobPostingController {
     res.status(200).json(successResponse(result.data, undefined, result.pagination));
   }
 
+  async getCandidateMatchedJobPostings(
+    req: Request,
+    res: Response<ApiSuccessResponse<JobPostingListItem[]>>,
+  ) {
+    const result = await this.jobPostingService.getCandidateMatchedJobPostings(req.query, req.user);
+    res.status(200).json(successResponse(result.data, undefined, result.pagination));
+  }
+
   /**
    * Returns job postings for recruiter/admin dashboards.
    *

@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Button, Input, ListBox, Modal, Select, toast, useOverlayState } from '@heroui/react';
-import { BriefcaseBusiness, Building2, CalendarDays, ChevronLeft, ChevronRight, Clock3, Filter, Heart, MapPin, RotateCcw, Search, WalletCards, X } from 'lucide-react';
+import { Button, Input, ListBox, Modal, Select, Switch, toast, useOverlayState } from '@heroui/react';
+import { BriefcaseBusiness, Building2, CalendarDays, ChevronLeft, ChevronRight, Clock3, Filter, Heart, MapPin, RotateCcw, Search, Sparkles, WalletCards, X } from 'lucide-react';
 import {
   getActiveJobPostings,
+  getMatchedJobPostings,
   type JobPostingEmploymentType,
   type JobPostingListItem,
   type JobPostingWorkLocation,
@@ -16,6 +17,7 @@ import type { ApiPagination } from '../lib/panel-api';
 import type { Skill } from '../lib/skills-api';
 import { getCompanyLogoUrl } from '../lib/company-logo';
 import { getWishlistStorageKey, readWishlist, writeWishlist } from '../lib/job-wishlist';
+import { getMe } from '../lib/me-api';
 
 type SortValue = 'createdAt-desc' | 'createdAt-asc' | 'expiresAt-asc' | 'expiresAt-desc';
 
@@ -78,10 +80,13 @@ export const CandidateJobsPage = ({ isPublic = false }: CandidateJobsPageProps) 
   const [currentPage, setCurrentPage] = useState(1);
   const [applyingId, setApplyingId] = useState<number | null>(null);
   const [wishlistVersion, setWishlistVersion] = useState(0);
+  const [bestMatches, setBestMatches] = useState(false);
+  const [candidateSkillCount, setCandidateSkillCount] = useState<number | null>(null);
+  const [candidateSkillsLoading, setCandidateSkillsLoading] = useState(!isPublic);
   const filterModal = useOverlayState();
   const selectedSort = sortOptions.find((option) => option.value === sortValue) ?? sortOptions[0];
   const selectedSkillIds = useMemo(() => selectedSkills.map((skill) => skill.id), [selectedSkills]);
-  const hasActiveFilters = search.trim().length > 0 || selectedSkills.length > 0 || sortValue !== 'createdAt-desc';
+  const hasActiveFilters = search.trim().length > 0 || selectedSkills.length > 0 || sortValue !== 'createdAt-desc' || bestMatches;
   const detailsBasePath = isPublic ? '/jobs' : '/panel/jobs';
   const isApplyBlockedByRole = isPublic && !!session && session.user.role !== 'Candidate';
   const wishlistStorageKey = session?.user.role === 'Candidate'
@@ -96,12 +101,40 @@ export const CandidateJobsPage = ({ isPublic = false }: CandidateJobsPageProps) 
   );
 
   useEffect(() => {
+    if (isPublic || session?.user.role !== 'Candidate') {
+      return;
+    }
+
+    let mounted = true;
+
+    getMe().then(
+      (response) => {
+        if (!mounted) return;
+        setCandidateSkillCount(response.data.skills.length);
+        if (response.data.skills.length === 0) setBestMatches(false);
+      },
+      () => {
+        if (!mounted) return;
+        setCandidateSkillCount(0);
+        setBestMatches(false);
+      },
+    ).finally(() => {
+      if (mounted) setCandidateSkillsLoading(false);
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, [isPublic, session?.user.id, session?.user.role]);
+
+  useEffect(() => {
     let mounted = true;
 
     const load = async () => {
       try {
         const trimmedSearch = search.trim();
-        const response = await getActiveJobPostings({
+        const getJobPostings = bestMatches ? getMatchedJobPostings : getActiveJobPostings;
+        const response = await getJobPostings({
           page: currentPage,
           limit: pageSize,
           orderBy: selectedSort.orderBy,
@@ -126,7 +159,7 @@ export const CandidateJobsPage = ({ isPublic = false }: CandidateJobsPageProps) 
     return () => {
       mounted = false;
     };
-  }, [currentPage, search, selectedSkills, selectedSort.orderBy, selectedSort.sort]);
+  }, [bestMatches, currentPage, search, selectedSkills, selectedSort.orderBy, selectedSort.sort]);
 
   const addSkillFilter = () => {
     if (!selectedSkill) {
@@ -155,6 +188,7 @@ export const CandidateJobsPage = ({ isPublic = false }: CandidateJobsPageProps) 
     setSortValue('createdAt-desc');
     setSelectedSkill(null);
     setSelectedSkills([]);
+    setBestMatches(false);
     setSkillResetKey((current) => current + 1);
     setCurrentPage(1);
   };
@@ -226,7 +260,13 @@ export const CandidateJobsPage = ({ isPublic = false }: CandidateJobsPageProps) 
         </div>
 
         <div className="mb-6 grid gap-4">
-          <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_150px_158px] lg:items-center">
+          <div
+            className={`grid gap-3 lg:items-center ${
+              isPublic
+                ? 'lg:grid-cols-[minmax(0,1fr)_150px_158px]'
+                : 'lg:grid-cols-[minmax(0,1fr)_150px_190px_158px]'
+            }`}
+          >
             <label className="grid w-full gap-2 lg:block">
               <span className="sr-only">Search jobs</span>
               <div className="relative w-full">
@@ -248,6 +288,7 @@ export const CandidateJobsPage = ({ isPublic = false }: CandidateJobsPageProps) 
               <span className="sr-only">Sort</span>
               <Select
                 selectedKey={sortValue}
+                isDisabled={bestMatches}
                 onSelectionChange={(key) => {
                   setSortValue(String(key) as SortValue);
                   setCurrentPage(1);
@@ -270,6 +311,30 @@ export const CandidateJobsPage = ({ isPublic = false }: CandidateJobsPageProps) 
               </Select>
             </label>
 
+            {!isPublic && (
+              <Switch
+                aria-label="Order jobs by best skill match"
+                className="h-10 rounded-lg border border-divider bg-content1 px-3"
+                isDisabled={candidateSkillsLoading || candidateSkillCount === 0}
+                isSelected={bestMatches}
+                size="sm"
+                onChange={(isSelected) => {
+                  setBestMatches(isSelected);
+                  setCurrentPage(1);
+                }}
+              >
+                <Switch.Content className="flex h-full w-full items-center gap-2">
+                  <Switch.Control>
+                    <Switch.Thumb />
+                  </Switch.Control>
+                  <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-sm font-medium text-foreground">
+                    <Sparkles aria-hidden="true" className="h-4 w-4" />
+                    Best matches
+                  </span>
+                </Switch.Content>
+              </Switch>
+            )}
+
             <div className="grid grid-cols-[110px_40px] gap-2">
               <Button type="button" variant="secondary" className="h-10 w-full" onPress={filterModal.open}>
                 <Filter aria-hidden="true" className="h-4 w-4" strokeWidth={1.8} />
@@ -291,6 +356,15 @@ export const CandidateJobsPage = ({ isPublic = false }: CandidateJobsPageProps) 
               </Button>
             </div>
           </div>
+
+          {!isPublic && !candidateSkillsLoading && candidateSkillCount === 0 && (
+            <div className="rounded-lg border border-warning/20 bg-warning/10 px-4 py-3 text-sm text-foreground-500">
+              <Link className="font-medium text-foreground underline underline-offset-4" to="/panel/profile">
+                Add skills to your profile
+              </Link>{' '}
+              to see which jobs match you best.
+            </div>
+          )}
 
           {selectedSkills.length > 0 && (
             <div className="flex flex-wrap items-center gap-2">
@@ -447,6 +521,14 @@ export const CandidateJobsPage = ({ isPublic = false }: CandidateJobsPageProps) 
                     <CalendarDays aria-hidden="true" className="h-4 w-4" strokeWidth={1.7} />
                     {job.expiresAt ? `Closes ${new Date(job.expiresAt).toLocaleDateString()}` : 'No expiry'}
                   </span>
+                  {bestMatches && job.match && (
+                    <span className="text-status-success inline-flex items-center gap-1.5 font-medium">
+                      <Sparkles aria-hidden="true" className="h-4 w-4" />
+                      {job.match.score === null
+                        ? 'Match unavailable'
+                        : `${job.match.score}% match · ${job.match.matchedSkillCount}/${job.match.requiredSkillCount} skills`}
+                    </span>
+                  )}
                 </div>
 
                 <p className="mt-5 line-clamp-3 text-sm leading-6 text-foreground-500">

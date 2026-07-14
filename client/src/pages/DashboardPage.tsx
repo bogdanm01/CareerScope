@@ -14,6 +14,7 @@ import { getActiveJobPostings, getRecruiterJobPostings, type JobPostingListItem 
 import { getAdminCompanies, getAdminJobPostings, getPendingJobPostings, type AdminCompanyListItem } from '../lib/admin-api';
 import { formatDate } from '../lib/date-format';
 import { getCompanyLogoUrl } from '../lib/company-logo';
+import { useRecruiterPostingAccess } from '../hooks/useRecruiterPostingAccess';
 
 const getStatusLabel = (status: string) => (status === 'UnderReview' ? 'Under Review' : status);
 
@@ -92,6 +93,13 @@ export const DashboardPage = () => {
   const [adminDashboardLoading, setAdminDashboardLoading] = useState(false);
   const [recruiterDashboard, setRecruiterDashboard] = useState<RecruiterDashboardState>(defaultRecruiterDashboardState);
   const [recruiterDashboardLoading, setRecruiterDashboardLoading] = useState(false);
+  const {
+    company: recruiterCompany,
+    loading: companyApprovalLoading,
+    canCreatePosting,
+    isBlocked: isPostingCreationBlocked,
+    showBlockedToast,
+  } = useRecruiterPostingAccess(role === 'Recruiter');
 
   useEffect(() => {
     if (role !== 'Candidate') {
@@ -288,9 +296,23 @@ export const DashboardPage = () => {
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div className="max-w-4xl">
             <span className="block text-2xl leading-tight text-foreground">Welcome back,</span>
-            <h2 className="mt-1 text-4xl leading-[1.1] text-foreground sm:text-5xl">
-              {displayName}.
-            </h2>
+            <div className="mt-1 flex flex-wrap items-center gap-3">
+              <h2 className="text-4xl leading-[1.1] text-foreground sm:text-5xl">
+                {displayName}.
+              </h2>
+              {role === 'Recruiter' && recruiterCompany && !recruiterCompany.isApproved && (
+                <Chip
+                  className="rounded-md"
+                  color={recruiterCompany.approvalStatus === 'Rejected' ? 'danger' : 'warning'}
+                  size="sm"
+                  variant="soft"
+                >
+                  {recruiterCompany.approvalStatus === 'Rejected'
+                    ? 'Company approval rejected'
+                    : 'Awaiting admin approval'}
+                </Chip>
+              )}
+            </div>
           </div>
           {isOnboardingComplete && (
             <Link
@@ -395,10 +417,18 @@ export const DashboardPage = () => {
                   <p className="mt-2 text-sm text-default-500">Latest roles from your company.</p>
                 </div>
                 <Button
-                  className="hover-brand h-10 shrink-0 rounded-lg bg-brand px-4 !text-sm font-medium text-brand-foreground"
+                  className={`hover-brand h-10 shrink-0 rounded-lg bg-brand px-4 !text-sm font-medium text-brand-foreground ${isPostingCreationBlocked ? 'cursor-not-allowed opacity-50' : ''}`}
                   type="button"
                   variant="secondary"
-                  onPress={() => navigate('/panel/job-postings/new')}
+                  isDisabled={companyApprovalLoading}
+                  aria-disabled={isPostingCreationBlocked}
+                  onPress={() => {
+                    if (isPostingCreationBlocked) {
+                      showBlockedToast();
+                      return;
+                    }
+                    navigate('/panel/job-postings/new');
+                  }}
                 >
                   <FilePlus2 aria-hidden="true" className="h-4 w-4" strokeWidth={1.8} />
                   Add posting
@@ -415,12 +445,23 @@ export const DashboardPage = () => {
                     {recruiterDashboard.postingsError}
                   </div>
                 ) : recruiterStats.recentPostings.length === 0 ? (
-                  <Link
-                    to="/panel/job-postings/new"
-                    className="rounded-lg border border-dashed border-divider bg-content2 p-5 text-sm text-default-500 transition-colors hover:bg-content1"
-                  >
-                    No postings yet. Create your first posting to start collecting applicants.
-                  </Link>
+                  canCreatePosting ? (
+                    <Link
+                      to="/panel/job-postings/new"
+                      className="rounded-lg border border-dashed border-divider bg-content2 p-5 text-sm text-default-500 transition-colors hover:bg-content1"
+                    >
+                      No postings yet. Create your first posting to start collecting applicants.
+                    </Link>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={companyApprovalLoading}
+                      onClick={showBlockedToast}
+                      className="rounded-lg border border-dashed border-divider bg-content2 p-5 text-left text-sm text-default-500 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      No postings yet. Company approval is required before creating one.
+                    </button>
+                  )
                 ) : (
                   recruiterStats.recentPostings.map((posting) => (
                     <Link

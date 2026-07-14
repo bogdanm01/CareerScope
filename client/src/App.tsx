@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { Toast } from '@heroui/react';
-import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { useAtomValue, useSetAtom } from 'jotai';
 import { GuestShell } from './components/GuestShell';
 import { PanelShell } from './components/PanelShell';
@@ -37,6 +37,7 @@ import { RecruiterJobPostingsPage } from './pages/RecruiterJobPostingsPage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
 import { authHydratedAtom, authLoadingAtom, authSessionAtom, hydrateAuthAtom } from './store/auth';
 import { getPanelHomePath } from './lib/navigation';
+import { useRecruiterPostingAccess } from './hooks/useRecruiterPostingAccess';
 
 const AppBootstrap = () => {
   const hydrateAuth = useSetAtom(hydrateAuthAtom);
@@ -103,6 +104,24 @@ const RoleRoute = ({ children, allow }: { children: ReactNode; allow: Array<'Can
 
   if (!session || !allow.includes(session.user.role as 'Candidate' | 'Recruiter' | 'Admin')) {
     return <Navigate to="/panel" replace />;
+  }
+
+  return children;
+};
+
+const ApprovedRecruiterCompanyRoute = ({ children }: { children: ReactNode }) => {
+  const navigate = useNavigate();
+  const { loading, canCreatePosting, showBlockedToast } = useRecruiterPostingAccess();
+
+  useEffect(() => {
+    if (!loading && !canCreatePosting) {
+      showBlockedToast();
+      navigate('/panel/job-postings', { replace: true });
+    }
+  }, [canCreatePosting, loading, navigate, showBlockedToast]);
+
+  if (loading || !canCreatePosting) {
+    return <div className="app-loading">Checking company approval...</div>;
   }
 
   return children;
@@ -231,7 +250,9 @@ function App() {
             path="job-postings/new"
             element={
               <RoleRoute allow={['Recruiter']}>
-                <RecruiterJobPostingCreatePage loading={loading} />
+                <ApprovedRecruiterCompanyRoute>
+                  <RecruiterJobPostingCreatePage loading={loading} />
+                </ApprovedRecruiterCompanyRoute>
               </RoleRoute>
             }
           />

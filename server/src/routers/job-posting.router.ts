@@ -17,6 +17,12 @@ export const getJobPostingRouter = () => {
   router.get('/active', jobPostingController.getPublicJobPostings.bind(jobPostingController));
 
   router.get(
+    '/matches',
+    authGuard([USER_ROLE.CANDIDATE]),
+    jobPostingController.getCandidateMatchedJobPostings.bind(jobPostingController),
+  );
+
+  router.get(
     '/',
     authGuard([USER_ROLE.RECRUITER, USER_ROLE.ADMIN]),
     jobPostingController.getJobPostings.bind(jobPostingController),

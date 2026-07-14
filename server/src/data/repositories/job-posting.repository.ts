@@ -3,7 +3,7 @@ import { DbClient } from '../../config/db-client.ts';
 import { jobPosting, JobPosting, JobPostingInsert, JobPostingStatus } from '../schema/job-posting.schema.ts';
 import { TOKENS } from '../../config/dependency-tokens.ts';
 import { GenericRepository } from './generic.repository.ts';
-import { and, asc, countDistinct, desc, eq, getTableColumns, gte, ilike, or, SQL } from 'drizzle-orm';
+import { and, asc, countDistinct, desc, eq, getTableColumns, gte, ilike, or, SQL, sql } from 'drizzle-orm';
 import { jobPostingSkill } from '../schema/job-posting-skill.schema.ts';
 import skill from '../schema/skill.schema.ts';
 import type { JobPostingDetailInclude, JobPostingListRequest } from '../../lib/zod/job-posting.zod-schema.ts';
@@ -35,6 +35,13 @@ type FindJobPostingsOptions = {
   includeCompany?: boolean;
 };
 
+export type JobPostingSkillMatch = {
+  score: number | null;
+  matchedSkillCount: number;
+  requiredSkillCount: number;
+  experienceQualifiedCount: number;
+};
+
 export type JobPostingListItem = Omit<JobPosting, 'companyId' | 'description' | 'isDeleted'> & {
   company?: {
     id: number;
@@ -42,6 +49,7 @@ export type JobPostingListItem = Omit<JobPosting, 'companyId' | 'description' | 
     logo: string | null;
     websiteUrl: string | null;
   };
+  match?: JobPostingSkillMatch;
 };
 
 export type JobPostingDetail = Omit<JobPosting, 'isDeleted'> & {
@@ -224,6 +232,120 @@ export class JobPostingRepository extends GenericRepository<JobPosting, JobPosti
 
     query = query.limit(pageSize);
     query = query.offset(skip);
+
+    const [data, [countResult]] = await Promise.all([query, countQuery]);
+
+    return {
+      data,
+      totalItems: countResult?.totalItems ?? 0,
+    };
+  }
+
+  async findCandidateMatchedJobPostings(
+    userId: string,
+    filters: FindJobPostingsFilters = {},
+    pagination: FindJobPostingsPagination = {},
+  ): Promise<FindJobPostingsResult> {
+    const { status, companyId, skills, search, expiresAtFrom } = filters;
+    const { page = 1, pageSize = 50 } = pagination;
+    const skip = (page - 1) * pageSize;
+    const requiredSkillCountExpression = sql<number>`(
+      select count(*)::int
+      from "job_posting_skill" required_skill
+      where required_skill."job_posting_id" = ${jobPosting.id}
+    )`;
+    const matchedSkillCountExpression = sql<number>`(
+      select count(*)::int
+      from "job_posting_skill" required_skill
+      inner join "user_skill" candidate_skill
+        on candidate_skill."skill_id" = required_skill."skill_id"
+        and candidate_skill."user_id" = ${userId}
+      where required_skill."job_posting_id" = ${jobPosting.id}
+    )`;
+    const experienceQualifiedCountExpression = sql<number>`(
+      select count(*)::int
+      from "job_posting_skill" required_skill
+      inner join "user_skill" candidate_skill
+        on candidate_skill."skill_id" = required_skill."skill_id"
+        and candidate_skill."user_id" = ${userId}
+      where required_skill."job_posting_id" = ${jobPosting.id}
+        and (
+          required_skill."yoe" is null
+          or candidate_skill."years_of_experience" >= required_skill."yoe"
+        )
+    )`;
+    const matchScoreExpression = sql<number | null>`case
+      when ${requiredSkillCountExpression} = 0 then null
+      else round(
+        (
+          (${matchedSkillCountExpression} * 0.8)
+          + (${experienceQualifiedCountExpression} * 0.2)
+        ) / ${requiredSkillCountExpression} * 100
+      )::int
+    end`;
+    const selectFields = {
+      id: jobPosting.id,
+      title: jobPosting.title,
+      shortDescription: jobPosting.shortDescription,
+      workLocation: jobPosting.workLocation,
+      employmentType: jobPosting.employmentType,
+      salaryRange: jobPosting.salaryRange,
+      status: jobPosting.status,
+      expiresAt: jobPosting.expiresAt,
+      createdBy: jobPosting.createdBy,
+      createdAt: jobPosting.createdAt,
+      updatedAt: jobPosting.updatedAt,
+      company: {
+        id: company.id,
+        name: company.name,
+        logo: company.logoUrl,
+        websiteUrl: company.websiteUrl,
+      },
+      match: {
+        score: matchScoreExpression,
+        matchedSkillCount: matchedSkillCountExpression,
+        requiredSkillCount: requiredSkillCountExpression,
+        experienceQualifiedCount: experienceQualifiedCountExpression,
+      },
+    };
+
+    let query = this.db
+      .select(selectFields)
+      .from(jobPosting)
+      .innerJoin(company, eq(jobPosting.companyId, company.id))
+      .$dynamic();
+    let countQuery = this.db
+      .select({ totalItems: countDistinct(jobPosting.id) })
+      .from(jobPosting)
+      .$dynamic();
+    const conditions: SQL[] = [eq(jobPosting.isDeleted, false)];
+
+    if (status) conditions.push(eq(jobPosting.status, status));
+    if (expiresAtFrom) conditions.push(gte(jobPosting.expiresAt, expiresAtFrom));
+    if (companyId) conditions.push(eq(jobPosting.companyId, companyId));
+    if (search) conditions.push(ilike(jobPosting.title, `%${search}%`));
+
+    if (skills?.length) {
+      const skillSlugs = sql.join(skills.map((slug) => sql`${slug}`), sql`, `);
+      conditions.push(sql`exists (
+        select 1
+        from "job_posting_skill" filter_job_skill
+        inner join "skill" filter_skill on filter_skill."id" = filter_job_skill."skill_id"
+        where filter_job_skill."job_posting_id" = ${jobPosting.id}
+          and filter_skill."slug" in (${skillSlugs})
+      )`);
+    }
+
+    query = query
+      .where(and(...conditions))
+      .orderBy(
+        sql`${matchScoreExpression} desc nulls last`,
+        desc(matchedSkillCountExpression),
+        desc(jobPosting.createdAt),
+      )
+      .limit(pageSize)
+      .offset(skip);
+    countQuery = countQuery.where(and(...conditions));
 
     const [data, [countResult]] = await Promise.all([query, countQuery]);
 

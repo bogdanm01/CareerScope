@@ -7,10 +7,13 @@ import {
   BriefcaseBusiness,
   Building2,
   CalendarDays,
+  Check,
   ExternalLink,
   Globe2,
   MapPin,
+  TriangleAlert,
   WalletCards,
+  X,
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -24,6 +27,7 @@ import { applyToJobPosting } from '../lib/job-applications-api';
 import { authErrorAtom, authLoadingAtom, authSessionAtom } from '../store/auth';
 import { formatDate } from '../lib/date-format';
 import { getCompanyLogoUrl } from '../lib/company-logo';
+import { getMe, type MeUserSkill } from '../lib/me-api';
 
 const getWebsiteHref = (websiteUrl: string) =>
   /^https?:\/\//i.test(websiteUrl) ? websiteUrl : `https://${websiteUrl}`;
@@ -67,6 +71,7 @@ export const CandidateJobDetailPage = ({ isPublic = false }: CandidateJobDetailP
   const [loading, setLoading] = useState(true);
   const [applying, setApplying] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [candidateSkills, setCandidateSkills] = useState<MeUserSkill[] | null>(null);
 
   const jobPostingId = Number(id);
   const backPath = isPublic ? '/jobs' : '/panel/jobs';
@@ -99,6 +104,24 @@ export const CandidateJobDetailPage = ({ isPublic = false }: CandidateJobDetailP
     const timeoutId = window.setTimeout(() => void loadDetail(), 0);
     return () => window.clearTimeout(timeoutId);
   }, [loadDetail]);
+
+  useEffect(() => {
+    if (session?.user.role !== 'Candidate') return;
+
+    let mounted = true;
+    getMe().then(
+      (response) => {
+        if (mounted) setCandidateSkills(response.data.skills);
+      },
+      () => {
+        if (mounted) setCandidateSkills([]);
+      },
+    );
+
+    return () => {
+      mounted = false;
+    };
+  }, [session?.user.id, session?.user.role]);
 
   const handleApply = async () => {
     if (!detail) {
@@ -227,7 +250,14 @@ export const CandidateJobDetailPage = ({ isPublic = false }: CandidateJobDetailP
                 Skills and minimum experience requested for this role.
               </p>
             </div>
-            <span className="text-sm text-foreground-500">{detail?.skills?.length || 0} listed</span>
+            {candidateSkills ? (
+              <Chip className="rounded-lg" color="success" size="sm" variant="soft">
+                {(detail?.skills || []).filter((skill) => candidateSkills.some((candidateSkill) => candidateSkill.id === skill.id)).length}
+                {' '}of {detail?.skills?.length || 0} skills in profile
+              </Chip>
+            ) : (
+              <span className="text-sm text-foreground-500">{detail?.skills?.length || 0} listed</span>
+            )}
           </div>
           <div className="mt-6 grid gap-3 sm:grid-cols-2">
             {(detail?.skills || []).length === 0 ? (
@@ -235,17 +265,60 @@ export const CandidateJobDetailPage = ({ isPublic = false }: CandidateJobDetailP
                 No skill requirements listed.
               </div>
             ) : (
-              detail?.skills?.map((skill) => (
-                <div
-                  key={skill.id}
-                  className="flex items-center justify-between gap-3 rounded-lg border border-divider bg-content2 px-4 py-3 text-sm"
-                >
-                  <strong className="font-medium text-foreground">{skill.name}</strong>
-                  <span className="whitespace-nowrap text-foreground-500">
-                    {skill.yoe === null || skill.yoe === undefined ? 'Any experience' : `${skill.yoe}y required`}
-                  </span>
-                </div>
-              ))
+              detail?.skills?.map((skill) => {
+                const candidateSkill = candidateSkills?.find((item) => item.id === skill.id);
+                const requiredYears = skill.yoe;
+                const candidateYears = candidateSkill?.yearsOfExperience;
+                const meetsExperience = Boolean(candidateSkill) && (
+                  requiredYears === null ||
+                  requiredYears === undefined ||
+                  (candidateYears !== null && candidateYears !== undefined && candidateYears >= requiredYears)
+                );
+                const hasExperienceGap = Boolean(candidateSkill) && !meetsExperience;
+                const requiredLabel = requiredYears === null || requiredYears === undefined
+                  ? 'No minimum required'
+                  : `${requiredYears}y required`;
+
+                if (!candidateSkills) {
+                  return (
+                    <div
+                      key={skill.id}
+                      className="flex items-center justify-between gap-3 rounded-lg border border-divider bg-content2 px-4 py-3 text-sm"
+                    >
+                      <strong className="font-medium text-foreground">{skill.name}</strong>
+                      <span className="whitespace-nowrap text-foreground-500">{requiredLabel}</span>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div
+                    key={skill.id}
+                    className={[
+                      'flex flex-wrap items-center justify-between gap-3 rounded-lg border px-4 py-3 text-sm',
+                      meetsExperience ? 'status-success' : hasExperienceGap ? 'status-warning' : 'status-danger',
+                    ].join(' ')}
+                  >
+                    <span className="inline-flex min-w-0 items-center gap-3 font-medium">
+                      {meetsExperience ? (
+                        <Check aria-hidden="true" className="h-4 w-4 shrink-0" />
+                      ) : hasExperienceGap ? (
+                        <TriangleAlert aria-hidden="true" className="h-4 w-4 shrink-0" />
+                      ) : (
+                        <X aria-hidden="true" className="h-4 w-4 shrink-0" />
+                      )}
+                      <span className="truncate">{skill.name}</span>
+                    </span>
+                    <span className="text-right">
+                      {!candidateSkill
+                        ? `Not in profile · ${requiredLabel}`
+                        : candidateYears === null || candidateYears === undefined
+                          ? `In profile · experience not provided · ${requiredLabel}`
+                          : `${candidateYears}y experience · ${requiredLabel}`}
+                    </span>
+                  </div>
+                );
+              })
             )}
           </div>
         </section>

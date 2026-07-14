@@ -5,6 +5,8 @@ import { ChevronLeft, ChevronRight, MoreHorizontal, PanelTopOpen, Plus, RotateCc
 import { getRecruiterJobPostings, type JobPostingListItem } from '../lib/job-postings-api';
 import { formatDate } from '../lib/date-format';
 import { StatusMultiSelect } from '../components/StatusMultiSelect';
+import { useRecruiterPostingAccess } from '../hooks/useRecruiterPostingAccess';
+import { CompanyApprovalRequiredCard } from '../components/CompanyApprovalRequiredCard';
 
 const pageSize = 10;
 
@@ -34,6 +36,13 @@ const getStatusLabel = (status: string) => {
 
 export const RecruiterJobPostingsPage = () => {
   const navigate = useNavigate();
+  const {
+    company,
+    loading: approvalLoading,
+    error: approvalError,
+    isBlocked,
+    showBlockedToast,
+  } = useRecruiterPostingAccess();
   const [postings, setPostings] = useState<JobPostingListItem[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -41,6 +50,10 @@ export const RecruiterJobPostingsPage = () => {
   const [statusFilters, setStatusFilters] = useState<string[]>([]);
 
   useEffect(() => {
+    if (approvalLoading || isBlocked) {
+      return;
+    }
+
     let cancelled = false;
 
     getRecruiterJobPostings().then(
@@ -59,7 +72,7 @@ export const RecruiterJobPostingsPage = () => {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [approvalLoading, isBlocked]);
 
   const statusOptions = useMemo(
     () => Array.from(new Set(postings.map((posting) => posting.status))).sort().map((status) => ({
@@ -102,23 +115,43 @@ export const RecruiterJobPostingsPage = () => {
             </p>
           </div>
           <Button
-            className="rounded-lg"
+            className={`rounded-lg ${isBlocked ? 'cursor-not-allowed opacity-50' : ''}`}
             type="button"
             variant="primary"
-            onPress={() => navigate('/panel/job-postings/new')}
+            isDisabled={approvalLoading}
+            aria-disabled={isBlocked}
+            onPress={() => {
+              if (isBlocked) {
+                showBlockedToast();
+                return;
+              }
+              navigate('/panel/job-postings/new');
+            }}
           >
             <Plus aria-hidden="true" className="h-4 w-4" strokeWidth={1.8} />
             <span>Add posting</span>
           </Button>
         </div>
 
-        {error && (
+        {approvalLoading ? (
+          <div className="mt-5 rounded-xl border border-divider bg-content1 p-6 text-sm text-foreground-500">
+            Checking company approval...
+          </div>
+        ) : isBlocked ? (
+          <div className="mt-5">
+            <CompanyApprovalRequiredCard
+              area="postings"
+              company={company}
+              verificationError={approvalError}
+            />
+          </div>
+        ) : error ? (
           <div className="mt-5 rounded-lg border border-danger/20 bg-danger/10 px-4 py-3 text-sm leading-6 text-danger-700">
             {error}
           </div>
-        )}
+        ) : null}
 
-        {postings.length === 0 ? (
+        {!approvalLoading && !isBlocked && (postings.length === 0 ? (
           <div className="mt-5 rounded-xl border border-dashed border-divider bg-content2 p-6 text-sm text-foreground-500">
             No job postings yet. Create your first posting to start collecting applicants.
           </div>
@@ -276,7 +309,7 @@ export const RecruiterJobPostingsPage = () => {
               </div>
             )}
           </>
-        )}
+        ))}
       </section>
     </div>
   );

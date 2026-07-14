@@ -16,6 +16,13 @@ export class HttpError extends Error {
 
 const DEFAULT_API_BASE_URL = 'http://localhost:5432';
 
+const formatErrorField = (field: string) => {
+  const leafField = field.split('.').at(-1) ?? field;
+  return leafField
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/^./, (character) => character.toUpperCase());
+};
+
 export const getApiBaseUrl = () => import.meta.env.VITE_API_URL?.trim() || DEFAULT_API_BASE_URL;
 
 const buildUrl = (path: string) => {
@@ -61,6 +68,25 @@ const readError = async (response: Response): Promise<{ message: string; code?: 
       const payload = JSON.parse(text) as Record<string, unknown>;
       const message = payload.message;
       const code = payload.code;
+      const errors = payload.errors;
+
+      if (Array.isArray(errors)) {
+        const firstError = errors.find(
+          (error): error is { field?: unknown; message: string } =>
+            typeof error === 'object'
+            && error !== null
+            && typeof (error as { message?: unknown }).message === 'string'
+            && Boolean((error as { message: string }).message.trim()),
+        );
+
+        if (firstError) {
+          const field = typeof firstError.field === 'string' ? firstError.field.trim() : '';
+          return {
+            message: field ? `${formatErrorField(field)}: ${firstError.message}` : firstError.message,
+            code: typeof code === 'string' ? code : undefined,
+          };
+        }
+      }
 
       if (typeof message === 'string' && message.trim()) {
         return {

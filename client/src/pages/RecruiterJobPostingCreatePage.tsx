@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, Calendar, Card, DateField, DatePicker, Dropdown, Input, ListBox, Select } from '@heroui/react';
+import { Button, Calendar, Card, DateField, DatePicker, Dropdown, Input, ListBox, Select, toast } from '@heroui/react';
 import { parseDate } from '@internationalized/date';
 import { ArrowLeft, BriefcaseBusiness, CalendarDays, ChevronDown, FilePlus2, MapPin, Plus, Send, WalletCards, X } from 'lucide-react';
 import { useSetAtom } from 'jotai';
@@ -39,6 +39,9 @@ type PostingLogisticsDraft = {
   employmentType: JobPostingEmploymentType | '';
   salaryRange: string;
 };
+
+type PostingField = 'title' | 'shortDescription' | 'description' | 'expiresAt';
+type PostingFieldErrors = Partial<Record<PostingField, string>>;
 
 const steps: Array<{ key: CreateStep; label: string }> = [
   { key: 'basic', label: 'Basic Info' },
@@ -149,7 +152,7 @@ export const RecruiterJobPostingCreatePage = ({ loading }: RecruiterJobPostingCr
     employmentType: 'FullTime',
     salaryRange: '',
   });
-  const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<PostingFieldErrors>({});
   const [skillMessage, setSkillMessage] = useState<string | null>(null);
   const [skillCatalogCount, setSkillCatalogCount] = useState(0);
   const [skillCategories, setSkillCategories] = useState<SkillCategory[]>([]);
@@ -289,26 +292,81 @@ export const RecruiterJobPostingCreatePage = ({ loading }: RecruiterJobPostingCr
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setError(null);
     setAuthError(null);
+
+    if (form.title.trim().length < 3) {
+      setActiveStep('basic');
+      setFieldErrors((current) => ({ ...current, title: 'Enter a title with at least 3 characters.' }));
+      toast.danger('Draft could not be saved', {
+        description: 'Add a job title with at least 3 characters. Other fields can be completed later.',
+      });
+      return;
+    }
+
     setAuthLoading(true);
 
     try {
       await submitPosting('Draft');
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : 'Unable to create job posting');
+      toast.danger('Draft could not be saved', {
+        description: submitError instanceof Error
+          ? submitError.message
+          : 'Check the posting details and try again.',
+      });
     } finally {
       setAuthLoading(false);
     }
   };
 
   const publishPosting = async () => {
-    setError(null);
     setAuthError(null);
+
+    const nextFieldErrors: PostingFieldErrors = {};
+    const title = form.title.trim();
+    const shortDescription = form.shortDescription?.trim() ?? '';
+    const description = form.description?.trim() ?? '';
+
+    if (title.length < 10) {
+      nextFieldErrors.title = 'Enter a title with at least 10 characters.';
+    }
+
+    if (!shortDescription) {
+      nextFieldErrors.shortDescription = 'Add a short description before publishing for approval.';
+    } else if (shortDescription.length > 80) {
+      nextFieldErrors.shortDescription = 'Keep the short description to 80 characters or fewer.';
+    }
+
+    if (description.length < 60) {
+      nextFieldErrors.description = 'Add a full job description with at least 60 characters.';
+    }
+
+    if (!form.expiresAt) {
+      nextFieldErrors.expiresAt = 'Choose an application closing date before publishing for approval.';
+    }
+
+    setFieldErrors(nextFieldErrors);
+
+    if (Object.keys(nextFieldErrors).length > 0) {
+      setActiveStep('basic');
+      const fieldLabels: Record<PostingField, string> = {
+        title: 'title',
+        shortDescription: 'short description',
+        description: 'description',
+        expiresAt: 'closing date',
+      };
+      const invalidFields = (Object.keys(nextFieldErrors) as PostingField[]).map((field) => fieldLabels[field]);
+      toast.danger('Posting is not ready for approval', {
+        description: `Complete or correct: ${invalidFields.join(', ')}. You can still save it as a draft.`,
+      });
+      return;
+    }
 
     if (selectedSkills.length === 0) {
       setActiveStep('skills');
       setSkillMessage('Add at least one required skill before publishing for approval.');
+      toast.danger('Posting is not ready for approval', {
+        description: 'Add at least one required skill. You can still save the posting as a draft.',
+      });
       return;
     }
 
@@ -317,7 +375,11 @@ export const RecruiterJobPostingCreatePage = ({ loading }: RecruiterJobPostingCr
     try {
       await submitPosting('PendingApproval');
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : 'Unable to publish job posting');
+      toast.danger('Posting could not be submitted for approval', {
+        description: submitError instanceof Error
+          ? submitError.message
+          : 'Check the required posting details and try again.',
+      });
     } finally {
       setAuthLoading(false);
     }
@@ -399,6 +461,9 @@ export const RecruiterJobPostingCreatePage = ({ loading }: RecruiterJobPostingCr
                 <p className="mt-2 text-sm leading-6 text-foreground-500">
                   Keep the short description concise. Use the markdown editor for the full role details.
                 </p>
+                <p className="mt-1 text-xs leading-5 text-foreground-500">
+                  <span className="text-danger">*</span> Required for approval. The title is the only required field for a draft.
+                </p>
               </div>
 
               <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(220px,1fr)]">
@@ -406,10 +471,13 @@ export const RecruiterJobPostingCreatePage = ({ loading }: RecruiterJobPostingCr
                   <span className="text-sm font-medium text-foreground">Title <span className="text-danger">*</span></span>
                   <Input
                     value={form.title}
-                    onChange={(event) => updateField('title', event.target.value)}
+                    onChange={(event) => {
+                      updateField('title', event.target.value);
+                      setFieldErrors((current) => ({ ...current, title: undefined }));
+                    }}
                     placeholder="Senior Frontend Engineer"
-                    required
                   />
+                  {fieldErrors.title && <span className="text-xs text-danger">{fieldErrors.title}</span>}
                 </label>
 
                 <label className="grid gap-2">
@@ -477,31 +545,45 @@ export const RecruiterJobPostingCreatePage = ({ loading }: RecruiterJobPostingCr
                 </label>
 
                 <div className="grid gap-2">
-                  <span className="text-sm font-medium text-foreground">Expires at</span>
+                  <span className="text-sm font-medium text-foreground">Expires at <span className="text-danger">*</span></span>
                   <PostingDatePicker
                     value={form.expiresAt ?? ''}
-                    onChange={(value) => updateField('expiresAt', value)}
+                    onChange={(value) => {
+                      updateField('expiresAt', value);
+                      setFieldErrors((current) => ({ ...current, expiresAt: undefined }));
+                    }}
                   />
+                  {fieldErrors.expiresAt && <span className="text-xs text-danger">{fieldErrors.expiresAt}</span>}
                 </div>
               </div>
 
               <label className="grid gap-2">
-                <span className="text-sm font-medium text-foreground">Short description</span>
+                <span className="text-sm font-medium text-foreground">Short description <span className="text-danger">*</span></span>
                 <Input
                   value={form.shortDescription ?? ''}
-                  onChange={(event) => updateField('shortDescription', event.target.value)}
+                  onChange={(event) => {
+                    updateField('shortDescription', event.target.value);
+                    setFieldErrors((current) => ({ ...current, shortDescription: undefined }));
+                  }}
                   placeholder="One or two sentences for the postings list"
-                  maxLength={120}
+                  maxLength={80}
                 />
+                <span className={fieldErrors.shortDescription ? 'text-xs text-danger' : 'text-xs text-foreground-500'}>
+                  {fieldErrors.shortDescription ?? `${form.shortDescription?.length ?? 0}/80 characters`}
+                </span>
               </label>
 
               <div className="grid gap-2">
-                <span className="text-sm font-medium text-foreground">Description</span>
+                <span className="text-sm font-medium text-foreground">Description <span className="text-danger">*</span></span>
                 <RichTextEditor
                   value={form.description ?? ''}
-                  onChange={(value) => updateField('description', value)}
+                  onChange={(value) => {
+                    updateField('description', value);
+                    setFieldErrors((current) => ({ ...current, description: undefined }));
+                  }}
                   placeholder="Add responsibilities, requirements, benefits, and hiring process details..."
                 />
+                {fieldErrors.description && <span className="text-xs text-danger">{fieldErrors.description}</span>}
               </div>
                 </>
               )}
@@ -510,7 +592,7 @@ export const RecruiterJobPostingCreatePage = ({ loading }: RecruiterJobPostingCr
               <div className="grid gap-5">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <h3 className="text-2xl text-foreground">Required skills</h3>
+                    <h3 className="text-2xl text-foreground">Required skills <span className="text-danger">*</span></h3>
                     <p className="mt-1 text-sm leading-6 text-foreground-500">
                       Add the skills candidates need for this posting.
                     </p>
@@ -802,12 +884,6 @@ export const RecruiterJobPostingCreatePage = ({ loading }: RecruiterJobPostingCr
                   activities={interviewActivities}
                   onChange={setInterviewActivities}
                 />
-              )}
-
-              {(error || loading) && (
-                <div className="rounded-lg border border-primary/20 bg-primary/10 px-4 py-3 text-sm leading-6 text-primary-700">
-                  {error || 'Saving posting...'}
-                </div>
               )}
 
               <div className="flex flex-col gap-3 border-t border-divider pt-5 sm:flex-row sm:items-center sm:justify-between">

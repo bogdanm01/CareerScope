@@ -202,6 +202,43 @@ export class JobPostingService {
     };
   }
 
+  async getCandidateMatchedJobPostings(
+    payload: unknown,
+    user: AuthenticatedUser,
+  ): Promise<PaginatedResult<JobPostingListItem>> {
+    const validationResult = JobPostingListRequestSchema.safeParse(payload);
+
+    if (!validationResult.success) {
+      throw new ZodValidationError(validationResult.error);
+    }
+
+    const query = validationResult.data;
+    const result = await this.jobPostingRepository.findCandidateMatchedJobPostings(
+      user.id,
+      {
+        status: JOB_POSTING_STATUS.ACTIVE,
+        expiresAtFrom: new Date(),
+        companyId: query.companyId,
+        skills: query.skills,
+        search: query.search,
+      },
+      {
+        page: query.page,
+        pageSize: query.limit,
+      },
+    );
+
+    return {
+      data: result.data,
+      pagination: {
+        currentPage: query.page,
+        pageSize: query.limit,
+        totalPages: Math.ceil(result.totalItems / query.limit),
+        totalItems: result.totalItems,
+      },
+    };
+  }
+
   async getJobPostingById(payload: unknown, user?: AuthenticatedUser): Promise<SingleResult<JobPostingDetail>> {
     const validationResult = JobPostingDetailRequestSchema.safeParse(payload);
 

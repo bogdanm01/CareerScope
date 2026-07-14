@@ -42,6 +42,8 @@ import { CategoryBarChart } from "../components/analytics/CategoryBarChart";
 import { getRecordNumber, getRecordString, statusLabel } from "../lib/analytics-utils";
 import { CompactStatCard } from "../components/analytics/CompactStatCard";
 import { CandidatePipelineTable } from "../components/analytics/CandidatePipelineTable";
+import { useRecruiterPostingAccess } from "../hooks/useRecruiterPostingAccess";
+import { CompanyApprovalRequiredCard } from "../components/CompanyApprovalRequiredCard";
 
 const todayIso = () => new Date().toISOString().slice(0, 10);
 
@@ -497,6 +499,15 @@ export const AnalyticsPage = () => {
     useState<RecruiterAnalyticsTab>("overview");
   const rangeModal = useOverlayState();
   const sessionRole = session?.user.role as AnalyticsRole | undefined;
+  const isRecruiter = sessionRole === "Recruiter";
+  const {
+    company: recruiterCompany,
+    loading: companyApprovalLoading,
+    error: companyApprovalError,
+    canCreatePosting: isRecruiterCompanyApproved,
+  } = useRecruiterPostingAccess(isRecruiter);
+  const recruiterAnalyticsBlocked =
+    isRecruiter && !companyApprovalLoading && !isRecruiterCompanyApproved;
 
   const loadOverview = useCallback(
     async (
@@ -535,9 +546,13 @@ export const AnalyticsPage = () => {
   );
 
   useEffect(() => {
+    if (isRecruiter && (companyApprovalLoading || !isRecruiterCompanyApproved)) {
+      return;
+    }
+
     const timeoutId = window.setTimeout(() => void loadOverview(), 0);
     return () => window.clearTimeout(timeoutId);
-  }, [loadOverview]);
+  }, [companyApprovalLoading, isRecruiter, isRecruiterCompanyApproved, loadOverview]);
 
   const openRangeModal = () => {
     if (overview) {
@@ -679,7 +694,15 @@ export const AnalyticsPage = () => {
         </Modal.Backdrop>
       </Modal>
 
-      {loading && !overview && (
+      {recruiterAnalyticsBlocked && (
+        <CompanyApprovalRequiredCard
+          area="analytics"
+          company={recruiterCompany}
+          verificationError={companyApprovalError}
+        />
+      )}
+
+      {!recruiterAnalyticsBlocked && (loading || companyApprovalLoading) && !overview && (
         <Card className="rounded-xl border border-divider shadow-none">
           <Card.Content className="p-6 text-sm text-default-500">
             Loading analytics...
@@ -687,7 +710,7 @@ export const AnalyticsPage = () => {
         </Card>
       )}
 
-      {errorMessage && !loading && (
+      {!recruiterAnalyticsBlocked && errorMessage && !loading && (
         <Card className="rounded-xl border border-danger-200 bg-danger-50 shadow-none">
           <Card.Content className="p-6">
             <p className="text-sm text-danger-700">{errorMessage}</p>
@@ -695,7 +718,7 @@ export const AnalyticsPage = () => {
         </Card>
       )}
 
-      {overview && (
+      {!recruiterAnalyticsBlocked && overview && (
         <>
           {activeRole === "Recruiter" && (
             <Tabs
