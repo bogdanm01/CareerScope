@@ -525,8 +525,12 @@ export class JobPostingService {
     nextStatus: JobPostingStatus | undefined,
     allowedTransitions: Partial<Record<JobPostingStatus, JobPostingStatus[]>>,
   ): void {
-    if (nextStatus === undefined || nextStatus === currentStatus) {
+    if (nextStatus === undefined) {
       return;
+    }
+
+    if (nextStatus === currentStatus) {
+      throw new BadRequestError(`Job posting is already in ${currentStatus} status.`);
     }
 
     const allowedNextStatuses = allowedTransitions[currentStatus] ?? [];
