@@ -75,7 +75,7 @@ export const JobPostingListRequestSchema = z.object({
 const JobPostingUpdateBaseRequestSchema = z.object({
   title: z.string().trim().min(3).optional(),
   shortDescription: z.string().trim().max(80).optional(),
-  description: z.string().trim().min(60).optional(), // TODO: Decide min length (markdown)
+  description: z.string().trim().optional(),
   workLocation: JobPostingWorkLocationSchema.optional(),
   employmentType: JobPostingEmploymentTypeSchema.optional(),
   salaryRange: z.string().trim().max(80).optional(),
@@ -124,7 +124,7 @@ export const JobPostingReadyForApprovalSchema = z
       error: 'Short description cannot be more than 80 characters long.',
     }),
     description: z.string().trim().min(60, {
-      error: 'Description is required when submitting job posting for approval.',
+      error: 'Description must be at least 60 characters long when submitting for approval.',
     }),
     expiresAt: z.coerce.date({
       error: 'expiresAt must be provided when submitting job posting for approval.',

@@ -36,6 +36,7 @@ import { getSkillCategories, type Skill, type SkillCategory } from '../lib/skill
 import { formatDateTime } from '../lib/date-format';
 import { authErrorAtom, authLoadingAtom } from '../store/auth';
 import { InterviewActivityTemplateEditor } from '../components/InterviewActivityTemplateEditor';
+import { FieldRequirementLegend, FieldRequirementMark } from '../components/FieldRequirementMark';
 
 type SelectedSkill = {
   id: number;
@@ -84,6 +85,18 @@ const formatStatusLabel = (status?: string | null) => {
 };
 
 const todayIso = () => new Date().toISOString().slice(0, 10);
+
+const getFriendlySubmissionError = (error: unknown, fallback: string) => {
+  if (!(error instanceof Error) || !error.message.trim()) {
+    return fallback;
+  }
+
+  if (/request validation failed/i.test(error.message)) {
+    return 'One or more posting details are missing or invalid. Review the required fields and try again.';
+  }
+
+  return error.message;
+};
 
 const PostingDatePicker = ({
   value,
@@ -171,7 +184,7 @@ export const RecruiterJobPostingDetailPage = () => {
   const setAuthLoading = useSetAtom(authLoadingAtom);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [detail, setDetail] = useState<JobPostingDetail | null>(null);
   const [form, setForm] = useState<PostingFormState>({
     title: '',
@@ -217,13 +230,13 @@ export const RecruiterJobPostingDetailPage = () => {
 
   const loadDetail = async () => {
     if (!Number.isFinite(postingId)) {
-      setError('Invalid job posting id.');
+      setLoadError('Invalid job posting id.');
       setLoading(false);
       return;
     }
 
     setLoading(true);
-    setError(null);
+    setLoadError(null);
 
     try {
       const [response, activityResponse] = await Promise.all([
@@ -242,7 +255,7 @@ export const RecruiterJobPostingDetailPage = () => {
         })),
       );
     } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : 'Unable to load job posting');
+      setLoadError(loadError instanceof Error ? loadError.message : 'Unable to load job posting');
       setDetail(null);
     } finally {
       setLoading(false);
@@ -341,6 +354,19 @@ export const RecruiterJobPostingDetailPage = () => {
       .filter((activity) => activity.title.length > 0),
   });
 
+  const applyUpdatedPosting = (updatedPosting: JobPostingDetail) => {
+    const completePosting: JobPostingDetail = {
+      ...updatedPosting,
+      company: updatedPosting.company ?? detail?.company,
+      skills: updatedPosting.skills ?? detail?.skills,
+      statusHistory: updatedPosting.statusHistory ?? detail?.statusHistory,
+    };
+
+    setDetail(completePosting);
+    setForm(toFormState(completePosting));
+    setSelectedSkills(toSelectedSkills(completePosting));
+  };
+
   const savePosting = async (nextStatus?: JobPostingStatus) => {
     if (!detail) {
       return;
@@ -348,19 +374,15 @@ export const RecruiterJobPostingDetailPage = () => {
 
     setSaving(true);
     setSkillMessage(null);
-    setError(null);
     setAuthError(null);
     setAuthLoading(true);
 
     try {
       const response = await updateJobPosting(detail.id, buildPayload(nextStatus));
-      setDetail(response.data);
-      setForm(toFormState(response.data));
-      setSelectedSkills(toSelectedSkills(response.data));
+      applyUpdatedPosting(response.data);
       toast.success(nextStatus === 'PendingApproval' ? 'Posting submitted for approval.' : 'Posting updated successfully.');
     } catch (submitError) {
-      const message = submitError instanceof Error ? submitError.message : 'Unable to update job posting';
-      setError(message);
+      const message = getFriendlySubmissionError(submitError, 'Check the posting details and try again.');
       toast.danger(nextStatus === 'PendingApproval' ? 'Unable to submit posting' : 'Unable to update posting', {
         description: message,
       });
@@ -376,15 +398,12 @@ export const RecruiterJobPostingDetailPage = () => {
     }
 
     setSaving(true);
-    setError(null);
     setAuthError(null);
     setAuthLoading(true);
 
     try {
       const response = await updateJobPosting(detail.id, { status: nextStatus });
-      setDetail(response.data);
-      setForm(toFormState(response.data));
-      setSelectedSkills(toSelectedSkills(response.data));
+      applyUpdatedPosting(response.data);
       toast.success(
         nextStatus === 'Paused'
           ? 'Posting paused.'
@@ -394,7 +413,6 @@ export const RecruiterJobPostingDetailPage = () => {
       );
     } catch (statusError) {
       const message = statusError instanceof Error ? statusError.message : 'Unable to update job posting status';
-      setError(message);
       toast.danger(
         nextStatus === 'Paused'
           ? 'Unable to pause posting'
@@ -414,13 +432,64 @@ export const RecruiterJobPostingDetailPage = () => {
     await savePosting();
   };
 
+  const requestPublish = () => {
+    const issues: string[] = [];
+    const title = form.title.trim();
+    const shortDescription = form.shortDescription.trim();
+    const description = form.description.trim();
+
+    if (title.length < 10) {
+      issues.push('Enter a title with at least 10 characters.');
+    }
+
+    if (!shortDescription) {
+      issues.push('Add a short description.');
+    } else if (shortDescription.length > 80) {
+      issues.push('Keep the short description to 80 characters or fewer.');
+    }
+
+    if (description.length < 60) {
+      issues.push('Add a full description with at least 60 characters.');
+    }
+
+    if (!form.expiresAt) {
+      issues.push('Choose a closing date.');
+    } else {
+      const expiresAt = new Date(`${form.expiresAt}T00:00:00.000Z`);
+      const minimumExpiresAt = new Date();
+      minimumExpiresAt.setDate(minimumExpiresAt.getDate() + 7);
+      const maximumExpiresAt = new Date();
+      maximumExpiresAt.setDate(maximumExpiresAt.getDate() + 90);
+
+      if (Number.isNaN(expiresAt.getTime())) {
+        issues.push('Choose a valid closing date.');
+      } else if (expiresAt < minimumExpiresAt) {
+        issues.push('Choose a closing date at least 7 days from now.');
+      } else if (expiresAt > maximumExpiresAt) {
+        issues.push('Choose a closing date no more than 90 days from now.');
+      }
+    }
+
+    if (selectedSkills.length === 0) {
+      issues.push('Add at least one required skill.');
+    }
+
+    if (issues.length > 0) {
+      toast.danger('Posting is not ready for approval', {
+        description: issues.join(' '),
+      });
+      return;
+    }
+
+    setConfirmPublishOpen(true);
+  };
+
   const handleDelete = async () => {
     if (!detail) {
       return;
     }
 
     setSaving(true);
-    setError(null);
     setAuthError(null);
     setAuthLoading(true);
 
@@ -429,7 +498,6 @@ export const RecruiterJobPostingDetailPage = () => {
       navigate('/panel/job-postings', { replace: true });
     } catch (deleteError) {
       const message = deleteError instanceof Error ? deleteError.message : 'Unable to delete job posting';
-      setError(message);
       toast.danger('Unable to delete posting', { description: message });
     } finally {
       setSaving(false);
@@ -445,10 +513,10 @@ export const RecruiterJobPostingDetailPage = () => {
     );
   }
 
-  if (error && !detail) {
+  if (loadError && !detail) {
     return (
       <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
-        <div className="rounded-lg border border-danger/20 bg-danger/10 p-4 text-sm leading-6 text-danger-700">{error}</div>
+        <div className="rounded-lg border border-danger/20 bg-danger/10 p-4 text-sm leading-6 text-danger-700">{loadError}</div>
         <div className="mt-4 flex flex-wrap gap-3">
           <Button className="rounded-lg" type="button" variant="primary" onPress={() => void loadDetail()}>
             Retry
@@ -542,12 +610,13 @@ export const RecruiterJobPostingDetailPage = () => {
               <p className="mt-2 text-sm leading-6 text-foreground-500">
                 Update the public role details candidates see before applying.
               </p>
+              <FieldRequirementLegend />
             </div>
 
             <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(220px,1fr)]">
               <label className="grid gap-2">
                 <span className="text-sm font-medium text-foreground">
-                  Title <span className="text-danger">*</span>
+                  Title <FieldRequirementMark level="draft" />
                 </span>
                 <Input
                   value={form.title}
@@ -615,35 +684,43 @@ export const RecruiterJobPostingDetailPage = () => {
               </label>
 
               <div className="grid gap-2">
-                <span className="text-sm font-medium text-foreground">Expires at</span>
+                <span className="text-sm font-medium text-foreground">Expires at <FieldRequirementMark level="approval" /></span>
                 <PostingDatePicker value={form.expiresAt} onChange={(value) => updateField('expiresAt', value)} />
               </div>
             </div>
 
             <label className="mt-4 grid gap-2">
-              <span className="text-sm font-medium text-foreground">Short description</span>
+              <span className="text-sm font-medium text-foreground">Short description <FieldRequirementMark level="approval" /></span>
               <Input
                 value={form.shortDescription}
                 onChange={(event) => updateField('shortDescription', event.target.value)}
                 placeholder="One or two sentences for the postings list"
-                maxLength={120}
+                maxLength={80}
               />
+              <span className="text-xs text-foreground-500">
+                {form.shortDescription.length}/80 characters
+              </span>
             </label>
 
             <div className="mt-4 grid gap-2">
-              <span className="text-sm font-medium text-foreground">Description</span>
+              <span className="text-sm font-medium text-foreground">Description <FieldRequirementMark level="approval" /></span>
               <RichTextEditor
                 value={form.description}
                 onChange={(value) => updateField('description', value)}
                 placeholder="Add responsibilities, requirements, benefits, and hiring process details..."
               />
+              <span
+                className={form.description.trim().length < 60 ? 'text-xs text-warning-700' : 'text-xs text-foreground-500'}
+              >
+                {form.description.trim().length} characters · 60 minimum for approval
+              </span>
             </div>
           </Card>
 
           <Card className="rounded-xl border border-divider bg-content1 p-6 shadow-none sm:p-8">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <h3 className="text-2xl text-foreground">Required skills</h3>
+                <h3 className="text-2xl text-foreground">Required skills <FieldRequirementMark level="approval" /></h3>
                 <p className="mt-1 text-sm leading-6 text-foreground-500">
                   Add the skills candidates need for this posting.
                 </p>
@@ -836,11 +913,6 @@ export const RecruiterJobPostingDetailPage = () => {
             />
           </Card>
 
-          {error && (
-            <div className="rounded-lg border border-danger/20 bg-danger/10 px-4 py-3 text-sm leading-6 text-danger-700">
-              {error}
-            </div>
-          )}
         </form>
 
         <aside className="grid content-start gap-4 xl:sticky xl:top-6">
@@ -870,7 +942,7 @@ export const RecruiterJobPostingDetailPage = () => {
                   className="rounded-lg"
                   type="button"
                   variant="secondary"
-                  onPress={() => setConfirmPublishOpen(true)}
+                  onPress={requestPublish}
                   isDisabled={isBusy}
                 >
                   <span className="inline-flex items-center gap-2">

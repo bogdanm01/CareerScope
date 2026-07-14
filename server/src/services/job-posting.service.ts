@@ -294,7 +294,7 @@ export class JobPostingService {
     return false;
   }
 
-  async updateJobPosting(id: unknown, payload: unknown, user: AuthenticatedUser): Promise<JobPosting> {
+  async updateJobPosting(id: unknown, payload: unknown, user: AuthenticatedUser): Promise<JobPostingDetail> {
     const idValidationResult = IntegerIdSchema.safeParse({ id });
 
     if (!idValidationResult.success) {
@@ -314,7 +314,7 @@ export class JobPostingService {
     id: number,
     payload: unknown,
     user: NonNullable<AuthenticatedUser>,
-  ): Promise<JobPosting> {
+  ): Promise<JobPostingDetail> {
     const validationResult = RecruiterJobPostingUpdateRequestSchema.safeParse(payload);
 
     if (!validationResult.success) {
@@ -358,7 +358,7 @@ export class JobPostingService {
       }
     }
 
-    const updatedJobPosting = await this.jobPostingRepository.updateWithSkillsAndStatusHistory(
+    await this.jobPostingRepository.updateWithSkillsAndStatusHistory(
       id,
       {
         title: updatePayload.title,
@@ -383,10 +383,10 @@ export class JobPostingService {
       await this.interviewActivityRepository.replacePostingTemplates(id, updatePayload.interviewActivities);
     }
 
-    return updatedJobPosting;
+    return await this.getUpdatedJobPostingDetail(id);
   }
 
-  private async updateJobPostingAsAdmin(id: number, payload: unknown): Promise<JobPosting> {
+  private async updateJobPostingAsAdmin(id: number, payload: unknown): Promise<JobPostingDetail> {
     const validationResult = AdminJobPostingUpdateRequestSchema.safeParse(payload);
 
     if (!validationResult.success) {
@@ -402,7 +402,7 @@ export class JobPostingService {
       ADMIN_ALLOWED_STATUS_TRANSITIONS,
     );
 
-    return await this.jobPostingRepository.updateWithSkillsAndStatusHistory(
+    await this.jobPostingRepository.updateWithSkillsAndStatusHistory(
       id,
       {
         status: updatePayload.status,
@@ -415,6 +415,22 @@ export class JobPostingService {
       },
       existingJobPosting.status as JobPostingStatus,
     );
+
+    return await this.getUpdatedJobPostingDetail(id);
+  }
+
+  private async getUpdatedJobPostingDetail(id: number): Promise<JobPostingDetail> {
+    const updatedJobPosting = await this.jobPostingRepository.findJobPosting(id, [
+      'company',
+      'skills',
+      'statusHistory',
+    ]);
+
+    if (!updatedJobPosting) {
+      throw new NotFoundError('Job posting not found.');
+    }
+
+    return updatedJobPosting;
   }
 
   private async getExistingJobPostingForUpdate(id: number): Promise<JobPostingDetail> {

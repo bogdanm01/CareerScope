@@ -95,7 +95,7 @@ export class JobPostingController {
    * @param req Express request containing the posting id, update payload, and authenticated user.
    * @param res Express response returning the updated job posting.
    */
-  async updateJobPosting(req: Request, res: Response<ApiSuccessResponse<JobPosting>>) {
+  async updateJobPosting(req: Request, res: Response<ApiSuccessResponse<JobPostingDetail>>) {
     const result = await this.jobPostingService.updateJobPosting(req.params.id, req.body, req.user);
     res.status(200).json(successResponse(result));
   }

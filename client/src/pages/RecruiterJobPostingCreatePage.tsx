@@ -20,6 +20,7 @@ import { getSkillCategories, type Skill, type SkillCategory } from '../lib/skill
 import { formatDate } from '../lib/date-format';
 import { authErrorAtom, authLoadingAtom } from '../store/auth';
 import { InterviewActivityTemplateEditor } from '../components/InterviewActivityTemplateEditor';
+import { FieldRequirementLegend, FieldRequirementMark } from '../components/FieldRequirementMark';
 
 type RecruiterJobPostingCreatePageProps = {
   loading: boolean;
@@ -461,14 +462,12 @@ export const RecruiterJobPostingCreatePage = ({ loading }: RecruiterJobPostingCr
                 <p className="mt-2 text-sm leading-6 text-foreground-500">
                   Keep the short description concise. Use the markdown editor for the full role details.
                 </p>
-                <p className="mt-1 text-xs leading-5 text-foreground-500">
-                  <span className="text-danger">*</span> Required for approval. The title is the only required field for a draft.
-                </p>
+                <FieldRequirementLegend />
               </div>
 
               <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(220px,1fr)]">
                 <label className="grid gap-2">
-                  <span className="text-sm font-medium text-foreground">Title <span className="text-danger">*</span></span>
+                  <span className="text-sm font-medium text-foreground">Title <FieldRequirementMark level="draft" /></span>
                   <Input
                     value={form.title}
                     onChange={(event) => {
@@ -545,7 +544,7 @@ export const RecruiterJobPostingCreatePage = ({ loading }: RecruiterJobPostingCr
                 </label>
 
                 <div className="grid gap-2">
-                  <span className="text-sm font-medium text-foreground">Expires at <span className="text-danger">*</span></span>
+                  <span className="text-sm font-medium text-foreground">Expires at <FieldRequirementMark level="approval" /></span>
                   <PostingDatePicker
                     value={form.expiresAt ?? ''}
                     onChange={(value) => {
@@ -558,7 +557,7 @@ export const RecruiterJobPostingCreatePage = ({ loading }: RecruiterJobPostingCr
               </div>
 
               <label className="grid gap-2">
-                <span className="text-sm font-medium text-foreground">Short description <span className="text-danger">*</span></span>
+                <span className="text-sm font-medium text-foreground">Short description <FieldRequirementMark level="approval" /></span>
                 <Input
                   value={form.shortDescription ?? ''}
                   onChange={(event) => {
@@ -574,7 +573,7 @@ export const RecruiterJobPostingCreatePage = ({ loading }: RecruiterJobPostingCr
               </label>
 
               <div className="grid gap-2">
-                <span className="text-sm font-medium text-foreground">Description <span className="text-danger">*</span></span>
+                <span className="text-sm font-medium text-foreground">Description <FieldRequirementMark level="approval" /></span>
                 <RichTextEditor
                   value={form.description ?? ''}
                   onChange={(value) => {
@@ -592,7 +591,7 @@ export const RecruiterJobPostingCreatePage = ({ loading }: RecruiterJobPostingCr
               <div className="grid gap-5">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <h3 className="text-2xl text-foreground">Required skills <span className="text-danger">*</span></h3>
+                    <h3 className="text-2xl text-foreground">Required skills <FieldRequirementMark level="approval" /></h3>
                     <p className="mt-1 text-sm leading-6 text-foreground-500">
                       Add the skills candidates need for this posting.
                     </p>
