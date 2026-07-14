@@ -1,5 +1,5 @@
 import { Button, Chip, Input, ListBox, Modal, Select, TextArea, toast, useOverlayState } from '@heroui/react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Info, Plus, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
   createJobApplicationActivity,
@@ -58,6 +58,7 @@ export const ApplicationInterviewTimeline = ({ applicationId, applicationStatus,
     internalNote: '',
   });
   const canManage = mode === 'manage' && applicationStatus === 'Interviewing';
+  const isPreInterview = applicationStatus === 'Submitted' || applicationStatus === 'UnderReview';
 
   const loadActivities = async () => {
     setLoading(true);
@@ -177,6 +178,19 @@ export const ApplicationInterviewTimeline = ({ applicationId, applicationStatus,
           {applicationStatus === 'UnderReview'
             ? 'Start interviewing to schedule or update interview activities. This planned timeline is read-only during CV review.'
             : 'Interview activities can only be changed while the application is interviewing. This timeline is read-only.'}
+        </div>
+      )}
+
+      {mode === 'readonly' && isPreInterview && (
+        <div className="mt-5 flex items-start gap-3 rounded-lg border border-accent/20 bg-accent/10 p-4 text-sm leading-6 text-foreground-600">
+          <Info aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
+          <div>
+            <p className="font-medium text-foreground">Interview process preview</p>
+            <p className="mt-1">
+              These stages are informational and are not active yet. If your CV and application pass the initial
+              review, the recruiter will move your application to Interviewing and activate this timeline.
+            </p>
+          </div>
         </div>
       )}
 
