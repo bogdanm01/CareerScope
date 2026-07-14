@@ -3,7 +3,7 @@ import { DbClient } from '../../config/db-client.ts';
 import { jobPosting, JobPosting, JobPostingInsert, JobPostingStatus } from '../schema/job-posting.schema.ts';
 import { TOKENS } from '../../config/dependency-tokens.ts';
 import { GenericRepository } from './generic.repository.ts';
-import { and, asc, countDistinct, desc, eq, getTableColumns, gte, ilike, or, SQL, sql } from 'drizzle-orm';
+import { and, asc, countDistinct, desc, eq, getTableColumns, gte, ilike, inArray, or, SQL, sql } from 'drizzle-orm';
 import { jobPostingSkill } from '../schema/job-posting-skill.schema.ts';
 import skill from '../schema/skill.schema.ts';
 import type { JobPostingDetailInclude, JobPostingListRequest } from '../../lib/zod/job-posting.zod-schema.ts';
@@ -18,7 +18,9 @@ type FindJobPostingsResult = {
 
 type FindJobPostingsFilters = {
   status?: JobPostingStatus;
+  statuses?: JobPostingStatus[];
   companyId?: number;
+  companyIds?: number[];
   skills?: string[];
   orderBy?: JobPostingListRequest['orderBy'];
   sort?: JobPostingListRequest['sort'];
@@ -145,7 +147,17 @@ export class JobPostingRepository extends GenericRepository<JobPosting, JobPosti
     pagination: FindJobPostingsPagination = {},
     options: FindJobPostingsOptions = {},
   ): Promise<FindJobPostingsResult> {
-    const { status, companyId, skills, orderBy = 'createdAt', sort = 'desc', search, expiresAtFrom } = filters;
+    const {
+      status,
+      statuses,
+      companyId,
+      companyIds,
+      skills,
+      orderBy = 'createdAt',
+      sort = 'desc',
+      search,
+      expiresAtFrom,
+    } = filters;
     const { page = 1, pageSize = 50 } = pagination;
     const { includeCompany = true } = options;
     const skip = (page - 1) * pageSize;
@@ -191,12 +203,20 @@ export class JobPostingRepository extends GenericRepository<JobPosting, JobPosti
       conditions.push(eq(jobPosting.status, status));
     }
 
+    if (statuses?.length) {
+      conditions.push(inArray(jobPosting.status, statuses));
+    }
+
     if (expiresAtFrom) {
       conditions.push(gte(jobPosting.expiresAt, expiresAtFrom));
     }
 
     if (companyId) {
       conditions.push(eq(jobPosting.companyId, companyId));
+    }
+
+    if (companyIds?.length) {
+      conditions.push(inArray(jobPosting.companyId, companyIds));
     }
 
     if (search) {

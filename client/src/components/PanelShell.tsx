@@ -6,6 +6,8 @@ import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { authSessionAtom, signOutAtom } from '../store/auth';
 import { useAppTheme } from './ThemeContext';
 import { getApiBaseUrl } from '../lib/http';
+import { getCompanyLogoUrl } from '../lib/company-logo';
+import { getMyCompany, type RecruiterCompanyProfile } from '../lib/me-api';
 
 type PanelNavItem = {
   to: string;
@@ -55,7 +57,6 @@ const adminNav: PanelNavItem[] = [
   { to: '/panel/analytics', label: 'Analytics', icon: 'analytics' },
   { to: '/panel/admin/users', label: 'Users', icon: 'users' },
   { to: '/panel/admin/companies', label: 'Companies', icon: 'companies' },
-  { to: '/panel/admin/company-approvals', label: 'Company approvals', icon: 'approvals' },
   { to: '/panel/admin/job-postings', label: 'Job Postings', icon: 'postings' },
   { to: '/panel/job-applications', label: 'Applications', icon: 'applications' },
   { to: '/panel/profile', label: 'Profile', icon: 'profile' },
@@ -82,6 +83,7 @@ export const PanelShell = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [sidebarStateUserId, setSidebarStateUserId] = useState<string | null>(null);
+  const [recruiterCompany, setRecruiterCompany] = useState<RecruiterCompanyProfile | null>(null);
   const navItems = getNavItems(session?.user.role);
   const sidebarUserId = session?.user.id ?? null;
   const sidebarStorageKey = sidebarUserId ? `careerscope:panel-sidebar:${sidebarUserId}` : null;
@@ -106,7 +108,42 @@ export const PanelShell = () => {
     const baseUrl = getApiBaseUrl();
     return baseUrl.startsWith('/') ? `${baseUrl.replace(/\/$/, '')}${imageUrl}` : new URL(imageUrl, baseUrl).toString();
   }, [session?.user.image]);
+  const companyLogoUrl = useMemo(
+    () => getCompanyLogoUrl(recruiterCompany?.logoUrl, recruiterCompany?.websiteUrl, 64),
+    [recruiterCompany?.logoUrl, recruiterCompany?.websiteUrl],
+  );
+  const companyInitials = recruiterCompany?.name
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join('');
   const isDark = theme === 'dark';
+
+  useEffect(() => {
+    if (session?.user.role !== 'Recruiter') {
+      return;
+    }
+
+    let cancelled = false;
+
+    void getMyCompany().then(
+      (response) => {
+        if (!cancelled) {
+          setRecruiterCompany(response.data);
+        }
+      },
+      () => {
+        if (!cancelled) {
+          setRecruiterCompany(null);
+        }
+      },
+    );
+
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.user.id, session?.user.role]);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => setSidebarOpen(false), 0);
@@ -232,6 +269,31 @@ export const PanelShell = () => {
                     </div>
                   </div>
                 </div>
+                {session?.user.role === 'Recruiter' && recruiterCompany && (
+                  <div
+                    className={[
+                      'mt-3 flex min-w-0 items-center border-t border-white/10 pt-3',
+                      sidebarCollapsed ? 'gap-2.5 lg:justify-center lg:gap-0' : 'gap-2.5',
+                    ].join(' ')}
+                    title={sidebarCollapsed ? recruiterCompany.name : undefined}
+                  >
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white/10 text-xs font-semibold text-white">
+                      {companyLogoUrl ? (
+                        <img
+                          src={companyLogoUrl}
+                          alt={`${recruiterCompany.name} logo`}
+                          className="h-full w-full object-contain"
+                        />
+                      ) : (
+                        companyInitials || recruiterCompany.name[0]?.toUpperCase()
+                      )}
+                    </div>
+                    <div className={['min-w-0 flex-1', sidebarCollapsed ? 'lg:hidden' : undefined].join(' ')}>
+                      <div className="text-[11px] leading-4 text-white/45">Company</div>
+                      <div className="truncate text-sm font-medium leading-5 text-white">{recruiterCompany.name}</div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 

@@ -13,7 +13,6 @@ import { CandidateCompaniesPage } from './pages/CandidateCompaniesPage';
 import { CandidateJobDetailPage } from './pages/CandidateJobDetailPage';
 import { CandidateJobWishlistPage } from './pages/CandidateJobWishlistPage';
 import { CandidateProfilePage } from './pages/CandidateProfilePage';
-import { AdminCompanyApprovalsPage } from './pages/AdminCompanyApprovalsPage';
 import { AdminCompaniesPage } from './pages/AdminCompaniesPage';
 import { AdminCompanyDetailPage } from './pages/AdminCompanyDetailPage';
 import { AdminCompanyProfilePage } from './pages/AdminCompanyProfilePage';
@@ -341,7 +340,7 @@ function App() {
               path="company-approvals"
               element={
                 <RoleRoute allow={['Admin']}>
-                  <AdminCompanyApprovalsPage />
+                  <Navigate to="/panel/admin/companies?tab=approvals" replace />
                 </RoleRoute>
               }
             />

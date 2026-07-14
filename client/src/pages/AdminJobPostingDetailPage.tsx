@@ -32,6 +32,7 @@ export const AdminJobPostingDetailPage = () => {
   const [error, setError] = useState<string | null>(null);
 
   const jobPostingId = Number(id);
+  const canReviewPosting = detail?.status === 'PendingApproval';
 
   const loadDetail = async () => {
     if (!Number.isFinite(jobPostingId)) {
@@ -63,7 +64,7 @@ export const AdminJobPostingDetailPage = () => {
   const handleReject = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!detail || !reason.trim()) {
+    if (!detail || !canReviewPosting || !reason.trim()) {
       return;
     }
 
@@ -114,6 +115,14 @@ export const AdminJobPostingDetailPage = () => {
         onCancel={() => setPendingAction(null)}
         onConfirm={async () => {
           if (!detail || !pendingAction) {
+            return;
+          }
+
+          if (detail.status !== 'PendingApproval') {
+            setPendingAction(null);
+            toast.warning('Posting decision is no longer available', {
+              description: `This posting is already ${detail.status.replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase()}.`,
+            });
             return;
           }
 
@@ -174,7 +183,9 @@ export const AdminJobPostingDetailPage = () => {
           <div>
             <h2 className="text-4xl leading-[1.15] text-foreground">{detail.title || 'Untitled role'}</h2>
             <p className="mt-3 max-w-2xl text-sm leading-7 text-foreground-500">
-              Review the posting and approve or reject it before it goes live.
+              {canReviewPosting
+                ? 'Review the posting and approve or reject it before it goes live.'
+                : 'Review the posting details and status history.'}
             </p>
           </div>
 
@@ -182,14 +193,16 @@ export const AdminJobPostingDetailPage = () => {
             <Link className="rounded-lg border border-divider bg-content1 px-4 py-2 text-sm font-medium text-foreground" to="/panel/admin/job-postings">
               Back to postings
             </Link>
-            <Button
-              variant="primary"
-              type="button"
-              onPress={() => setPendingAction({ type: 'approve' })}
-              isDisabled={actioning}
-            >
-              {actioning ? 'Processing...' : 'Approve posting'}
-            </Button>
+            {canReviewPosting && (
+              <Button
+                variant="primary"
+                type="button"
+                onPress={() => setPendingAction({ type: 'approve' })}
+                isDisabled={actioning}
+              >
+                {actioning ? 'Processing...' : 'Approve posting'}
+              </Button>
+            )}
           </div>
         </div>
 
@@ -211,7 +224,7 @@ export const AdminJobPostingDetailPage = () => {
         </div>
       </section>
 
-      <section className="grid gap-6 lg:grid-cols-[1fr_0.9fr]">
+      <section className={canReviewPosting ? 'grid gap-6 lg:grid-cols-[1fr_0.9fr]' : 'grid gap-6'}>
         <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
           <h3 className="text-2xl text-foreground">Posting details</h3>
           <div className="mt-5 grid gap-3 text-sm text-foreground-500">
@@ -244,7 +257,8 @@ export const AdminJobPostingDetailPage = () => {
           </div>
         </section>
 
-      <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
+      {canReviewPosting && (
+        <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">
           <h3 className="text-2xl text-foreground">Reject posting</h3>
           <p className="mt-2 text-sm leading-6 text-foreground-500">
             Use rejection when the posting is incomplete or not ready to go live.
@@ -265,6 +279,7 @@ export const AdminJobPostingDetailPage = () => {
             </Button>
           </form>
         </section>
+      )}
       </section>
 
       <section className="rounded-xl border border-divider bg-content1 p-6 sm:p-8">

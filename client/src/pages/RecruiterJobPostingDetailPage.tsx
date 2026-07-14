@@ -79,6 +79,18 @@ const statusColor = (status?: string) => {
   return 'accent';
 };
 
+const statusHistoryClassName = (status?: string) => {
+  if (status === 'Rejected') {
+    return 'border-danger/30 bg-danger/10 text-danger-700';
+  }
+
+  if (status === 'Active') {
+    return 'border-success/30 bg-success/10 text-success-700';
+  }
+
+  return 'border-divider bg-content2 text-foreground';
+};
+
 const formatStatusLabel = (status?: string | null) => {
   if (!status) return 'Draft';
   return status.replace(/([a-z])([A-Z])/g, '$1 $2');
@@ -997,20 +1009,6 @@ export const RecruiterJobPostingDetailPage = () => {
           </Card>
 
           <Card className="rounded-xl border border-divider bg-content1 p-5 shadow-none">
-            <h3 className="text-xl text-foreground">Company</h3>
-            <div className="mt-4 grid gap-3 text-sm">
-              <div>
-                <span className="block text-foreground-500">Name</span>
-                <span className="font-medium text-foreground">{detail?.company?.name || 'Unknown company'}</span>
-              </div>
-              <div>
-                <span className="block text-foreground-500">Website</span>
-                <span className="break-all text-foreground">{detail?.company?.websiteUrl || 'Not provided'}</span>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="rounded-xl border border-divider bg-content1 p-5 shadow-none">
             <h3 className="text-xl text-foreground">Status history</h3>
             <div className="mt-4 grid gap-3">
               {(detail?.statusHistory || []).length === 0 ? (
@@ -1019,12 +1017,15 @@ export const RecruiterJobPostingDetailPage = () => {
                 </div>
               ) : (
                 detail?.statusHistory?.map((entry) => (
-                  <div key={entry.id} className="rounded-lg border border-divider bg-content2 p-3 text-sm text-foreground">
+                  <div
+                    key={entry.id}
+                    className={`rounded-lg border p-3 text-sm ${statusHistoryClassName(entry.status)}`}
+                  >
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <strong>{formatStatusLabel(entry.status)}</strong>
-                      <span className="text-xs text-foreground-500">{formatDateTime(entry.createdAt)}</span>
+                      <span className="text-xs opacity-75">{formatDateTime(entry.createdAt)}</span>
                     </div>
-                    {entry.reason && <p className="mt-2 leading-5 text-foreground-500">{entry.reason}</p>}
+                    {entry.reason && <p className="mt-2 leading-5 opacity-90">{entry.reason}</p>}
                   </div>
                 ))
               )}

@@ -29,14 +29,14 @@ const getApprovalColor = (status: string): 'danger' | 'default' | 'success' | 'w
   }
 };
 
-export const AdminCompanyApprovalsPage = () => {
+export const AdminCompanyApprovalsPage = ({ embedded = false }: { embedded?: boolean }) => {
   const navigate = useNavigate();
   const [companies, setCompanies] = useState<AdminCompanyListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [error, setError] = useState<string | null>(null);
-  const pageSize = 5;
+  const pageSize = 25;
 
   const loadRequests = async (page = currentPage) => {
     setLoading(true);
@@ -69,8 +69,8 @@ export const AdminCompanyApprovalsPage = () => {
   }, []);
 
   return (
-    <div className="grid gap-8">
-      <section className="p-0">
+    <div className={embedded ? 'grid gap-5' : 'grid gap-8'}>
+      {!embedded && <section className="p-0">
         <h2 className="text-4xl leading-[1.15] text-foreground">Company approvals</h2>
         <p className="mt-3 max-w-2xl text-sm leading-7 text-foreground-500">
           Review pending recruiter companies and approve the ones ready to join the platform.
@@ -81,7 +81,13 @@ export const AdminCompanyApprovalsPage = () => {
             {error}
           </div>
         )}
-      </section>
+      </section>}
+
+      {embedded && error && (
+        <div className="rounded-lg border border-danger/20 bg-danger/10 px-4 py-3 text-sm leading-6 text-danger-700">
+          {error}
+        </div>
+      )}
 
       <section className="overflow-hidden rounded-xl border border-divider bg-content1">
         {loading ? (
@@ -144,7 +150,7 @@ export const AdminCompanyApprovalsPage = () => {
                               <Dropdown.Item
                                 textValue="Open details"
                                 onPress={() => navigate(`/panel/admin/companies/${company.id}`, {
-                                  state: { company, backTo: '/panel/admin/company-approvals' },
+                                  state: { company, backTo: '/panel/admin/companies?tab=approvals' },
                                 })}
                               >
                                 <span className="inline-flex w-full items-center gap-2">

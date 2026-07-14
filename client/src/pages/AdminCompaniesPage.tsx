@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import {
   Avatar,
   Button,
@@ -9,8 +9,10 @@ import {
   ListBox,
   Select,
   Table,
+  Tabs,
 } from "@heroui/react";
 import {
+  BriefcaseBusiness,
   ChevronLeft,
   ChevronRight,
   ExternalLink,
@@ -22,6 +24,7 @@ import {
 import { getAdminCompanies, type AdminCompanyListItem } from "../lib/admin-api";
 import { getCompanyLogoUrl } from "../lib/company-logo";
 import { StatusMultiSelect } from "../components/StatusMultiSelect";
+import { AdminCompanyApprovalsPage } from "./AdminCompanyApprovalsPage";
 
 const pageSize = 10;
 
@@ -82,6 +85,8 @@ const getSearchQuery = (value: string) => {
 export const AdminCompaniesPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const selectedTab = searchParams.get("tab") === "approvals" ? "approvals" : "all";
   const [companies, setCompanies] = useState<AdminCompanyListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -180,6 +185,12 @@ export const AdminCompaniesPage = () => {
   const publicCompanyBackTo = encodeURIComponent(
     `${location.pathname}${location.search}`,
   );
+  const handleTabChange = (key: React.Key) => {
+    const nextTab = key === "approvals" ? "approvals" : "all";
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set("tab", nextTab);
+    setSearchParams(nextParams, { replace: true });
+  };
 
   return (
     <div className="grid gap-8">
@@ -188,93 +199,113 @@ export const AdminCompaniesPage = () => {
           Companies
         </h2>
         <p className="mt-3 max-w-2xl text-sm leading-7 text-foreground-500">
-          Browse and audit companies registered on the platform.
+          Browse registered companies or review pending approval requests.
         </p>
-
-        <form
-          className="mt-7 grid gap-3 lg:grid-cols-[minmax(350px,1.25fr)_220px_180px_auto]"
-          onSubmit={(event) => {
-            event.preventDefault();
-            applySearchImmediately();
-          }}
-        >
-          <label className="relative block">
-            <span className="sr-only">Search companies</span>
-            <Search
-              aria-hidden="true"
-              className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-foreground-500"
-            />
-            <Input
-              aria-label="Search companies"
-              className="h-10 rounded-lg pl-9 text-sm w-100"
-              placeholder="Search by company name or tax ID"
-              value={searchDraft}
-              onChange={(event) => setSearchDraft(event.target.value)}
-            />
-          </label>
-
-          <StatusMultiSelect
-            ariaLabel="Filter companies by approval status"
-            options={[
-              { value: "PendingApproval", label: "Pending approval" },
-              { value: "Approved", label: "Approved" },
-              { value: "Rejected", label: "Rejected" },
-            ]}
-            selectedValues={approvalStatuses}
-            onChange={(values) => {
-              setCurrentPage(1);
-              setApprovalStatuses(values.length === 3 ? [] : values);
-            }}
-          />
-
-          <Select
-            selectedKey={deletedFilter || "all"}
-            onSelectionChange={(key) => {
-              setCurrentPage(1);
-              setDeletedFilter(key && String(key) !== "all" ? String(key) : "");
-            }}
-          >
-            <Select.Trigger
-              aria-label="Deleted filter"
-              className="h-10 rounded-lg text-sm"
-            >
-              <Select.Value />
-              <Select.Indicator />
-            </Select.Trigger>
-            <Select.Popover>
-              <ListBox aria-label="Deleted filter options">
-                <ListBox.Item id="all" textValue="All records">
-                  All records
-                </ListBox.Item>
-                <ListBox.Item id="false" textValue="Active records">
-                  Active records
-                </ListBox.Item>
-                <ListBox.Item id="true" textValue="Deleted records">
-                  Deleted records
-                </ListBox.Item>
-              </ListBox>
-            </Select.Popover>
-          </Select>
-
-          <Button
-            isIconOnly
-            aria-label="Clear filters"
-            className="h-10 w-10 rounded-lg text-sm"
-            type="button"
-            variant="outline"
-            isDisabled={!hasNonDefaultFilters}
-            onPress={clearFilters}
-          >
-            <X aria-hidden="true" className="h-4 w-4" />
-          </Button>
-        </form>
-
-        {error && (
-          <div className="mt-5 rounded-lg border border-danger/20 bg-danger/10 px-4 py-3 text-sm leading-6 text-danger-700">
-            {error}
-          </div>
-        )}
       </section>
+
+      <Tabs className="w-full" selectedKey={selectedTab} onSelectionChange={handleTabChange}>
+        <Tabs.ListContainer className="max-w-md">
+          <Tabs.List aria-label="Admin company views">
+            <Tabs.Tab id="all">
+              All companies
+              <Tabs.Indicator />
+            </Tabs.Tab>
+            <Tabs.Tab id="approvals">
+              Approvals
+              <Tabs.Indicator />
+            </Tabs.Tab>
+          </Tabs.List>
+        </Tabs.ListContainer>
+        <Tabs.Panel id={selectedTab} className="w-full pt-4">
+          {selectedTab === "all" ? (
+            <div className="grid gap-8">
+              <div>
+                <form
+                  className="grid gap-3 lg:grid-cols-[minmax(350px,1.25fr)_220px_180px_auto]"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    applySearchImmediately();
+                  }}
+                >
+                  <label className="relative block">
+                    <span className="sr-only">Search companies</span>
+                    <Search
+                      aria-hidden="true"
+                      className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-foreground-500"
+                    />
+                    <Input
+                      aria-label="Search companies"
+                      className="h-10 w-100 rounded-lg pl-9 text-sm"
+                      placeholder="Search by company name or tax ID"
+                      value={searchDraft}
+                      onChange={(event) => setSearchDraft(event.target.value)}
+                    />
+                  </label>
+
+                  <StatusMultiSelect
+                    ariaLabel="Filter companies by approval status"
+                    options={[
+                      { value: "PendingApproval", label: "Pending approval" },
+                      { value: "Approved", label: "Approved" },
+                      { value: "Rejected", label: "Rejected" },
+                    ]}
+                    selectedValues={approvalStatuses}
+                    onChange={(values) => {
+                      setCurrentPage(1);
+                      setApprovalStatuses(values.length === 3 ? [] : values);
+                    }}
+                  />
+
+                  <Select
+                    selectedKey={deletedFilter || "all"}
+                    onSelectionChange={(key) => {
+                      setCurrentPage(1);
+                      setDeletedFilter(
+                        key && String(key) !== "all" ? String(key) : "",
+                      );
+                    }}
+                  >
+                    <Select.Trigger
+                      aria-label="Deleted filter"
+                      className="h-10 rounded-lg text-sm"
+                    >
+                      <Select.Value />
+                      <Select.Indicator />
+                    </Select.Trigger>
+                    <Select.Popover>
+                      <ListBox aria-label="Deleted filter options">
+                        <ListBox.Item id="all" textValue="All records">
+                          All records
+                        </ListBox.Item>
+                        <ListBox.Item id="false" textValue="Active records">
+                          Active records
+                        </ListBox.Item>
+                        <ListBox.Item id="true" textValue="Deleted records">
+                          Deleted records
+                        </ListBox.Item>
+                      </ListBox>
+                    </Select.Popover>
+                  </Select>
+
+                  <Button
+                    isIconOnly
+                    aria-label="Clear filters"
+                    className="h-10 w-10 rounded-lg text-sm"
+                    type="button"
+                    variant="outline"
+                    isDisabled={!hasNonDefaultFilters}
+                    onPress={clearFilters}
+                  >
+                    <X aria-hidden="true" className="h-4 w-4" />
+                  </Button>
+                </form>
+
+                {error && (
+                  <div className="mt-5 rounded-lg border border-danger/20 bg-danger/10 px-4 py-3 text-sm leading-6 text-danger-700">
+                    {error}
+                  </div>
+                )}
+              </div>
 
       <section className="overflow-hidden rounded-xl border border-divider bg-content1">
         {loading ? (
@@ -400,6 +431,19 @@ export const AdminCompaniesPage = () => {
                                 </span>
                               </Dropdown.Item>
                               <Dropdown.Item
+                                textValue="View job postings"
+                                onPress={() =>
+                                  navigate(
+                                    `/panel/admin/job-postings?tab=all&companyId=${company.id}`,
+                                  )
+                                }
+                              >
+                                <span className="inline-flex w-full items-center gap-2">
+                                  <BriefcaseBusiness className="h-4 w-4" />
+                                  View job postings
+                                </span>
+                              </Dropdown.Item>
+                              <Dropdown.Item
                                 isDisabled={!company.isApproved}
                                 href={
                                   company.isApproved
@@ -467,6 +511,12 @@ export const AdminCompaniesPage = () => {
           </div>
         )}
       </section>
+            </div>
+          ) : (
+            <AdminCompanyApprovalsPage embedded />
+          )}
+        </Tabs.Panel>
+      </Tabs>
     </div>
   );
 };

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Chip, Dropdown, Input, Table } from '@heroui/react';
-import { ChevronLeft, ChevronRight, MoreHorizontal, PanelTopOpen, Plus, RotateCcw, Search } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MoreHorizontal, PanelTopOpen, Plus, RotateCcw, Search, Users } from 'lucide-react';
 import { getRecruiterJobPostings, type JobPostingListItem } from '../lib/job-postings-api';
 import { formatDate } from '../lib/date-format';
 import { StatusMultiSelect } from '../components/StatusMultiSelect';
@@ -9,6 +9,7 @@ import { useRecruiterPostingAccess } from '../hooks/useRecruiterPostingAccess';
 import { CompanyApprovalRequiredCard } from '../components/CompanyApprovalRequiredCard';
 
 const pageSize = 10;
+const postingStatusesWithApplications = new Set(['Active', 'Paused', 'Closed', 'Expired']);
 
 const getStatusColor = (status: string): 'accent' | 'danger' | 'default' | 'success' | 'warning' => {
   switch (status) {
@@ -267,6 +268,21 @@ export const RecruiterJobPostingsPage = () => {
                                         Open detail
                                       </span>
                                     </Dropdown.Item>
+                                    {postingStatusesWithApplications.has(posting.status) && (
+                                      <Dropdown.Item
+                                        textValue="View applications"
+                                        onPress={() =>
+                                          navigate(
+                                            `/panel/job-applications?postingId=${posting.id}`,
+                                          )
+                                        }
+                                      >
+                                        <span className="inline-flex w-full items-center gap-2">
+                                          <Users className="h-4 w-4" />
+                                          View applications
+                                        </span>
+                                      </Dropdown.Item>
+                                    )}
                                   </Dropdown.Menu>
                                 </Dropdown.Popover>
                               </Dropdown>

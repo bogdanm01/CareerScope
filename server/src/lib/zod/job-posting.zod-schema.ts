@@ -53,6 +53,20 @@ const JobPostingEmploymentTypeSchema = z.enum(Object.values(JOB_POSTING_EMPLOYME
 
 export const JobPostingListRequestSchema = z.object({
   companyId: z.coerce.number().int().positive().optional(),
+  companyIds: z
+    .string()
+    .optional()
+    .transform((value, ctx) => {
+      if (!value) return [];
+
+      const ids = value.split(',').map((item) => Number(item.trim()));
+      if (ids.some((id) => !Number.isInteger(id) || id <= 0)) {
+        ctx.addIssue({ code: 'custom', message: 'Company filters must contain valid positive IDs.' });
+        return z.NEVER;
+      }
+
+      return Array.from(new Set(ids));
+    }),
   skills: z
     .string()
     .optional()
@@ -70,6 +84,11 @@ export const JobPostingListRequestSchema = z.object({
   limit: z.coerce.number().int().positive().max(100).default(50),
   search: z.string().trim().min(2).optional(),
   status: z.enum(Object.values(JOB_POSTING_STATUS)).optional(),
+  statuses: z
+    .string()
+    .optional()
+    .transform((value) => (value ? value.split(',').map((item) => item.trim()).filter(Boolean) : []))
+    .pipe(z.array(z.enum(Object.values(JOB_POSTING_STATUS)))),
 });
 
 const JobPostingUpdateBaseRequestSchema = z.object({

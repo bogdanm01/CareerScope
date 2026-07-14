@@ -375,267 +375,349 @@ Linear builds planning and issue-tracking tools that help product and engineerin
 const users = [
   {
     key: 'admin',
-    name: 'Mila Admin',
+    name: 'Emily Carter',
     email: 'mila.admin+seed@careerscope.local',
-    firstName: 'Mila',
-    lastName: 'Admin',
+    firstName: 'Emily',
+    lastName: 'Carter',
     role: USER_ROLE.ADMIN,
     dateOfBirth: '1990-01-14',
   },
   {
     key: 'recruiterNorthstar',
-    name: 'Ivan Recruiter',
+    name: 'James Wilson',
     email: 'ivan.recruiter+seed@careerscope.local',
-    firstName: 'Ivan',
-    lastName: 'Recruiter',
+    firstName: 'James',
+    lastName: 'Wilson',
     role: USER_ROLE.RECRUITER,
     dateOfBirth: '1988-09-02',
     companyTaxId: 'RS-104582913',
   },
   {
     key: 'recruiterAstra',
-    name: 'Sara Recruiter',
+    name: 'Sarah Mitchell',
     email: 'sara.recruiter+seed@careerscope.local',
-    firstName: 'Sara',
-    lastName: 'Recruiter',
+    firstName: 'Sarah',
+    lastName: 'Mitchell',
     role: USER_ROLE.RECRUITER,
     dateOfBirth: '1992-03-19',
     companyTaxId: 'RS-782451006',
   },
   {
     key: 'recruiterGreengrid',
-    name: 'Marko Recruiter',
+    name: 'Michael Turner',
     email: 'marko.recruiter+seed@careerscope.local',
-    firstName: 'Marko',
-    lastName: 'Recruiter',
+    firstName: 'Michael',
+    lastName: 'Turner',
     role: USER_ROLE.RECRUITER,
     dateOfBirth: '1986-12-04',
     companyTaxId: 'RS-639027411',
   },
   {
     key: 'recruiterBluePeak',
-    name: 'Ivana Recruiter',
+    name: 'Olivia Bennett',
     email: 'ivana.recruiter+seed@careerscope.local',
-    firstName: 'Ivana',
-    lastName: 'Recruiter',
+    firstName: 'Olivia',
+    lastName: 'Bennett',
     role: USER_ROLE.RECRUITER,
     dateOfBirth: '1990-08-18',
     companyTaxId: 'RS-510936284',
   },
   {
     key: 'recruiterDanube',
-    name: 'Luka Recruiter',
+    name: 'Daniel Brooks',
     email: 'luka.recruiter+seed@careerscope.local',
-    firstName: 'Luka',
-    lastName: 'Recruiter',
+    firstName: 'Daniel',
+    lastName: 'Brooks',
     role: USER_ROLE.RECRUITER,
     dateOfBirth: '1991-06-11',
     companyTaxId: 'RS-318475920',
   },
   {
     key: 'recruiterSignalForge',
-    name: 'Nina Recruiter',
+    name: 'Sophia Reed',
     email: 'nina.recruiter+seed@careerscope.local',
-    firstName: 'Nina',
-    lastName: 'Recruiter',
+    firstName: 'Sophia',
+    lastName: 'Reed',
     role: USER_ROLE.RECRUITER,
     dateOfBirth: '1989-10-27',
     companyTaxId: 'RS-846205731',
   },
   {
     key: 'recruiterAtlassian',
-    name: 'Tara Recruiter',
+    name: 'Chloe Parker',
     email: 'tara.recruiter+seed@careerscope.local',
-    firstName: 'Tara',
-    lastName: 'Recruiter',
+    firstName: 'Chloe',
+    lastName: 'Parker',
     role: USER_ROLE.RECRUITER,
     dateOfBirth: '1987-02-22',
     companyTaxId: 'RS-740193625',
   },
   {
     key: 'recruiterFigma',
-    name: 'Ognjen Recruiter',
+    name: 'Ethan Collins',
     email: 'ognjen.recruiter+seed@careerscope.local',
-    firstName: 'Ognjen',
-    lastName: 'Recruiter',
+    firstName: 'Ethan',
+    lastName: 'Collins',
     role: USER_ROLE.RECRUITER,
     dateOfBirth: '1993-01-17',
     companyTaxId: 'RS-693845217',
   },
   {
     key: 'recruiterNotion',
-    name: 'Marija Recruiter',
+    name: 'Grace Morgan',
     email: 'marija.recruiter+seed@careerscope.local',
-    firstName: 'Marija',
-    lastName: 'Recruiter',
+    firstName: 'Grace',
+    lastName: 'Morgan',
     role: USER_ROLE.RECRUITER,
     dateOfBirth: '1991-05-26',
     companyTaxId: 'RS-582014936',
   },
   {
     key: 'recruiterAirbnb',
-    name: 'Filip Recruiter',
+    name: 'William Foster',
     email: 'filip.recruiter+seed@careerscope.local',
-    firstName: 'Filip',
-    lastName: 'Recruiter',
+    firstName: 'William',
+    lastName: 'Foster',
     role: USER_ROLE.RECRUITER,
     dateOfBirth: '1985-07-07',
     companyTaxId: 'RS-461802735',
   },
   {
+    key: 'recruiterDatadog',
+    name: 'Hannah Cooper',
+    email: 'jelena.recruiter+seed@careerscope.local',
+    firstName: 'Hannah',
+    lastName: 'Cooper',
+    role: USER_ROLE.RECRUITER,
+    dateOfBirth: '1990-04-12',
+    companyTaxId: 'RS-927614358',
+  },
+  {
+    key: 'recruiterVercel',
+    name: 'Noah Richardson',
+    email: 'nemanja.recruiter+seed@careerscope.local',
+    firstName: 'Noah',
+    lastName: 'Richardson',
+    role: USER_ROLE.RECRUITER,
+    dateOfBirth: '1989-07-21',
+    companyTaxId: 'RS-215709483',
+  },
+  {
+    key: 'recruiterLinear',
+    name: 'Ava Sullivan',
+    email: 'aleksandra.recruiter+seed@careerscope.local',
+    firstName: 'Ava',
+    lastName: 'Sullivan',
+    role: USER_ROLE.RECRUITER,
+    dateOfBirth: '1992-11-09',
+    companyTaxId: 'RS-368142750',
+  },
+  {
     key: 'candidatePetar',
-    name: 'Petar Candidate',
+    name: 'Peter Anderson',
     email: 'petar.candidate+seed@careerscope.local',
-    firstName: 'Petar',
-    lastName: 'Candidate',
+    firstName: 'Peter',
+    lastName: 'Anderson',
     role: USER_ROLE.CANDIDATE,
     dateOfBirth: '1997-05-22',
   },
   {
     key: 'candidateAna',
-    name: 'Ana Candidate',
+    name: 'Emma Thompson',
     email: 'ana.candidate+seed@careerscope.local',
-    firstName: 'Ana',
-    lastName: 'Candidate',
+    firstName: 'Emma',
+    lastName: 'Thompson',
     role: USER_ROLE.CANDIDATE,
     dateOfBirth: '1995-11-08',
   },
   {
     key: 'candidateJovana',
-    name: 'Jovana Candidate',
+    name: 'Jessica Miller',
     email: 'jovana.candidate+seed@careerscope.local',
-    firstName: 'Jovana',
-    lastName: 'Candidate',
+    firstName: 'Jessica',
+    lastName: 'Miller',
     role: USER_ROLE.CANDIDATE,
     dateOfBirth: '1998-07-16',
   },
   {
     key: 'candidateNikola',
-    name: 'Nikola Candidate',
+    name: 'Nicholas Davis',
     email: 'nikola.candidate+seed@careerscope.local',
-    firstName: 'Nikola',
-    lastName: 'Candidate',
+    firstName: 'Nicholas',
+    lastName: 'Davis',
     role: USER_ROLE.CANDIDATE,
     dateOfBirth: '1996-02-13',
   },
   {
     key: 'candidateMilica',
-    name: 'Milica Candidate',
+    name: 'Mia Clark',
     email: 'milica.candidate+seed@careerscope.local',
-    firstName: 'Milica',
-    lastName: 'Candidate',
+    firstName: 'Mia',
+    lastName: 'Clark',
     role: USER_ROLE.CANDIDATE,
     dateOfBirth: '1999-09-24',
   },
   {
     key: 'candidateStefan',
-    name: 'Stefan Candidate',
+    name: 'Steven Walker',
     email: 'stefan.candidate+seed@careerscope.local',
-    firstName: 'Stefan',
-    lastName: 'Candidate',
+    firstName: 'Steven',
+    lastName: 'Walker',
     role: USER_ROLE.CANDIDATE,
     dateOfBirth: '1994-04-30',
   },
   {
     key: 'candidateTeodora',
-    name: 'Teodora Candidate',
+    name: 'Madison Hall',
     email: 'teodora.candidate+seed@careerscope.local',
-    firstName: 'Teodora',
-    lastName: 'Candidate',
+    firstName: 'Madison',
+    lastName: 'Hall',
     role: USER_ROLE.CANDIDATE,
     dateOfBirth: '2000-12-05',
   },
   {
     key: 'candidateLazar',
-    name: 'Lazar Candidate',
+    name: 'Lucas Young',
     email: 'lazar.candidate+seed@careerscope.local',
-    firstName: 'Lazar',
-    lastName: 'Candidate',
+    firstName: 'Lucas',
+    lastName: 'Young',
     role: USER_ROLE.CANDIDATE,
     dateOfBirth: '1993-08-12',
   },
   {
     key: 'candidateMina',
-    name: 'Mina Candidate',
+    name: 'Megan Lewis',
     email: 'mina.candidate+seed@careerscope.local',
-    firstName: 'Mina',
-    lastName: 'Candidate',
+    firstName: 'Megan',
+    lastName: 'Lewis',
     role: USER_ROLE.CANDIDATE,
     dateOfBirth: '1996-10-03',
   },
   {
     key: 'candidateUros',
-    name: 'Uros Candidate',
+    name: 'Ryan King',
     email: 'uros.candidate+seed@careerscope.local',
-    firstName: 'Uros',
-    lastName: 'Candidate',
+    firstName: 'Ryan',
+    lastName: 'King',
     role: USER_ROLE.CANDIDATE,
     dateOfBirth: '1992-06-21',
   },
   {
     key: 'candidateKatarina',
-    name: 'Katarina Candidate',
+    name: 'Katherine Wright',
     email: 'katarina.candidate+seed@careerscope.local',
-    firstName: 'Katarina',
-    lastName: 'Candidate',
+    firstName: 'Katherine',
+    lastName: 'Wright',
     role: USER_ROLE.CANDIDATE,
     dateOfBirth: '1998-01-28',
   },
   {
     key: 'candidateAleksa',
-    name: 'Aleksa Candidate',
+    name: 'Alexander Scott',
     email: 'aleksa.candidate+seed@careerscope.local',
-    firstName: 'Aleksa',
-    lastName: 'Candidate',
+    firstName: 'Alexander',
+    lastName: 'Scott',
     role: USER_ROLE.CANDIDATE,
     dateOfBirth: '1995-03-14',
   },
   {
     key: 'candidateTamara',
-    name: 'Tamara Candidate',
+    name: 'Natalie Green',
     email: 'tamara.candidate+seed@careerscope.local',
-    firstName: 'Tamara',
-    lastName: 'Candidate',
+    firstName: 'Natalie',
+    lastName: 'Green',
     role: USER_ROLE.CANDIDATE,
     dateOfBirth: '1997-08-09',
   },
   {
     key: 'candidateVuk',
-    name: 'Vuk Candidate',
+    name: 'Victor Baker',
     email: 'vuk.candidate+seed@careerscope.local',
-    firstName: 'Vuk',
-    lastName: 'Candidate',
+    firstName: 'Victor',
+    lastName: 'Baker',
     role: USER_ROLE.CANDIDATE,
     dateOfBirth: '1993-12-18',
   },
   {
     key: 'candidateLena',
-    name: 'Lena Candidate',
+    name: 'Lily Adams',
     email: 'lena.candidate+seed@careerscope.local',
-    firstName: 'Lena',
-    lastName: 'Candidate',
+    firstName: 'Lily',
+    lastName: 'Adams',
     role: USER_ROLE.CANDIDATE,
     dateOfBirth: '1998-04-25',
   },
   {
     key: 'candidateDusan',
-    name: 'Dusan Candidate',
+    name: 'Dylan Nelson',
     email: 'dusan.candidate+seed@careerscope.local',
-    firstName: 'Dusan',
-    lastName: 'Candidate',
+    firstName: 'Dylan',
+    lastName: 'Nelson',
     role: USER_ROLE.CANDIDATE,
     dateOfBirth: '1994-09-07',
   },
   {
     key: 'candidateSofija',
-    name: 'Sofija Candidate',
+    name: 'Sophie Hill',
     email: 'sofija.candidate+seed@careerscope.local',
-    firstName: 'Sofija',
-    lastName: 'Candidate',
+    firstName: 'Sophie',
+    lastName: 'Hill',
     role: USER_ROLE.CANDIDATE,
     dateOfBirth: '1999-06-11',
   },
 ] as const;
+
+const femaleSeedUserNames = new Set([
+  'Ava',
+  'Chloe',
+  'Emily',
+  'Emma',
+  'Grace',
+  'Hannah',
+  'Jessica',
+  'Katherine',
+  'Lily',
+  'Madison',
+  'Megan',
+  'Mia',
+  'Natalie',
+  'Olivia',
+  'Sarah',
+  'Sophia',
+  'Sophie',
+]);
+
+const maleSeedUserNames = new Set([
+  'Alexander',
+  'Daniel',
+  'Dylan',
+  'Ethan',
+  'James',
+  'Lucas',
+  'Michael',
+  'Nicholas',
+  'Noah',
+  'Peter',
+  'Ryan',
+  'Steven',
+  'Victor',
+  'William',
+]);
+
+const getSeedUserAvatarUrl = (firstName: string, userIndex: number) => {
+  const portraitCollection = femaleSeedUserNames.has(firstName)
+    ? 'women'
+    : maleSeedUserNames.has(firstName)
+      ? 'men'
+      : null;
+
+  if (!portraitCollection) {
+    throw new Error(`Seed user "${firstName}" has no avatar gender classification.`);
+  }
+
+  const portraitIndex = (userIndex * 37 + 11) % 100;
+  return `https://randomuser.me/api/portraits/${portraitCollection}/${portraitIndex}.jpg`;
+};
 
 const candidateSkills = [
   { userKey: 'candidatePetar', skillSlug: 'typescript', yearsOfExperience: 4 },
@@ -801,7 +883,7 @@ Experience with regulated systems is useful but not required.`,
   {
     title: 'Product Designer',
     companyTaxId: 'RS-927614358',
-    createdByUserKey: 'admin',
+    createdByUserKey: 'recruiterDatadog',
     shortDescription: 'Design workflow automation experiences for operations-heavy business users.',
     description: `## Design practical AI products
 
@@ -972,7 +1054,7 @@ Lead the evolution of transaction processing services from tightly coupled modul
   {
     title: 'Machine Learning Engineer',
     companyTaxId: 'RS-927614358',
-    createdByUserKey: 'admin',
+    createdByUserKey: 'recruiterDatadog',
     shortDescription: 'Productionize document intelligence and classification models.',
     description: `## Move models into production
 
@@ -1291,7 +1373,7 @@ Improve frontend performance for high-traffic storefront, checkout, and merchant
   {
     title: 'Developer Productivity Engineer',
     companyTaxId: 'RS-215709483',
-    createdByUserKey: 'admin',
+    createdByUserKey: 'recruiterVercel',
     shortDescription: 'Improve the local development, build, and debugging experience for product engineers.',
     description: `## Make product teams faster
 
@@ -1320,7 +1402,7 @@ Build tools and workflows that shorten feedback loops across local development, 
   {
     title: 'Product Operations Manager',
     companyTaxId: 'RS-368142750',
-    createdByUserKey: 'admin',
+    createdByUserKey: 'recruiterLinear',
     shortDescription: 'Create operating rhythms and insights that help product teams make better decisions.',
     description: `## Scale product operations
 
@@ -1349,7 +1431,7 @@ Build the processes, reporting, and feedback systems that connect product, desig
   {
     title: 'Observability Platform Engineer',
     companyTaxId: 'RS-927614358',
-    createdByUserKey: 'admin',
+    createdByUserKey: 'recruiterDatadog',
     shortDescription: 'Build telemetry pipelines and platform capabilities for reliable cloud services.',
     description: `## Build the observability platform
 
@@ -1406,6 +1488,12 @@ Work across design and frontend engineering to turn interaction patterns into ac
   },
 ] as const;
 
+const rejectedThenActiveJobReasons = new Map<string, string>([
+  ['Backend Platform Engineer', 'Clarify the on-call expectations and incident response responsibilities.'],
+  ['DevOps Engineer', 'Add more detail about the infrastructure scope and the team\'s operational ownership.'],
+  ['Observability Platform Engineer', 'Clarify the required platform experience and expected ownership of telemetry systems.'],
+]);
+
 const applications = [
   {
     userKey: 'candidatePetar',
@@ -1422,7 +1510,7 @@ const applications = [
     jobTitle: 'Backend Platform Engineer',
     status: JOB_APPLICATION_STATUS.SUBMITTED,
   },
-  { userKey: 'candidateJovana', jobTitle: 'Product Designer', status: JOB_APPLICATION_STATUS.HIRED },
+  { userKey: 'candidateJovana', jobTitle: 'Design Systems Engineer', status: JOB_APPLICATION_STATUS.HIRED },
   { userKey: 'candidateAna', jobTitle: 'DevOps Engineer', status: JOB_APPLICATION_STATUS.UNDER_REVIEW },
   { userKey: 'candidatePetar', jobTitle: 'DevOps Engineer', status: JOB_APPLICATION_STATUS.REJECTED },
   {
@@ -1472,7 +1560,7 @@ const applications = [
   },
   {
     userKey: 'candidateTeodora',
-    jobTitle: 'Machine Learning Engineer',
+    jobTitle: 'Backend Platform Engineer',
     status: JOB_APPLICATION_STATUS.SUBMITTED,
   },
   {
@@ -1539,7 +1627,7 @@ const applications = [
     jobTitle: 'Staff Design Engineer',
     status: JOB_APPLICATION_STATUS.INTERVIEWING,
   },
-  { userKey: 'candidateTamara', jobTitle: 'Product Designer', status: JOB_APPLICATION_STATUS.HIRED },
+  { userKey: 'candidateTamara', jobTitle: 'Design Systems Engineer', status: JOB_APPLICATION_STATUS.HIRED },
   {
     userKey: 'candidateTamara',
     jobTitle: 'Product Operations Manager',
@@ -1645,10 +1733,17 @@ const applications = [
   },
 ] as const;
 
+const postingStatusesThatMayHaveApplications = new Set<string>([
+  JOB_POSTING_STATUS.ACTIVE,
+  JOB_POSTING_STATUS.PAUSED,
+  JOB_POSTING_STATUS.CLOSED,
+  JOB_POSTING_STATUS.EXPIRED,
+]);
+
 const applicationReviews = [
   {
     userKey: 'candidateJovana',
-    jobTitle: 'Product Designer',
+    jobTitle: 'Design Systems Engineer',
     rating: 5,
     comment: 'Clear process, fast feedback, and a thoughtful design challenge.',
     createdDaysAgo: 46,
@@ -1753,7 +1848,7 @@ const applicationReviews = [
   },
   {
     userKey: 'candidateTamara',
-    jobTitle: 'Product Designer',
+    jobTitle: 'Design Systems Engineer',
     rating: 5,
     comment: 'The design challenge was relevant, the panel was welcoming, and decisions were communicated quickly.',
     createdDaysAgo: 15,
@@ -1844,7 +1939,7 @@ const notifications = [
     payload: {
       type: 'new_application',
       title: 'New application received',
-      message: 'Petar Candidate applied for Backend Platform Engineer.',
+      message: 'Peter Anderson applied for Backend Platform Engineer.',
     },
   },
   {
@@ -1852,7 +1947,7 @@ const notifications = [
     payload: {
       type: 'application_status_changed',
       title: 'Candidate hired',
-      message: 'You were hired for the Product Designer role.',
+      message: 'You were hired for the Design Systems Engineer role.',
     },
   },
   {
@@ -1892,7 +1987,7 @@ const notifications = [
     payload: {
       type: 'new_application',
       title: 'New application received',
-      message: 'Milica Candidate applied for Frontend Platform Engineer.',
+      message: 'Mia Clark applied for Frontend Platform Engineer.',
     },
   },
   {
@@ -1900,7 +1995,7 @@ const notifications = [
     payload: {
       type: 'new_application',
       title: 'New application received',
-      message: 'Stefan Candidate applied for Security Software Engineer.',
+      message: 'Steven Walker applied for Security Software Engineer.',
     },
   },
   {
@@ -1930,7 +2025,7 @@ type JobSeed = (typeof jobs)[number];
 type ApplicationSeed = (typeof applications)[number];
 
 const isDirectHireApplication = (application: ApplicationSeed) =>
-  application.userKey === 'candidateJovana' && application.jobTitle === 'Product Designer';
+  application.userKey === 'candidateJovana' && application.jobTitle === 'Design Systems Engineer';
 
 const applicationCreatedDaysAgo = [
   57, 57, 56, 54, 54, 54, 51, 49, 49, 45,
@@ -2027,9 +2122,22 @@ const seedCompanies = async () => {
 const seedUsers = async () => {
   const companiesByTaxId = await getCompaniesByTaxId();
   const companyApprovalStatusByTaxId = new Map(companies.map((item) => [item.taxId, item.approvalStatus]));
+  const recruiterCompanyTaxIds = new Set(
+    users.flatMap((item) =>
+      item.role === USER_ROLE.RECRUITER && 'companyTaxId' in item ? [item.companyTaxId] : [],
+    ),
+  );
+  const companyWithoutRecruiter = companies.find((item) => !recruiterCompanyTaxIds.has(item.taxId));
+
+  if (companyWithoutRecruiter) {
+    throw new Error(
+      `Seed company "${companyWithoutRecruiter.name}" (${companyWithoutRecruiter.taxId}) has no assigned recruiter.`,
+    );
+  }
+
   const userByKey = await getSeedUsersByKey();
 
-  for (const item of users) {
+  for (const [userIndex, item] of users.entries()) {
     const companyId =
       'companyTaxId' in item ? requireMapValue(companiesByTaxId, item.companyTaxId, 'company tax id') : null;
     const onboardingStatus =
@@ -2042,10 +2150,11 @@ const seedUsers = async () => {
     await db
       .update(user)
       .set({
-        name: item.name,
+        name: `${item.firstName} ${item.role}`,
         email: item.email,
         firstName: item.firstName,
-        lastName: item.lastName,
+        lastName: item.role,
+        image: getSeedUserAvatarUrl(item.firstName, userIndex),
         emailVerified: true,
         companyId,
         role: item.role,
@@ -2245,7 +2354,22 @@ const removeSeedJobs = async () => {
   await db.delete(jobPosting).where(inArray(jobPosting.id, jobIds));
 };
 
-const getJobPostingStatusSequence = (status: string) => {
+type JobPostingStatusValue = (typeof JOB_POSTING_STATUS)[keyof typeof JOB_POSTING_STATUS];
+
+const getJobPostingStatusSequence = (
+  status: string,
+  includeRejectedReview = false,
+): JobPostingStatusValue[] => {
+  if (status === JOB_POSTING_STATUS.ACTIVE && includeRejectedReview) {
+    return [
+      JOB_POSTING_STATUS.DRAFT,
+      JOB_POSTING_STATUS.PENDING_APPROVAL,
+      JOB_POSTING_STATUS.REJECTED,
+      JOB_POSTING_STATUS.PENDING_APPROVAL,
+      JOB_POSTING_STATUS.ACTIVE,
+    ];
+  }
+
   switch (status) {
     case JOB_POSTING_STATUS.DRAFT:
       return [JOB_POSTING_STATUS.DRAFT];
@@ -2293,7 +2417,11 @@ const seedJobs = async (userByKey: Map<UserKey, string>) => {
 
   for (const [jobIndex, item] of jobs.entries()) {
     const companyId = requireMapValue(companiesByTaxId, item.companyTaxId, 'company tax id');
-    const createdAt = daysAgo(70 - jobIndex * 3);
+    const rejectionReason = rejectedThenActiveJobReasons.get(item.title);
+    const statusSequence = getJobPostingStatusSequence(item.status, Boolean(rejectionReason));
+    const statusTransitionIntervalDays = 4;
+    const minimumCreatedDaysAgo = (statusSequence.length - 1) * statusTransitionIntervalDays;
+    const createdAt = daysAgo(Math.max(minimumCreatedDaysAgo, 70 - jobIndex * 3));
     const [createdJob] = await db
       .insert(jobPosting)
       .values({
@@ -2322,13 +2450,22 @@ const seedJobs = async (userByKey: Map<UserKey, string>) => {
       })),
     );
 
-    const statusSequence = getJobPostingStatusSequence(item.status);
     await db.insert(jobPostingStatusHistory).values(
       statusSequence.map((status, statusIndex) => ({
         jobPostingId: createdJob.id,
         status,
-        reason: statusIndex === 0 ? 'Posting created from seed data.' : `Posting moved to ${status}.`,
-        createdAt: new Date(createdAt.getTime() + statusIndex * 4 * 24 * 60 * 60 * 1000),
+        reason:
+          statusIndex === 0
+            ? 'Posting created from seed data.'
+            : status === JOB_POSTING_STATUS.REJECTED && rejectionReason
+              ? rejectionReason
+              : status === JOB_POSTING_STATUS.PENDING_APPROVAL &&
+                  statusSequence.slice(0, statusIndex).includes(JOB_POSTING_STATUS.REJECTED)
+                ? 'Posting updated and resubmitted for approval.'
+                : `Posting moved to ${status}.`,
+        createdAt: new Date(
+          createdAt.getTime() + statusIndex * statusTransitionIntervalDays * 24 * 60 * 60 * 1000,
+        ),
       })),
     );
 
@@ -2373,6 +2510,12 @@ const seedApplications = async (
 
     if (!jobSeed) {
       throw new Error(`Missing seed job definition for application "${item.jobTitle}".`);
+    }
+
+    if (!postingStatusesThatMayHaveApplications.has(jobSeed.status)) {
+      throw new Error(
+        `Seed application for "${item.jobTitle}" is invalid because the posting status is ${jobSeed.status}.`,
+      );
     }
 
     const [createdApplication] = await db

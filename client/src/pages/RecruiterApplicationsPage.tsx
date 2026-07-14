@@ -10,6 +10,7 @@ import { authSessionAtom } from '../store/auth';
 import { StatusMultiSelect } from '../components/StatusMultiSelect';
 import { useRecruiterPostingAccess } from '../hooks/useRecruiterPostingAccess';
 import { CompanyApprovalRequiredCard } from '../components/CompanyApprovalRequiredCard';
+import { CompanySelectOption } from '../components/CompanySelectOption';
 
 type ApplicationRow = RecruiterJobApplicationListItem & {
   postingTitle: string;
@@ -80,7 +81,7 @@ export const RecruiterApplicationsPage = () => {
       setLoading(true);
 
       try {
-        const postingsResponse = await getRecruiterJobPostings();
+        const postingsResponse = await getRecruiterJobPostings({ page: 1, limit: 100 });
 
         if (!isMounted) {
           return;
@@ -140,6 +141,7 @@ export const RecruiterApplicationsPage = () => {
     });
     return Array.from(byId.values()).sort((left, right) => left.name.localeCompare(right.name));
   }, [postings]);
+  const selectedCompany = companies.find((company) => String(company.id) === selectedCompanyKey);
 
   const visiblePostings = useMemo(
     () =>
@@ -291,8 +293,22 @@ export const RecruiterApplicationsPage = () => {
             }
             fullWidth
           >
-            <ComboBox.InputGroup className="flex h-10 items-center">
-              <Input aria-label="Filter by company" className="!text-sm !font-medium" placeholder="Search companies" />
+            <ComboBox.InputGroup className="relative flex h-10 items-center">
+              {selectedCompany && (
+                <span className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2">
+                  <CompanySelectOption
+                    iconOnly
+                    name={selectedCompany.name}
+                    logoUrl={selectedCompany.logo}
+                    websiteUrl={selectedCompany.websiteUrl}
+                  />
+                </span>
+              )}
+              <Input
+                aria-label="Filter by company"
+                className={`!text-sm !font-medium ${selectedCompany ? "!pl-10" : ""}`}
+                placeholder="Search companies"
+              />
               <ComboBox.Trigger />
             </ComboBox.InputGroup>
             <ComboBox.Popover>
@@ -302,7 +318,11 @@ export const RecruiterApplicationsPage = () => {
                 </ListBox.Item>
                 {companies.map((company) => (
                   <ListBox.Item key={company.id} id={String(company.id)} textValue={company.name}>
-                    {company.name}
+                    <CompanySelectOption
+                      name={company.name}
+                      logoUrl={company.logo}
+                      websiteUrl={company.websiteUrl}
+                    />
                   </ListBox.Item>
                 ))}
               </ListBox>

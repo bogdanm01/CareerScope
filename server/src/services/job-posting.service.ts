@@ -52,7 +52,6 @@ const ADMIN_ALLOWED_STATUS_TRANSITIONS: Partial<Record<JobPostingStatus, JobPost
   [JOB_POSTING_STATUS.PENDING_APPROVAL]: [
     JOB_POSTING_STATUS.ACTIVE,
     JOB_POSTING_STATUS.REJECTED,
-    JOB_POSTING_STATUS.CLOSED,
   ],
   [JOB_POSTING_STATUS.ACTIVE]: [JOB_POSTING_STATUS.CLOSED, JOB_POSTING_STATUS.PAUSED],
 };
@@ -137,7 +136,9 @@ export class JobPostingService {
     const result = await this.jobPostingRepository.findJobPostings(
       {
         status: query.status,
+        statuses: query.statuses,
         companyId,
+        companyIds: user.role === USER_ROLE.ADMIN ? query.companyIds : undefined,
         skills: query.skills,
         orderBy: query.orderBy,
         sort: query.sort,

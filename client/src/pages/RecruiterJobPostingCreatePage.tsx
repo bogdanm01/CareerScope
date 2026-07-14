@@ -582,7 +582,14 @@ export const RecruiterJobPostingCreatePage = ({ loading }: RecruiterJobPostingCr
                   }}
                   placeholder="Add responsibilities, requirements, benefits, and hiring process details..."
                 />
-                {fieldErrors.description && <span className="text-xs text-danger">{fieldErrors.description}</span>}
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  {fieldErrors.description && <span className="text-xs text-danger">{fieldErrors.description}</span>}
+                  <span
+                    className={`ml-auto ${form.description?.trim().length && form.description.trim().length >= 60 ? 'text-xs text-foreground-500' : 'text-xs text-warning-700'}`}
+                  >
+                    {form.description?.trim().length ?? 0} characters · 60 minimum for approval
+                  </span>
+                </div>
               </div>
                 </>
               )}
